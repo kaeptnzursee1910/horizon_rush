@@ -5,6 +5,8 @@
 
 HR.Net = {
   PREFIX: 'horizonrush-v1-',
+  prefix: 'horizonrush-v1-',  // aktuelles Präfix (Rennen oder Party)
+  limit: 8,                   // maximale Spielerzahl inklusive Gastgeber
   peer: null, isHost: false, conns: new Map(), hostConn: null, code: null,
   myId: null, onMsg: null, onDrop: null, nextId: 1,
 
@@ -35,12 +37,13 @@ HR.Net = {
     return id ? new Peer(id, opts) : new Peer(opts);
   },
 
-  host(cb) {
+  host(cb, prefix) {
     this.close();
+    this.prefix = prefix || this.PREFIX;
     this.isHost = true; this.myId = 0; this.nextId = 1;
     const tryCode = (attempt) => {
       const code = String(Math.floor(1000 + Math.random() * 9000));
-      const p = this.makePeer(this.PREFIX + code);
+      const p = this.makePeer(this.prefix + code);
       let opened = false;
       p.on('open', () => { opened = true; this.peer = p; this.code = code; cb(null, code); });
       p.on('error', e => {
@@ -56,7 +59,7 @@ HR.Net = {
 
   acceptConn(conn) {
     conn.on('open', () => {
-      if (this.conns.size >= HR.MAX_ONLINE - 1) { conn.send({ t: 'full' }); setTimeout(() => conn.close(), 300); return; }
+      if (this.conns.size >= this.limit - 1) { conn.send({ t: 'full', max: this.limit }); setTimeout(() => conn.close(), 300); return; }
       const id = this.nextId++;
       conn.hrId = id;
       this.conns.set(id, conn);
@@ -74,8 +77,9 @@ HR.Net = {
     if (this.onDrop) this.onDrop(id);
   },
 
-  join(code, cb) {
+  join(code, cb, prefix) {
     this.close();
+    this.prefix = prefix || this.PREFIX;
     this.isHost = false;
     const p = this.makePeer();
     let done = false;
@@ -83,10 +87,10 @@ HR.Net = {
     const timer = setTimeout(() => fail('Keine Verbindung zum Gastgeber. Prüfe den Code und den Online-Schlüssel.'), 20000);
     p.on('open', () => {
       this.peer = p;
-      const conn = p.connect(this.PREFIX + code, { reliable: true, serialization: 'json' });
+      const conn = p.connect(this.prefix + code, { reliable: true, serialization: 'json' });
       conn.on('data', d => {
         if (d.t === 'welcome' && !done) { done = true; clearTimeout(timer); this.myId = d.id; this.hostConn = conn; this.code = code; cb(null, d.id); return; }
-        if (d.t === 'full') { clearTimeout(timer); fail('Das Rennen ist schon voll (maximal ' + HR.MAX_ONLINE + ' Spieler).'); return; }
+        if (d.t === 'full') { clearTimeout(timer); fail('Hier ist schon alles voll (maximal ' + (d.max || HR.MAX_ONLINE) + ' Spieler).'); return; }
         if (this.onMsg) this.onMsg(d, 0);
       });
       const lost = () => { if (done && this.hostConn === conn) { this.hostConn = null; if (this.onDrop) this.onDrop(0); } };
@@ -107,7 +111,7 @@ HR.Net = {
 
   errText(e) {
     switch (e && e.type) {
-      case 'peer-unavailable': return 'Kein Rennen mit diesem Code gefunden.';
+      case 'peer-unavailable': return this.prefix === this.PREFIX ? 'Kein Rennen mit diesem Code gefunden.' : 'Keine Party mit diesem Code gefunden.';
       case 'network': case 'server-error': case 'socket-error': case 'socket-closed':
         return 'Keine Verbindung zum Vermittlungsserver. Ist das Gerät online?';
       case 'browser-incompatible': return 'Dieser Browser unterstützt kein WebRTC.';
@@ -131,6 +135,6 @@ HR.Net = {
     if (this.hostConn) try { this.hostConn.close(); } catch (_) { }
     this.hostConn = null;
     if (this.peer) try { this.peer.destroy(); } catch (_) { }
-    this.peer = null; this.code = null; this.isHost = false; this.myId = null;
+    this.peer = null; this.code = null; this.isHost = false; this.myId = null; this.limit = HR.MAX_ONLINE;
   },
 };

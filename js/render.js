@@ -32,7 +32,9 @@ HR.Render = {
 
   view(g, game, view) {
     const race = game.race, tr = race.track, segs = tr.segs, n = tr.n, L = tr.length;
-    const viewer = race.cars[view.car];
+    const R = race.rules;
+    let viewer = race.cars[view.car];
+    if (viewer.out && R && R.spectate) viewer = R.spectate(race, viewer) || viewer;
     const vw = view.w, vh = view.h;
     const hy = vh * HR.HORIZON, k = vh * HR.LENS, half = vw / 2;
     const dd = view.dd;
@@ -101,7 +103,7 @@ HR.Render = {
     // Autos nach Segment sortieren
     const buckets = new Map();
     for (const c of race.cars) {
-      if (c === viewer) continue;
+      if (c === viewer || c.out) continue;
       const si = Math.floor(race.mod(c.dist) / HR.SEG) % n;
       let b = buckets.get(si); if (!b) buckets.set(si, b = []);
       b.push(c);
@@ -114,6 +116,7 @@ HR.Render = {
         const sd = spr[kind];
         this.sprite(g, sd[0], sd[1], seg.S1 * k, seg.X1 + off * seg.W1, seg.Y1, seg.clip);
       }
+      if (R && R.extras) for (const [img, ww, off] of R.extras(race, seg.index, viewer)) this.sprite(g, img, ww, seg.S1 * k, seg.X1 + off * seg.W1, seg.Y1, seg.clip);
       const cars = buckets.get(seg.index);
       if (cars) {
         if (cars.length > 1) cars.sort((a, b) => race.mod(b.dist) - race.mod(a.dist));
@@ -122,7 +125,8 @@ HR.Render = {
           const sc = seg.S1 + (seg.S2 - seg.S1) * pct, w_ = seg.W1 + (seg.W2 - seg.W1) * pct;
           const sx = seg.X1 + (seg.X2 - seg.X1) * pct + c.x * w_, sy = seg.Y1 + (seg.Y2 - seg.Y1) * pct;
           const box = this.sprite(g, c.frames[c.lean + ',' + (c.braking ? 1 : 0)], HR.CAR_W, sc * k, sx, sy, seg.clip);
-          if (box && c.human && game.online && i < dd * 0.5 && box.y + box.h <= seg.clip) this.tag(g, c.name, sx, box.y - 3, U.clamp(box.w / 7, 10, 18));
+          if (box && R && R.decorate && box.y + box.h <= seg.clip) R.decorate(g, race, c, box);
+          if (box && c.human && (game.online || game.party) && i < dd * 0.5 && box.y + box.h <= seg.clip) this.tag(g, c.name, sx, box.y - 3, U.clamp(box.w / 7, 10, 18));
         }
       }
     }
@@ -137,6 +141,7 @@ HR.Render = {
       }
       const yRoad = hy + sk * HR.CAMH;
       g.drawImage(img, half - dw / 2, yRoad - dh + bounce, dw, dh);
+      if (R && R.decorate) R.decorate(g, race, viewer, { x: half - dw / 2, y: yRoad - dh + bounce, w: dw, h: dh, own: true });
       // Staub neben der Straße
       if (viewer.offroad && viewer.speed > 800) {
         const a = Math.min(0.5, viewer.speed / HR.MAXSPEED);
@@ -148,6 +153,7 @@ HR.Render = {
       }
     }
     if (!race.demo) this.hud(g, game, view, viewer, vw, vh);
+    if (R && R.flash > 0) { g.fillStyle = `rgba(255,255,255,${Math.min(0.7, R.flash)})`; g.fillRect(0, 0, vw, vh); }
     g.restore();
   },
 
@@ -174,23 +180,28 @@ HR.Render = {
     const pad = 14 * sc + 4;
     const Y = 'rgb(255,210,40)', Wt = '#fff';
     const touch = HR.Input.touchMode;
+    const R = race.rules, noLaps = R && R.noLaps;
     // oben links
     let y = pad;
-    if (race.mode !== 'trial') {
+    if (race.mode !== 'trial' && !noLaps) {
       this.text(g, 'POSITION', pad, y, small, Y); y += small * 1.1;
       this.text(g, `${p.place}/${race.cars.length}`, pad, y, big, Wt); y += big * 1.05;
     }
-    this.text(g, 'RUNDE', pad, y, small, Y); y += small * 1.1;
-    const lap = Math.min(race.laps, Math.max(1, p.lapsDone + 1));
-    this.text(g, `${lap}/${race.laps}`, pad, y, mid, Wt);
+    if (!noLaps) {
+      this.text(g, 'RUNDE', pad, y, small, Y); y += small * 1.1;
+      const lap = Math.min(race.laps, Math.max(1, p.lapsDone + 1));
+      this.text(g, `${lap}/${race.laps}`, pad, y, mid, Wt);
+    }
     // oben rechts
     const rx = vw - pad; y = pad;
+    if (noLaps) { /* Zeiten zeigt das Partyspiel selbst */ } else {
     this.text(g, 'ZEIT', rx, y, small, Y, 'right'); y += small * 1.1;
     this.text(g, U.fmtTime(p.finished ? p.finishTime : race.time), rx, y, mid, Wt, 'right'); y += mid * 1.15 + 4;
     const cur = p.finished || race.state === 'countdown' ? null : race.time - p.lapStart;
     this.text(g, `RUNDE  ${U.fmtTime(p.lapsDone >= 0 ? cur : (race.state === 'countdown' ? null : race.time))}`, rx, y, small, Wt, 'right'); y += small * 1.2;
     this.text(g, `BESTE   ${U.fmtTime(p.bestLap)}`, rx, y, small, Wt, 'right'); y += small * 1.2;
-    this.text(g, `REKORD  ${U.fmtTime(game.records.lap[race.track.cfg.name])}`, rx, y, small, 'rgb(200,200,200)', 'right');
+    if (!race.party) this.text(g, `REKORD  ${U.fmtTime(game.records.lap[race.track.cfg.name])}`, rx, y, small, 'rgb(200,200,200)', 'right');
+    }
 
     // Tacho, Gang, Drehzahl (Touch: in der Mitte unten, zwischen den Tasten)
     const kmh = Math.round(p.speed * HR.KMH);
@@ -211,7 +222,7 @@ HR.Render = {
         g.fillStyle = '#000'; g.fillRect(px, py - 3 * sc, pw, 6 * sc);
         const L = race.track.length;
         for (const c of race.cars) {
-          if (c === p) continue;
+          if (c === p || c.out) continue;
           g.fillStyle = U.rgb(c.color); g.beginPath(); g.arc(px + race.mod(c.dist) / L * pw, py, 5 * sc, 0, 7); g.fill();
         }
         g.fillStyle = '#fff'; g.beginPath(); g.arc(px + race.mod(p.dist) / L * pw, py, 7 * sc, 0, 7); g.fill();
@@ -228,7 +239,8 @@ HR.Render = {
       if (p.msg2) this.text(g, p.msg2, vw / 2, vh * 0.2 + 50 * sc, mid, Wt, 'center', 'middle');
     }
     if (view.label) this.text(g, view.label, vw / 2, pad, small, Y, 'center');
-    if (race.state === 'done' && race.doneT > 0.8 && view.first && !game.online) {
+    if (R && R.hud) R.hud(g, race, p, vw, vh, sc, this);
+    if (race.state === 'done' && race.doneT > 0.8 && view.first && !game.online && !game.party) {
       this.text(g, touch ? 'Tippe: Ergebnis' : 'Enter: Ergebnis', vw / 2, vh * 0.42, mid, Wt, 'center', 'middle');
     }
   },

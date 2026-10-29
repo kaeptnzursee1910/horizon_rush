@@ -17,11 +17,13 @@ HR.Race = class {
     this.finishOrder = 0;
     this.doneT = 0;
     this.online = !!opts.online;
+    this.party = !!opts.party;
+    this.rules = opts.rules || null;   // Party-Spielregeln (partyrace.js)
     const n = opts.entrants.length;
     this.cars = opts.entrants.map((e, i) => {
       const ct = HR.CARS[e.car];
       return {
-        id: e.id, name: e.name, car: e.car, ct, color: e.color || ct.color,
+        id: e.id, pidx: e.pidx, name: e.name, car: e.car, ct, color: e.color || ct.color,
         frames: game.carFrames(e.car, e.color || ct.color),
         pid: e.pid == null ? null : e.pid, human: !!e.human, remote: !!e.remote,
         maxSpeed: HR.MAXSPEED * ct.top, accel: HR.MAXSPEED * 0.22 * ct.accel,
@@ -34,6 +36,7 @@ HR.Race = class {
         lean: 0, braking: false, offroad: false, lapsDone: -1, lapStart: 0, lapTimes: [], bestLap: null,
         finished: false, finishTime: null, finishRank: 0, place: i + 1,
         gear: 1, rpm: 0.1, crashCd: 0, msg: '', msg2: '', msgT: 0, bg: 0, net: null,
+        out: false, spinT: 0,
       };
     });
     this.players = this.cars.filter(c => c.pid != null);
@@ -61,6 +64,7 @@ HR.Race = class {
     this.time += dt;
     if (this.goT > 0) this.goT -= dt;
     for (const c of this.cars) {
+      if (c.out) continue;
       if (c.remote) this.netSmooth(c, dt);
       else if (c.pid != null && !c.finished) this.drivePlayer(c, inputs[c.pid], dt);
       else this.driveAI(c, dt);
@@ -69,8 +73,9 @@ HR.Race = class {
       if (c.msgT > 0) c.msgT -= dt;
       if (!c.remote) this.checkLap(c);
     }
-    for (const p of this.players) this.updateEngine(p, p.finished ? { up: true } : inputs[p.pid], dt);
+    for (const p of this.players) if (!p.out) this.updateEngine(p, p.finished ? { up: true } : inputs[p.pid], dt);
     this.rank();
+    if (this.rules) this.rules.update(this, dt, inputs);
     if (this.state === 'racing' && !this.demo && !this.netClient) {
       const all = this.humans.length && this.humans.every(p => p.finished || p.gone);
       const first = this.humans.find(p => p.finished);
@@ -86,11 +91,18 @@ HR.Race = class {
     const seg = this.track.segAt(this.mod(c.dist));
     const sp = c.speed / HR.MAXSPEED;
     const dx = dt * c.steer * Math.min(1, sp * 1.5);
+    const mul = this.rules ? this.rules.speedMul(this, c) : 1, maxS = c.maxSpeed * mul;
     c.lean = 0;
+    if (c.spinT > 0) {
+      // ins Schleudern geraten: keine Kontrolle, Auto wackelt
+      c.spinT -= dt;
+      c.lean = Math.sin(c.spinT * 30) > 0 ? 1 : -1;
+      inp = { left: false, right: false, up: false, down: true };
+    }
     if (inp.left) { c.x -= dx; c.lean = -1; }
     else if (inp.right) { c.x += dx; c.lean = 1; }
     c.x -= dt * 2 * sp * sp * seg.curve * HR.CENTRIFUGAL * c.grip;
-    if (inp.up) c.speed += c.accel * (1 - 0.55 * c.speed / c.maxSpeed) * dt;
+    if (inp.up) c.speed += c.accel * (mul > 1 ? mul * mul : 1) * (1 - 0.55 * c.speed / maxS) * dt;
     else if (inp.down) c.speed -= HR.MAXSPEED * 0.9 * dt;
     else c.speed -= HR.MAXSPEED * 0.18 * dt;
     c.braking = !!inp.down;
@@ -110,14 +122,14 @@ HR.Race = class {
     }
     this.collideCars(c);
     c.x = U.clamp(c.x, -2.6, 2.6);
-    c.speed = U.clamp(c.speed, 0, c.maxSpeed);
+    c.speed = mul < 1 && c.speed > maxS ? Math.max(maxS, c.speed - HR.MAXSPEED * 1.2 * dt) : U.clamp(c.speed, 0, maxS);
     c.dist += c.speed * dt;
   }
 
   collideCars(c) {
     const L = this.track.length;
     for (const o of this.cars) {
-      if (o === c) continue;
+      if (o === c || o.out) continue;
       const dz = this.mod(o.dist - c.dist);
       if (dz < HR.CAR_LEN && Math.abs(o.x - c.x) < HR.CAR_W / HR.ROADW * 0.8 && c.speed > o.speed) {
         if (c.pid != null && c.crashCd <= 0) { HR.Audio.play('bump'); c.crashCd = 0.3; }
@@ -183,13 +195,14 @@ HR.Race = class {
     c.lapTimes.push(lt);
     if (c.bestLap == null || lt < c.bestLap) c.bestLap = lt;
     const isPlayer = c.pid != null && !c.finished && !this.demo;
-    const record = isPlayer && this.game.recordLap(this.track.cfg.name, lt);
+    const record = isPlayer && !this.party && this.game.recordLap(this.track.cfg.name, lt);
+    if (this.rules && this.rules.noLaps) return;
     if (done >= this.laps && !c.finished) {
       c.finished = true; c.finishTime = this.time;
       this.finishOrder += 1; c.finishRank = this.finishOrder;
       if (isPlayer) {
         this.rank();
-        const raceRec = this.game.recordRace(this.track.cfg.name, this.laps, this.time);
+        const raceRec = !this.party && this.game.recordRace(this.track.cfg.name, this.laps, this.time);
         const place = this.mode === 'trial' ? '' : `Platz ${c.place}  ·  `;
         this.say(c, 'ZIEL!', place + U.fmtTime(this.time) + (raceRec ? '  ·  NEUER REKORD!' : ''), 99);
         HR.Audio.play('finish');
@@ -203,6 +216,7 @@ HR.Race = class {
 
   rank() {
     this.order = this.cars.slice().sort((a, b) => {
+      if (a.out !== b.out) return a.out ? 1 : -1;
       if (a.finished && b.finished) return (a.finishTime - b.finishTime) || (a.finishRank - b.finishRank);
       if (a.finished) return -1;
       if (b.finished) return 1;

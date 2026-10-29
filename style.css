@@ -155,3 +155,68 @@ body.portrait #rotate { display: flex; }
   #carprev { width: min(300px, 50vw); }
 }
 @media (prefers-reduced-motion: reduce) { #carprev, .spinner { animation: none; } }
+
+/* Party */
+.panel.party { width: min(1060px, 100%); }
+.party header { flex-wrap: wrap; }
+.ptitle { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ptitle span { color: var(--dim); font-size: 14px; font-weight: bold; }
+.codepill { margin-left: auto; background: rgba(0, 0, 0, .35); border: 2px solid var(--gold); border-radius: 20px; padding: 4px 14px; color: var(--dim); font-size: 13px; }
+.codepill b { color: var(--gold); font-size: 22px; letter-spacing: .1em; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.pgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 20px; align-items: start; }
+.pmain h3:first-child { margin-top: 0; }
+.pside h3 { margin-top: 0; }
+.pside section + section { margin-top: 14px; }
+.pdot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; flex: none; border: 2px solid rgba(255, 255, 255, .5); vertical-align: -2px; margin-right: 6px; }
+.pdot.btn { width: 22px; height: 22px; padding: 0; border-color: #fff; margin-right: 0; }
+.pdot.btn:focus-visible { outline: 2px solid var(--gold); }
+.players small.ok { color: var(--ok); }
+.players small.wait { color: var(--dim); }
+.pstep { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 18px; font-weight: bold; }
+.pstep > span { min-width: 110px; }
+.pstep b { min-width: 34px; text-align: center; color: var(--yellow); font-size: 24px; }
+.pstep button:disabled { opacity: .35; cursor: default; }
+.seg { display: inline-flex; border: 2px solid var(--line); border-radius: 22px; overflow: hidden; }
+.seg button { background: rgba(0, 0, 0, .3); border: 0; padding: 7px 16px; font-weight: bold; font-size: 16px; }
+.seg button.on { background: rgba(200, 120, 0, .75); }
+.seg button:disabled { cursor: default; }
+.seg button:disabled:not(.on) { opacity: .5; }
+.seg button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+.gchip { text-align: left; background: rgba(0, 0, 0, .3); border: 2px solid var(--line); border-radius: 6px; padding: 7px 10px; font-size: 14px; font-weight: bold; display: flex; gap: 8px; align-items: center; }
+.gchip i { font-style: normal; color: var(--dim); min-width: 28px; font-size: 12px; }
+.gchip.on { border-color: var(--gold); background: rgba(200, 120, 0, .4); }
+.gchip.on i { color: var(--yellow); }
+.gchip.auto { border-color: var(--line); background: rgba(255, 255, 255, .06); }
+.gchip:disabled { cursor: default; color: var(--text); }
+.gchip:not(:disabled):hover, .gchip:focus-visible { border-color: var(--gold); outline: none; }
+.note.wait { color: var(--yellow); }
+.chatlog { height: 190px; overflow-y: auto; background: rgba(0, 0, 0, .3); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: 14px; line-height: 1.4;
+  -webkit-user-select: text; user-select: text; touch-action: pan-y; }
+.chatlog p { margin: 0 0 4px; overflow-wrap: anywhere; }
+.chatlog p.sys { color: var(--dim); font-style: italic; }
+.chatform { display: flex; gap: 6px; margin-top: 6px; }
+.chatform input { flex: 1; min-width: 0; font: inherit; font-size: 16px; color: var(--text); background: rgba(0, 0, 0, .35); border: 2px solid var(--line); border-radius: 4px; padding: 7px 10px; -webkit-user-select: text; user-select: text; }
+.chatform input:focus { outline: none; border-color: var(--gold); }
+.chatform button { background: rgba(200, 120, 0, .6); border: 0; border-radius: 4px; padding: 0 12px; font-weight: bold; }
+.intro .gcode { color: var(--dim); font-weight: bold; margin: 0 0 6px; }
+.intro .gdesc { font-size: 17px; line-height: 1.5; margin: 0; }
+.intro p { line-height: 1.45; margin: 0; }
+.ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ctrl div { background: rgba(0, 0, 0, .25); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.ctrl div.cur { border-color: var(--gold); }
+.ctrl b { color: var(--yellow); }
+.podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-items: end; margin: 6px 0 14px; }
+.pod { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0; }
+.pod .pname { font-weight: bold; font-size: 17px; overflow-wrap: anywhere; }
+.pod .ppts { color: var(--dim); font-size: 13px; }
+.pod .block { width: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; font-size: 30px; font-weight: 900; font-style: italic; color: #000; border-radius: 4px 4px 0 0; }
+.pod.p1 .block { height: 110px; background: linear-gradient(var(--gold), var(--orange)); }
+.pod.p2 .block { height: 80px; background: linear-gradient(#e6e6ee, #9a9aa6); }
+.pod.p3 .block { height: 60px; background: linear-gradient(#e0a070, #9a5a2a); }
+.list button:disabled { opacity: .55; cursor: default; }
+@media (max-width: 820px), (max-height: 560px) {
+  .pgrid { grid-template-columns: 1fr; }
+  .chatlog { height: 130px; }
+  .ctrl { grid-template-columns: 1fr; }
+}

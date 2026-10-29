@@ -4,7 +4,7 @@
 const Game = HR.Game = {
   canvas: null, g: null, W: 0, H: 0, dpr: 1,
   sprites: null, bgCache: new Map(), trackCache: {}, frameCache: {},
-  race: null, views: [], paused: false, champ: null, lastParams: null, online: null,
+  race: null, views: [], paused: false, champ: null, lastParams: null, online: null, party: null,
   diff: 1,
 
   // ---------- Einstellungen und Bestzeiten ----------
@@ -59,7 +59,7 @@ const Game = HR.Game = {
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 250));
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && this.race && !this.race.demo && !this.online && !this.paused && this.race.state !== 'done') this.togglePause();
+      if (document.hidden && this.race && !this.race.demo && !this.online && !this.party && !this.paused && this.race.state !== 'done') this.togglePause();
     });
     HR.Net.onMsg = (m, from) => this.netMsg(m, from);
     HR.Net.onDrop = id => this.netDrop(id);
@@ -69,6 +69,12 @@ const Game = HR.Game = {
     let last = performance.now(), acc = 0;
     const frame = now => {
       const dt = Math.min(1 / 20, (now - last) / 1000); last = now;
+      const arena = HR.Party.arena;
+      if (arena) {
+        try { arena.frame(dt); arena.render(this.g, this.W, this.H, this.dpr); } catch (e) { console.error(e); }
+        requestAnimationFrame(frame);
+        return;
+      }
       if (this.race && !this.paused) {
         acc += dt;
         while (acc >= HR.STEP) { this.update(HR.STEP); acc -= HR.STEP; }
@@ -102,7 +108,7 @@ const Game = HR.Game = {
       else v = { x: 0, y: k * H / 2 + (k ? 1 : 0), w: W, h: H / 2 - 1 };
       return Object.assign(v, { car: ci, dd: list.length > 1 ? HR.DRAW_SPLIT : HR.DRAW, label: list.length > 1 ? 'SPIELER ' + (k + 1) : '', first: k === 0 });
     });
-    HR.Input.layout(race.demo ? [] : this.views, W, H);
+    HR.Input.layout(race.demo ? [] : this.views, W, H, race.rules && race.rules.extraButton);
   },
 
   // ---------- Rennen ----------
@@ -141,9 +147,10 @@ const Game = HR.Game = {
 
   update(dt) {
     const race = this.race;
-    const inputs = [0, 1].map(i => { const c = HR.Input.control(i); return { up: c.gas, down: c.brake, left: c.left, right: c.right }; });
+    const inputs = [0, 1].map(i => { const c = HR.Input.control(i); return { up: c.gas, down: c.brake, left: c.left, right: c.right, act: c.act }; });
     race.update(dt, inputs);
     if (this.online) this.netTick(dt);
+    if (this.party) { if (HR.Party.ctl && HR.Party.ctl.tick) HR.Party.ctl.tick(dt); return; }
     if (!race.demo && race.state === 'done' && !this.resultsShown) {
       if (!this.online || this.online.host) {
         if (race.doneT > 5 || (this.online && race.doneT > 3)) this.showResults();
@@ -153,7 +160,7 @@ const Game = HR.Game = {
 
   tapped() {
     const r = this.race;
-    if (r && !r.demo && r.state === 'done' && r.doneT > 0.8 && !this.resultsShown && !this.online) this.showResults();
+    if (r && !r.demo && r.state === 'done' && r.doneT > 0.8 && !this.resultsShown && !this.online && !this.party) this.showResults();
   },
 
   render() {
@@ -166,6 +173,7 @@ const Game = HR.Game = {
   },
 
   togglePause() {
+    if (this.party) { if (HR.Party.ctl) UI.partyPause(); return; }
     const r = this.race;
     if (!r || r.demo || this.resultsShown) return;
     if (r.state === 'done') { if (!this.online) this.showResults(); return; }
@@ -177,6 +185,7 @@ const Game = HR.Game = {
   resume() { this.paused = false; UI.hide(); },
 
   quitToMenu() {
+    if (this.party) HR.Party.reset();
     if (this.online) { HR.Net.close(); this.online = null; }
     this.champ = null;
     this.startDemo();
@@ -214,7 +223,7 @@ const Game = HR.Game = {
     if (e.code === 'F11') { UI.fullscreen(); return true; }
     if (UI.visible()) return UI.key(e);
     const r = this.race;
-    if (r && !r.demo && r.state === 'done' && !this.online && (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Space')) { if (r.doneT > 0.8) this.showResults(); return true; }
+    if (r && !r.demo && r.state === 'done' && !this.online && !this.party && (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Space')) { if (r.doneT > 0.8) this.showResults(); return true; }
     if (e.code === 'Escape' || e.code === 'KeyP') { this.togglePause(); return true; }
     return false;
   },
@@ -389,14 +398,18 @@ const UI = HR.UI = {
     this.el.innerHTML = html;
     this.back = back || null;
     this.keys = opts.keys || null;
-    this.el.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', ev => {
+    this.bind(this.el);
+    const f = this.el.querySelector('[autofocus]') || this.el.querySelector('button:not([disabled])');
+    if (f) f.focus({ preventScroll: true });
+    const sc = this.el.querySelector('.panel'); if (sc) sc.scrollTop = 0;
+  },
+
+  bind(root) {
+    root.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', ev => {
       ev.preventDefault();
       HR.Audio.init(); HR.Audio.play(b.dataset.act === 'back' ? 'blip' : 'select');
       const fn = this.acts[b.dataset.act]; if (fn) fn(b.dataset.arg, b, ev);
     }));
-    const f = this.el.querySelector('[autofocus]') || this.el.querySelector('button:not([disabled])');
-    if (f) f.focus({ preventScroll: true });
-    const sc = this.el.querySelector('.panel'); if (sc) sc.scrollTop = 0;
   },
 
   key(e) {
@@ -446,7 +459,8 @@ const UI = HR.UI = {
         <h1 class="logo">HORIZON RUSH</h1>
         <p class="tag">Arcade-Rennspiel</p>
         <nav class="list">
-          <button data-act="mode" data-arg="race" autofocus>Einzelrennen</button>
+          <button data-act="party" class="hot" autofocus>Party</button>
+          <button data-act="mode" data-arg="race">Einzelrennen</button>
           <button data-act="mode" data-arg="champ">Meisterschaft</button>
           <button data-act="mode" data-arg="trial">Zeitfahren</button>
           <button data-act="mode" data-arg="split">2 Spieler (Splitscreen)</button>
