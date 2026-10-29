@@ -37,7 +37,8 @@ Reines HTML, CSS und JavaScript ohne Build-Schritt. `index.html` lädt die Datei
 `core.js` (Strecken, Autos, Grafiken), `race.js` (Fahrphysik, KI), `render.js` (Pseudo-3D),
 `audio.js` (Sound), `input.js` (Touch/Tastatur), `net.js` (Online), `main.js` (Menüs, Ablauf),
 `party.js` (Party-Lobby, Chat, Runden, Punkte), `partyrace.js` (Fahrspiele),
-`arena.js` (Grundgerüst der 2D-Spiele) und `games/*.js` (die Arena-Spiele).
+`arena.js` (Grundgerüst der 2D-Spiele), `games/*.js` (die Arena-Spiele) und `showcase.js`
+(Hintergrund des Startbildschirms: alle Minispiele im Wechsel, gespielt vom Computer).
 Im Party-Modus rechnet der Gastgeber die Arena-Spiele, die anderen Geräte schicken nur ihre Tasten.
 
 ## Verbindung

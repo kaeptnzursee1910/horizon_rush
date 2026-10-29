@@ -110,7 +110,7 @@ HR.AR.define({
       g.fillStyle = G.rgb(view, 0.35); g.beginPath(); g.arc(x, y, s * 2.2, 0, 7); g.fill();
       g.fillStyle = G.rgb(view); g.beginPath(); g.moveTo(x, y - s * 1.3); g.lineTo(x + s * 1.6, y + s * 0.8); g.lineTo(x - s * 1.6, y + s * 0.8); g.closePath(); g.fill();
       g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y - s * 0.1, s * 0.4, 0, 7); g.fill();
-      if (view === me) G.label(g, 'DU', x, y - s * 2, Math.max(14, s), '#fff');
+      if (view === me && !G.show) G.label(g, 'DU', x, y - s * 2, Math.max(14, s), '#fff');
       else G.label(g, 'Du schaust ' + G.name(view.id) + ' zu', x, y - s * 2, Math.max(14, s * 0.8), '#fff');
     }
     G.label(g, Math.floor(S.z / 10) + ' m', W - 14 - 40, H - 14, 18, 'rgba(255,255,255,.6)');

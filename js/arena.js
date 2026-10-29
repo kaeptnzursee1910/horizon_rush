@@ -43,7 +43,7 @@ HR.ArenaGame = class {
 
   // Geräusche: der Gastgeber spielt sie und schickt sie mit dem nächsten Spielstand an alle
   sfx(name, onlyFor) {
-    if (!this.host) return;
+    if (!this.host || this.show) return;
     if (onlyFor == null || onlyFor === this.me) HR.Audio.play(name);
     this.fx.push([++this.fxSeq, name, onlyFor == null ? -1 : onlyFor, this.S.time]);
     if (this.fx.length > 20) this.fx.shift();
@@ -170,7 +170,7 @@ HR.ArenaGame = class {
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.fillStyle = this.def.bg || '#05060f'; g.fillRect(0, 0, W, H);
     // mit Touch-Tasten bleibt unten ein Streifen für die Tasten frei
-    const band = HR.Input.touchMode ? Math.min(H * 0.24, 150 * U.clamp(Math.min(W / 900, H / 560), 0.6, 1.15)) : 0;
+    const band = HR.Input.touchMode && !this.show ? Math.min(H * 0.24, 150 * U.clamp(Math.min(W / 900, H / 560), 0.6, 1.15)) : 0;
     const avH = H - band;
     const sc = Math.min(W / this.W, avH / this.H);
     this.view = { sc, ox: (W - this.W * sc) / 2, oy: (avH - this.H * sc) / 2, W, H };
@@ -178,6 +178,7 @@ HR.ArenaGame = class {
     this.def.draw(g, this.S, this, W, H);
     g.restore();
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (this.show) return;
     this.hud(g, W, H);
     HR.Render.touch(g);
   }

@@ -75,11 +75,19 @@ const Game = HR.Game = {
         requestAnimationFrame(frame);
         return;
       }
+      const show = HR.Showcase.active();
+      if (show) HR.Showcase.tick(dt);
+      if (show && HR.Showcase.arena) {
+        try { HR.Showcase.render(this.g, this.W, this.H, this.dpr); } catch (e) { console.error(e); }
+        requestAnimationFrame(frame);
+        return;
+      }
       if (this.race && !this.paused) {
         acc += dt;
         while (acc >= HR.STEP) { this.update(HR.STEP); acc -= HR.STEP; }
       } else acc = 0;
       this.render();
+      if (show) HR.Showcase.render(this.g, this.W, this.H, this.dpr);
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
@@ -113,9 +121,22 @@ const Game = HR.Game = {
 
   // ---------- Rennen ----------
   startDemo() {
+    this.startDemoRace(null);
+    HR.Showcase.reset();
+  },
+
+  // Hintergrund-Rennen der Computer-Fahrer, auf Wunsch mit den Regeln eines Party-Fahrspiels
+  startDemoRace(def) {
     this.paused = false;
-    const ai = HR.makeAI(HR.FIELD, 1).map((a, i) => Object.assign(a, { id: 'ai' + i, skill: U.uniform(0.85, 0.97) }));
-    this.race = new HR.Race(this, { track: Math.floor(Math.random() * 3), laps: 999, mode: 'demo', demo: true, entrants: ai, startSpeed: 0.6 });
+    const ai = HR.makeAI(HR.FIELD, 1).map((a, i) => Object.assign(a, { id: 'ai' + i, pidx: i, skill: U.uniform(0.85, 0.97) }));
+    let rules = null;
+    if (def) {
+      const players = ai.map((a, i) => ({ id: i, name: a.name, color: i }));
+      rules = def.rules({ host: true, me: -1, players, seed: 1 }, { host: true, event() {} });
+      if (rules.left != null && rules.period) { rules.left = 2.5; rules.period = 2.5; }   // Ausscheidungsrennen: gleich jemanden rausnehmen
+    }
+    this.race = new HR.Race(this, { track: Math.floor(Math.random() * 3), laps: 999, mode: 'demo', demo: true, entrants: ai, startSpeed: 0.6, rules });
+    if (rules && rules.init) rules.init(this.race, U.rng(Math.floor(Math.random() * 1e9)));
     HR.Audio.stopEngines();
     this.layoutViews();
   },
