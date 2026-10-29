@@ -156,7 +156,7 @@ const TOUCH_DRIVE = 'links ◀ ▶ lenken, rechts GAS und BREMSE';
 // A1 Ausscheidungsrennen
 // ======================================================================
 HR.addGame(raceDef({
-  code: 'A1', name: 'Ausscheidungsrennen',
+  code: 'A1', name: 'Ausscheidungsrennen', short: 'Bloß nicht Letzter sein!',
   desc: 'Alle fahren auf derselben Strecke. In regelmäßigen Abständen scheidet das letzte Auto aus und schaut ab dann beim Führenden zu.',
   goal: 'Nicht Letzter sein, wenn die Uhr abläuft. Wer am Ende als Einziger übrig ist, gewinnt.',
   touch: TOUCH_DRIVE, keys: KEYS_DRIVE,
@@ -202,7 +202,7 @@ HR.addGame(raceDef({
 // A2 Polizeijagd
 // ======================================================================
 HR.addGame(raceDef({
-  code: 'A2', name: 'Polizeijagd',
+  code: 'A2', name: 'Polizeijagd', short: 'Wer gerammt wird, ist Polizei.',
   desc: 'Ein Auto ist der Streifenwagen mit Blaulicht. Wen die Polizei anrempelt, der ist ab sofort selbst die Polizei. Der neue Streifenwagen muss kurz warten, damit die anderen fliehen können.',
   goal: 'So wenig Zeit wie möglich als Polizei verbringen. Abgerechnet wird nach 100 Sekunden.',
   touch: TOUCH_DRIVE, keys: KEYS_DRIVE,
@@ -272,7 +272,7 @@ HR.addGame(raceDef({
 // A3 Heiße Bombe
 // ======================================================================
 HR.addGame(raceDef({
-  code: 'A3', name: 'Heiße Bombe',
+  code: 'A3', name: 'Heiße Bombe', short: 'Gib die Bombe weiter!',
   desc: 'Ein Auto trägt eine tickende Bombe. Durch Anrempeln gibst du sie weiter. Niemand weiß genau, wann sie hochgeht, aber das Ticken wird schneller. Mit der Bombe fährst du etwas schneller.',
   goal: 'Die Bombe loswerden, bevor sie explodiert. Wer sie dann trägt, scheidet aus. Der Letzte im Rennen gewinnt.',
   touch: TOUCH_DRIVE, keys: KEYS_DRIVE,
@@ -376,7 +376,7 @@ HR.partySprites = function () {
 };
 
 HR.addGame(raceDef({
-  code: 'A5', name: 'Turbo-Rennen mit Extras',
+  code: 'A5', name: 'Turbo-Rennen mit Extras', short: 'Rennen mit Extra-Boxen.',
   desc: 'Ein Rennen über 2 Runden mit Extra-Boxen auf der Strecke. Fahr durch eine Box, um ein Extra zu bekommen: Turbo, Ölfleck (hinter dir ablegen), Schild (schützt vor Öl und Blitz), Magnet (zieht dich nach vorn) oder Blitz (bremst alle vor dir). Weiter hinten gibt es stärkere Extras.',
   goal: 'Als Erster ins Ziel kommen.',
   touch: TOUCH_DRIVE + ', EXTRA einsetzen', keys: KEYS_DRIVE + ', Leertaste Extra einsetzen',

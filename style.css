@@ -220,3 +220,11 @@ body.portrait #rotate { display: flex; }
   .chatlog { height: 130px; }
   .ctrl { grid-template-columns: 1fr; }
 }
+.gcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.gcard { text-align: left; background: rgba(0, 0, 0, .3); border: 2px solid var(--line); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gcard i { font-style: normal; color: var(--dim); font-size: 12px; font-weight: bold; }
+.gcard strong { color: var(--gold); font-size: 16px; font-style: italic; }
+.gcard span { font-size: 13px; color: var(--text); }
+.gcard small { font-size: 12px; color: var(--yellow); }
+.gcard:not(:disabled):hover, .gcard:focus-visible { border-color: var(--gold); background: rgba(200, 120, 0, .4); outline: none; }
+.gcard:disabled { cursor: default; color: var(--text); }

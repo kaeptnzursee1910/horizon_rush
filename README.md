@@ -34,7 +34,8 @@ er wird nur im Browser des jeweiligen Geräts gespeichert.
 1. Ein Gerät tippt auf *Party → Party eröffnen* und bekommt einen 4-stelligen Code.
 2. Alle anderen tippen auf *Party*, geben den Code ein und tippen auf *Beitreten*.
 3. In der Lobby sehen alle die Einstellungen des Gastgebers: Spielerzahl, Runden und ob die
-   Minispiele zufällig kommen oder ausgewählt werden. Nebenan ist ein Chat.
+   Minispiele zufällig kommen oder ausgewählt werden. Nebenan ist ein Chat. Bei „Auswählen“
+   wählt der Gastgeber vor jeder Runde das Minispiel, alle sehen dabei die Spielerliste und den Chat.
 4. Vor jeder Runde erscheinen Beschreibung und Steuerung des Spiels. Sobald alle auf *Bereit!*
    getippt haben, geht es los. Platz 1 bis 8 bekommen 10, 8, 6, 5, 4, 3, 2 und 1 Punkte.
 

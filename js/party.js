@@ -207,13 +207,12 @@ const Party = HR.Party = {
   // ---------- Ablauf ----------
   start() {
     const P = this.P; if (!P.host) return;
-    const pool = P.pick === 'random' ? HR.GAME_ORDER.slice() : HR.GAME_ORDER.filter(c => P.picks.includes(c));
-    if (!pool.length) return;
-    // Spielliste: jedes Spiel einmal in zufälliger Reihenfolge, dann von vorn, ohne direkte Wiederholung
+    // Zufällig: Spielliste mit jedem Spiel einmal in zufälliger Reihenfolge, dann von vorn, ohne direkte Wiederholung.
+    // Auswählen: der Gastgeber wählt vor jeder Runde, die Liste füllt sich dabei.
     const list = [];
-    while (list.length < P.rounds) {
-      let bag = U.shuffle(pool);
-      if (list.length && bag.length > 1 && bag[0] === list[list.length - 1]) bag.push(bag.shift());
+    while (P.pick === 'random' && list.length < P.rounds) {
+      let bag = U.shuffle(HR.GAME_ORDER);
+      if (list.length && bag[0] === list[list.length - 1]) bag.push(bag.shift());
       list.push(...bag);
     }
     P.playlist = list.slice(0, P.rounds);
@@ -227,9 +226,21 @@ const Party = HR.Party = {
     const P = this.P;
     if (P.round >= P.rounds) { P.phase = 'final'; this.changed(); this.show(); return; }
     P.round += 1;
-    P.current = P.playlist[P.round - 1];
     P.ready = [];
+    if (P.pick === 'pick') { P.current = null; P.phase = 'choose'; }
+    else { P.current = P.playlist[P.round - 1]; P.phase = 'intro'; }
+    this.broadcastState();
+    this.show();
+  },
+
+  // Gastgeber wählt das Minispiel der nächsten Runde
+  choose(code) {
+    const P = this.P;
+    if (!P.host || P.phase !== 'choose' || !HR.GAMES[code]) return;
+    P.current = code;
+    P.playlist = P.playlist.slice(0, P.round - 1).concat([code]);
     P.phase = 'intro';
+    this.sys(Party.hostName() + ' hat ' + HR.GAMES[code].name + ' gewählt.');
     this.broadcastState();
     this.show();
   },
@@ -405,11 +416,10 @@ const PUI = HR.PUI = {
       <button class="arrow small" data-act="pset" data-arg="${key}:-1" ${dis} aria-label="${label} weniger">◄</button><b>${val}</b>
       <button class="arrow small" data-act="pset" data-arg="${key}:1" ${dis} aria-label="${label} mehr">►</button></div>`;
     const games = HR.GAME_ORDER.map(c => {
-      const g = HR.GAMES[c], on = P.pick === 'random' || P.picks.includes(c);
-      return `<button class="gchip ${on ? 'on' : ''} ${P.pick === 'random' ? 'auto' : ''}" data-act="ptoggle" data-arg="${c}" ${host && P.pick === 'pick' ? '' : 'disabled'}>
-        <i>${c}</i>${g ? g.name : c}</button>`;
+      const g = HR.GAMES[c];
+      return `<button class="gchip auto" disabled><i>${c}</i>${g ? g.name : c}</button>`;
     }).join('');
-    const n = P.pick === 'random' ? HR.GAME_ORDER.length : P.picks.length;
+    const n = HR.GAME_ORDER.length;
     el.innerHTML = `
       <h3>Einstellungen</h3>
       ${step('max', 'Spieler', P.max)}
@@ -417,15 +427,28 @@ const PUI = HR.PUI = {
       <div class="pstep"><span>Minispiele</span><div class="seg">
         <button class="${P.pick === 'random' ? 'on' : ''}" data-act="ppick" data-arg="random" ${dis}>Zufällig</button>
         <button class="${P.pick === 'pick' ? 'on' : ''}" data-act="ppick" data-arg="pick" ${dis}>Auswählen</button></div></div>
-      <p class="note">${P.pick === 'random' ? `Jede Runde kommt ein zufälliges Spiel aus allen ${n} Minispielen.` : `${n} von ${HR.GAME_ORDER.length} Minispielen ausgewählt. Sie kommen in zufälliger Reihenfolge.`}
-        ${host && P.pick === 'pick' ? `<button class="link" data-act="pall" data-arg="1">alle</button> · <button class="link" data-act="pall" data-arg="0">keine</button>` : ''}</p>
+      <p class="note">${P.pick === 'random' ? `Jede Runde kommt ein zufälliges Spiel aus allen ${n} Minispielen.` : `Vor jeder Runde wählt ${host ? 'du' : UI.esc(Party.hostName())} eines der ${n} Minispiele aus.`}</p>
       <div class="games">${games}</div>
-      ${host ? `<nav class="list row"><button class="hot" data-act="pstart" ${n ? '' : 'disabled'}>Party starten</button></nav>
+      ${host ? `<nav class="list row"><button class="hot" data-act="pstart">Party starten</button></nav>
         <p class="note">Die anderen tippen auf <b>Party → Beitreten</b> und geben den Code <b>${P.code}</b> ein.</p>`
         : `<p class="note wait">Nur ${UI.esc(Party.hostName())} kann die Einstellungen ändern. Warte, bis die Party startet …</p>`}`;
     UI.bind(el);
     if (focus) { const b = el.querySelector(`[data-act="${focus[0]}"]${focus[1] != null ? `[data-arg="${focus[1]}"]` : ''}`); if (b && !b.disabled) b.focus({ preventScroll: true }); }
     else if (host && !UI.el.contains(document.activeElement)) { const b = el.querySelector('[data-act="pstart"]'); if (b) b.focus({ preventScroll: true }); }
+  },
+
+  // --- Minispiel für die nächste Runde wählen (Modus "Auswählen") ---
+  choose() {
+    const P = Party.P, host = P.host;
+    const cards = HR.GAME_ORDER.map(c => {
+      const g = HR.GAMES[c], n = P.playlist.filter(x => x === c).length;
+      return `<button class="gcard" data-act="pchoose" data-arg="${c}" ${host ? '' : 'disabled'}>
+        <i>${c} · ${g.kind === 'race' ? 'Fahrspiel' : 'Arena'}</i><strong>${g.name}</strong><span>${g.short || ''}</span>${n ? `<small>schon ${n}× gespielt</small>` : ''}</button>`;
+    }).join('');
+    const body = `${host ? '<p class="note">Tippe auf das Minispiel für diese Runde. Alle sehen deine Auswahl.</p>'
+      : `<p class="note wait">${UI.esc(Party.hostName())} wählt gerade das Minispiel für diese Runde …</p>`}<div class="gcards">${cards}</div>`;
+    this.frame('Minispiel wählen', `Runde ${P.round} von ${P.rounds}`, body);
+    if (host) { const b = UI.el.querySelector('.gcard'); if (b) b.focus({ preventScroll: true }); }
   },
 
   // --- Spielbeschreibung vor jeder Runde ---
@@ -493,6 +516,7 @@ PUI.refresh = {
     const P = Party.P, n = document.getElementById('preadynote');
     if (n) { const wait = P.players.filter(p => !P.ready.includes(p.id)).map(p => p.name); n.textContent = wait.length ? 'Warte auf: ' + wait.join(', ') : 'Alle bereit – los geht’s!'; }
   },
+  choose() { PUI.players(); },
   round() { PUI.players(); },
   final() { PUI.players(); },
 };
@@ -512,6 +536,7 @@ Object.assign(UI.acts, {
   ptoggle(c) { Party.set('toggle', c); },
   pall(v) { Party.set('all', v === '1'); },
   pstart() { Party.start(); },
+  pchoose(c) { Party.choose(c); },
   pready() { Party.ready(); },
   pnext() { clearInterval(PUI._auto); Party.nextRound(); },
   plobby() { Party.toLobby(); },
