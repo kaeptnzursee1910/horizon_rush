@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Horizon Rush</title>
+<meta name="description" content="Horizon Rush – Arcade-Rennspiel im Browser mit Splitscreen und Online-Rennen.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Horizon Rush">
+<meta name="theme-color" content="#0f142d">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="menu" hidden></div>
+<div id="toast" hidden></div>
+<div id="rotate"><div><b>Bitte quer halten</b><span>Horizon Rush wird im Querformat gespielt.</span></div></div>
+<noscript><p class="noscript">Horizon Rush braucht JavaScript.</p></noscript>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" async></script>
+<script src="js/core.js" defer></script>
+<script src="js/audio.js" defer></script>
+<script src="js/input.js" defer></script>
+<script src="js/render.js" defer></script>
+<script src="js/race.js" defer></script>
+<script src="js/net.js" defer></script>
+<script src="js/main.js" defer></script>
+</body>
+</html>
