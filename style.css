@@ -228,3 +228,15 @@ body.portrait #rotate { display: flex; }
 .gcard small { font-size: 12px; color: var(--yellow); }
 .gcard:not(:disabled):hover, .gcard:focus-visible { border-color: var(--gold); background: rgba(200, 120, 0, .4); outline: none; }
 .gcard:disabled { cursor: default; color: var(--text); }
+/* Hauptmenü */
+.bigmenu { gap: 12px; margin-top: 6px; }
+.main .bigmenu button.big { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 18px; border: 2px solid var(--line); background: rgba(0, 0, 0, .35); border-radius: 8px; }
+.main .bigmenu button.big b { font-size: 32px; font-style: italic; letter-spacing: .01em; }
+.main .bigmenu button.big span { font-size: 15px; font-weight: normal; color: var(--dim); }
+.main .bigmenu button.big.hot { background: rgba(200, 120, 0, .75); border-color: var(--gold); }
+.main .bigmenu button.big.hot span { color: var(--text); }
+.main .bigmenu button.big:focus, .main .bigmenu button.big:hover { border-color: var(--gold); background: rgba(200, 120, 0, .6); }
+.main .bigmenu button.big.hot:focus, .main .bigmenu button.big.hot:hover { background: rgba(220, 140, 0, .9); }
+.minor { margin-top: 14px; }
+.minor button { background: none; border: 1px solid var(--line); border-radius: 20px; padding: 7px 18px; color: var(--dim); font-size: 15px; font-weight: bold; }
+.minor button:hover, .minor button:focus-visible { color: var(--text); border-color: var(--gold); outline: none; }

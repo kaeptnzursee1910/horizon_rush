@@ -453,31 +453,17 @@ const UI = HR.UI = {
   // ---------- Hauptmenü ----------
   main() {
     Game.champ = null;
-    const d = HR.DIFFS[Game.diff][0];
     this.show(`
       <div class="panel main">
         <h1 class="logo">HORIZON RUSH</h1>
-        <p class="tag">Arcade-Rennspiel</p>
-        <nav class="list">
-          <button data-act="party" class="hot" autofocus>Party</button>
-          <button data-act="mode" data-arg="race">Einzelrennen</button>
-          <button data-act="mode" data-arg="champ">Meisterschaft</button>
-          <button data-act="mode" data-arg="trial">Zeitfahren</button>
-          <button data-act="mode" data-arg="split">2 Spieler (Splitscreen)</button>
-          <button data-act="online">Online-Rennen</button>
-          <button data-act="diff" id="diffbtn">Schwierigkeit:&nbsp; ◄ ${d} ►</button>
-          <button data-act="records">Bestzeiten</button>
-          <button data-act="settings">Einstellungen</button>
+        <p class="tag">Das Party-Spiel für bis zu 8 Spieler</p>
+        <nav class="list bigmenu">
+          <button data-act="party" class="big hot" autofocus><b>Multiplayer</b><span>Party mit Freunden · 12 Minispiele</span></button>
+          <button data-act="mode" data-arg="race" class="big"><b>Singleplayer</b><span>Rennen gegen 7 Computergegner</span></button>
         </nav>
+        <nav class="minor"><button data-act="settings">Einstellungen</button></nav>
         <p class="hint">${HR.Input.touchMode ? 'Tippen zum Wählen' : '↑↓ wählen  ·  Enter bestätigen  ·  F11 Vollbild  ·  M Ton'}</p>
-      </div>`, null, {
-      keys: e => {
-        if (document.activeElement && document.activeElement.id === 'diffbtn' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyA' || e.code === 'KeyD')) {
-          this.acts.diff(e.code === 'ArrowLeft' || e.code === 'KeyA' ? -1 : 1); return true;
-        }
-        return false;
-      },
-    });
+      </div>`, null);
   },
 
   // Autoauswahl wie im Original: ◄► Auto, ↑↓ Lackierung
@@ -641,16 +627,14 @@ const UI = HR.UI = {
 
   settings() {
     const s = Game.settings;
-    const splitNames = { auto: 'Automatisch', tb: 'Oben / Unten', lr: 'Nebeneinander' };
     const key = HR.Net.getKey();
     this.show(`<div class="panel narrow"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Einstellungen</h2></header>
       <nav class="list settings">
         <button data-act="sound" autofocus>Ton: <b>${s.sound ? 'an' : 'aus'}</b></button>
-        <button data-act="cycleSplit">Splitscreen: <b>${splitNames[s.split]}</b></button>
+        <button data-act="cycleDiff">Computergegner: <b>${HR.DIFFS[Game.diff][0]}</b></button>
         <button data-act="keyform">Verbindungsserver: <b>${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>
         <button data-act="fullscreen">Vollbild</button>
-      </nav>
-      <p class="note">Splitscreen „Automatisch“: Auf Touch-Geräten nebeneinander, damit jeder Spieler seine eigenen Tasten hat. Mit Tastatur oben und unten (Spieler 1: WASD, Spieler 2: Pfeiltasten).</p></div>`, () => this.main());
+      </nav></div>`, () => this.main());
   },
 
   // ---------- Online ----------
@@ -718,7 +702,7 @@ const UI = HR.UI = {
     mode(m) {
       if (m === 'race' || m === 'trial') {
         UI.carSelect('AUTO WÄHLEN', '', Game.settings.car, pick =>
-          UI.trackSelect('STRECKE WÄHLEN  –  ' + (m === 'race' ? 'EINZELRENNEN' : 'ZEITFAHREN'), (t, laps) => Game.startRace({ mode: m, track: t, laps, picks: [pick] }), () => UI.acts.mode(m)),
+          UI.trackSelect('STRECKE WÄHLEN', (t, laps) => Game.startRace({ mode: m, track: t, laps, picks: [pick] }), () => UI.acts.mode(m)),
         () => UI.main());
       } else if (m === 'champ') {
         UI.carSelect('AUTO WÄHLEN', '', Game.settings.car, pick => Game.startChamp(pick), () => UI.main());
@@ -747,6 +731,7 @@ const UI = HR.UI = {
     records() { UI.records(); },
     settings() { UI.settings(); },
     fullscreen() { UI.fullscreen(); },
+    cycleDiff() { Game.diff = (Game.diff + 1) % 3; Game.save(); UI.settings(); const b = UI.el.querySelector('[data-act="cycleDiff"]'); if (b) b.focus(); },
     cycleSplit() { const s = Game.settings; s.split = { auto: 'tb', tb: 'lr', lr: 'auto' }[s.split]; Game.save(); UI.settings(); const b = UI.el.querySelector('[data-act="cycleSplit"]'); if (b) b.focus(); },
     champNext() { if (Game.champ.idx >= 3) UI.champFinal(); else Game.nextChamp(); },
     online() { UI._keyBack = null; UI.online(); },

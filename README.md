@@ -1,37 +1,24 @@
 # Horizon Rush
 
-Arcade-Rennspiel und Party-Spiel im Browser.
+Das Party-Spiel für bis zu 8 Spieler im Browser.
 Läuft auf iPad, Android-Tablet und Windows-PC in Safari, Chrome, Edge oder Firefox.
 
 **Spielen:** https://simkol34-ai.github.io/horizon_rush/
 
 ## Inhalt
+- **Multiplayer:** Party für bis zu 8 Spieler mit 12 Minispielen, Chat und Siegerehrung
+- **Singleplayer:** Rennen gegen 7 Computergegner, Stärke unter *Einstellungen*
 - 3 Strecken (Küstenstraße, Alpenpass, Wüstencanyon), 4 Autos mit Lackierungen
-- Einzelrennen, Meisterschaft, Zeitfahren, 2 Spieler im Splitscreen
-- Online-Rennen für 2–8 Geräte, freie Startplätze fährt die KI
-- Party-Modus für bis zu 8 Spieler mit 12 Minispielen, Chat und Siegerehrung
-- Bestzeiten werden im Browser des Geräts gespeichert
 
 ## Steuerung
 - **Touch:** links ◄ ►, rechts GAS und BREMSE, oben II für Pause
 - **Tastatur:** Pfeiltasten oder WASD, Esc Pause, M Ton, F11 Vollbild
-- **Splitscreen mit Tastatur:** Spieler 1 WASD, Spieler 2 Pfeiltasten
 
 Auf dem iPad: In Safari öffnen, dann *Teilen → Zum Home-Bildschirm*. So startet das Spiel im Vollbild.
 
-## Online-Rennen
-1. Ein Gerät tippt auf *Online-Rennen → Rennen erstellen* und bekommt einen 4-stelligen Code.
-2. Die anderen tippen auf *Online-Rennen*, geben den Code ein und tippen auf *Beitreten*.
-3. Der Gastgeber wählt Strecke, Runden und KI-Stärke und startet das Rennen.
-
-Die Geräte verbinden sich per WebRTC direkt miteinander. In Netzwerken, die direkte Verbindungen
-blockieren (etwa Firmen- oder Hochschul-WLANs), läuft die Verbindung über einen Verbindungsserver.
-Die Zugangsdaten dafür trägt man unter *Einstellungen → Verbindungsserver* ein. Sie stehen nicht im Code
-und werden nur im Browser des jeweiligen Geräts gespeichert.
-
-## Party
-1. Ein Gerät tippt auf *Party → Party eröffnen* und bekommt einen 4-stelligen Code.
-2. Alle anderen tippen auf *Party*, geben den Code ein und tippen auf *Beitreten*.
+## Multiplayer (Party)
+1. Ein Gerät tippt auf *Multiplayer → Party eröffnen* und bekommt einen 4-stelligen Code.
+2. Alle anderen tippen auf *Multiplayer*, geben den Code ein und tippen auf *Beitreten*.
 3. In der Lobby sehen alle die Einstellungen des Gastgebers: Spielerzahl, Runden und ob die
    Minispiele zufällig kommen oder ausgewählt werden. Nebenan ist ein Chat. Bei „Auswählen“
    wählt der Gastgeber vor jeder Runde das Minispiel, alle sehen dabei die Spielerliste und den Chat.
@@ -52,3 +39,9 @@ Reines HTML, CSS und JavaScript ohne Build-Schritt. `index.html` lädt die Datei
 `party.js` (Party-Lobby, Chat, Runden, Punkte), `partyrace.js` (Fahrspiele),
 `arena.js` (Grundgerüst der 2D-Spiele) und `games/*.js` (die Arena-Spiele).
 Im Party-Modus rechnet der Gastgeber die Arena-Spiele, die anderen Geräte schicken nur ihre Tasten.
+
+## Verbindung
+Die Geräte verbinden sich per WebRTC direkt miteinander. In Netzwerken, die direkte Verbindungen
+blockieren (etwa Firmen- oder Hochschul-WLANs), läuft die Verbindung über einen Verbindungsserver.
+Die Zugangsdaten dafür trägt man unter *Einstellungen → Verbindungsserver* ein. Sie stehen nicht im Code
+und werden nur im Browser des jeweiligen Geräts gespeichert.
