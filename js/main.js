@@ -469,7 +469,7 @@ const UI = HR.UI = {
           <button data-act="records">Bestzeiten</button>
           <button data-act="settings">Einstellungen</button>
         </nav>
-        <p class="hint">${HR.Input.touchMode ? 'Tippen zum Wählen · externe Tastatur funktioniert auch' : '↑↓ wählen  ·  Enter bestätigen  ·  F11 Vollbild  ·  M Ton'}</p>
+        <p class="hint">${HR.Input.touchMode ? 'Tippen zum Wählen' : '↑↓ wählen  ·  Enter bestätigen  ·  F11 Vollbild  ·  M Ton'}</p>
       </div>`, null, {
       keys: e => {
         if (document.activeElement && document.activeElement.id === 'diffbtn' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyA' || e.code === 'KeyD')) {
@@ -647,10 +647,10 @@ const UI = HR.UI = {
       <nav class="list settings">
         <button data-act="sound" autofocus>Ton: <b>${s.sound ? 'an' : 'aus'}</b></button>
         <button data-act="cycleSplit">Splitscreen: <b>${splitNames[s.split]}</b></button>
-        <button data-act="keyform">Online-Schlüssel: <b>${key ? 'gespeichert' : 'fehlt'}</b></button>
+        <button data-act="keyform">Verbindungsserver: <b>${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>
         <button data-act="fullscreen">Vollbild</button>
       </nav>
-      <p class="note">Splitscreen „Automatisch“: Auf Touch-Geräten nebeneinander, damit jeder Spieler seine eigenen Tasten hat. Mit Tastatur oben/unten wie im Original (Spieler 1: WASD, Spieler 2: Pfeiltasten).</p></div>`, () => this.main());
+      <p class="note">Splitscreen „Automatisch“: Auf Touch-Geräten nebeneinander, damit jeder Spieler seine eigenen Tasten hat. Mit Tastatur oben und unten (Spieler 1: WASD, Spieler 2: Pfeiltasten).</p></div>`, () => this.main());
   },
 
   // ---------- Online ----------
@@ -665,8 +665,7 @@ const UI = HR.UI = {
         <label class="field"><span>Code eines Rennens</span><input id="jcode" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off"></label>
         <button data-act="join">Beitreten</button>
       </div>
-      <p class="note">${key ? 'Online-Schlüssel ist auf diesem Gerät gespeichert.' : 'Für eduroam und Mobilfunk braucht jedes Gerät einmal den Online-Schlüssel. Ohne ihn klappt es nur in manchen Netzen, zum Beispiel einem Handy-Hotspot.'}
-        <button class="link" data-act="keyform">${key ? 'Ändern' : 'Schlüssel eintragen'}</button></p>
+      <p class="note"><button class="link" data-act="keyform">Verbindungseinstellungen</button></p>
       <p class="error" id="err" hidden></p></div>`, () => this.main());
     this.el.querySelector('#jcode').addEventListener('keydown', e => { if (e.key === 'Enter') this.acts.join(); });
     this.el.querySelector('#pname').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
@@ -674,8 +673,8 @@ const UI = HR.UI = {
 
   keyform() {
     const k = HR.Net.getKey() || {};
-    this.show(`<div class="panel narrow"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Online-Schlüssel</h2></header>
-      <p class="note">Benutzername und Passwort für den Relay-Server. Du bekommst sie von der Person, die das Spiel eingerichtet hat. Sie bleiben nur auf diesem Gerät gespeichert.</p>
+    this.show(`<div class="panel narrow"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Verbindungsserver</h2></header>
+      <p class="note">In manchen Netzwerken, etwa in Firmen- oder Hochschul-WLANs, können sich Geräte nicht direkt verbinden. Dann läuft die Verbindung über einen Verbindungsserver. Die Zugangsdaten werden nur auf diesem Gerät gespeichert.</p>
       <label class="field"><span>Benutzername</span><input id="kuser" value="${this.esc(k.user || '')}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
       <label class="field"><span>Passwort</span><input id="kpass" type="password" value="${this.esc(k.pass || '')}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
       <nav class="list row"><button data-act="keysave">Speichern</button>${k.user ? '<button data-act="keydel">Löschen</button>' : ''}</nav></div>`, () => this._keyBack ? this._keyBack() : this.online());
@@ -754,10 +753,10 @@ const UI = HR.UI = {
     keyform() { UI._keyBack = UI.el.querySelector('.settings') ? () => UI.settings() : () => UI.online(); UI.keyform(); },
     keysave() {
       const u = UI.el.querySelector('#kuser').value.trim(), p = UI.el.querySelector('#kpass').value.trim();
-      HR.Net.setKey(u, p); UI.toast(u && p ? 'Online-Schlüssel gespeichert' : 'Online-Schlüssel gelöscht');
+      HR.Net.setKey(u, p); UI.toast(u && p ? 'Zugangsdaten gespeichert' : 'Zugangsdaten gelöscht');
       UI._keyBack ? UI._keyBack() : UI.online();
     },
-    keydel() { HR.Net.setKey(null); UI.toast('Online-Schlüssel gelöscht'); UI._keyBack ? UI._keyBack() : UI.online(); },
+    keydel() { HR.Net.setKey(null); UI.toast('Zugangsdaten gelöscht'); UI._keyBack ? UI._keyBack() : UI.online(); },
     readName() { const n = UI.el.querySelector('#pname'); if (n) { Game.settings.name = n.value.trim().slice(0, 16) || Game.settings.name; Game.save(); } },
     host() { UI.acts.readName(); Game.onlineHost(); },
     join() {

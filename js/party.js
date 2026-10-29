@@ -417,7 +417,7 @@ const PUI = HR.PUI = {
       <button class="arrow small" data-act="pset" data-arg="${key}:1" ${dis} aria-label="${label} mehr">►</button></div>`;
     const games = HR.GAME_ORDER.map(c => {
       const g = HR.GAMES[c];
-      return `<button class="gchip auto" disabled><i>${c}</i>${g ? g.name : c}</button>`;
+      return `<button class="gchip auto" disabled>${g ? g.name : c}</button>`;
     }).join('');
     const n = HR.GAME_ORDER.length;
     el.innerHTML = `
@@ -443,7 +443,7 @@ const PUI = HR.PUI = {
     const cards = HR.GAME_ORDER.map(c => {
       const g = HR.GAMES[c], n = P.playlist.filter(x => x === c).length;
       return `<button class="gcard" data-act="pchoose" data-arg="${c}" ${host ? '' : 'disabled'}>
-        <i>${c} · ${g.kind === 'race' ? 'Fahrspiel' : 'Arena'}</i><strong>${g.name}</strong><span>${g.short || ''}</span>${n ? `<small>schon ${n}× gespielt</small>` : ''}</button>`;
+        <i>${g.kind === 'race' ? 'Fahrspiel' : 'Arena-Spiel'}</i><strong>${g.name}</strong><span>${g.short || ''}</span>${n ? `<small>schon ${n}× gespielt</small>` : ''}</button>`;
     }).join('');
     const body = `${host ? '<p class="note">Tippe auf das Minispiel für diese Runde. Alle sehen deine Auswahl.</p>'
       : `<p class="note wait">${UI.esc(Party.hostName())} wählt gerade das Minispiel für diese Runde …</p>`}<div class="gcards">${cards}</div>`;
@@ -456,7 +456,7 @@ const PUI = HR.PUI = {
     const P = Party.P, def = HR.GAMES[P.current];
     const touch = HR.Input.touchMode;
     const body = `<div class="intro">
-      <p class="gcode">${def.code} · ${def.kind === 'race' ? 'Fahrspiel' : 'Arena-Spiel'}</p>
+      <p class="gcode">${def.kind === 'race' ? 'Fahrspiel' : 'Arena-Spiel'}</p>
       <p class="gdesc">${def.desc}</p>
       <h3>Ziel</h3><p>${def.goal}</p>
       <h3>Steuerung</h3>
@@ -558,8 +558,7 @@ UI.party = function () {
       <label class="field"><span>Code einer Party</span><input id="jcode" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off"></label>
       <button data-act="pjoin">Beitreten</button>
     </div>
-    <p class="note">${key ? 'Online-Schlüssel ist auf diesem Gerät gespeichert.' : 'Für eduroam und Mobilfunk braucht jedes Gerät einmal den Online-Schlüssel.'}
-      <button class="link" data-act="keyform">${key ? 'Ändern' : 'Schlüssel eintragen'}</button></p>
+    <p class="note"><button class="link" data-act="keyform">Verbindungseinstellungen</button></p>
     <p class="error" id="err" hidden></p></div>`, () => this.main());
   this.el.querySelector('#jcode').addEventListener('keydown', e => { if (e.key === 'Enter') UI.acts.pjoin(); });
   this.el.querySelector('#pname').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });

@@ -1,6 +1,6 @@
 # Horizon Rush
 
-Arcade-Rennspiel und Party-Spiel im Browser – die Web-Version von Horizon Rush (ursprünglich in Python/pygame).
+Arcade-Rennspiel und Party-Spiel im Browser.
 Läuft auf iPad, Android-Tablet und Windows-PC in Safari, Chrome, Edge oder Firefox.
 
 **Spielen:** https://simkol34-ai.github.io/horizon_rush/
@@ -24,11 +24,10 @@ Auf dem iPad: In Safari öffnen, dann *Teilen → Zum Home-Bildschirm*. So start
 2. Die anderen tippen auf *Online-Rennen*, geben den Code ein und tippen auf *Beitreten*.
 3. Der Gastgeber wählt Strecke, Runden und KI-Stärke und startet das Rennen.
 
-Die Geräte verbinden sich per WebRTC direkt miteinander (Vermittlung über PeerJS).
-In Netzen wie eduroam, die direkte Verbindungen blockieren, läuft die Verbindung über einen
-Relay-Server. Dafür braucht jedes Gerät einmal den **Online-Schlüssel** (Benutzername und Passwort),
-den die Person vergibt, die das Spiel eingerichtet hat. Der Schlüssel steht nicht im Code,
-er wird nur im Browser des jeweiligen Geräts gespeichert.
+Die Geräte verbinden sich per WebRTC direkt miteinander. In Netzwerken, die direkte Verbindungen
+blockieren (etwa Firmen- oder Hochschul-WLANs), läuft die Verbindung über einen Verbindungsserver.
+Die Zugangsdaten dafür trägt man unter *Einstellungen → Verbindungsserver* ein. Sie stehen nicht im Code
+und werden nur im Browser des jeweiligen Geräts gespeichert.
 
 ## Party
 1. Ein Gerät tippt auf *Party → Party eröffnen* und bekommt einen 4-stelligen Code.
@@ -40,9 +39,9 @@ er wird nur im Browser des jeweiligen Geräts gespeichert.
    getippt haben, geht es los. Platz 1 bis 8 bekommen 10, 8, 6, 5, 4, 3, 2 und 1 Punkte.
 
 Minispiele:
-- **Fahrspiele:** A1 Ausscheidungsrennen, A2 Polizeijagd, A3 Heiße Bombe, A5 Turbo-Rennen mit Extras
-- **Arena-Spiele:** B1 Lichtrad-Arena, B2 Panzer-Arena, B3 Autoscooter-Sumo, B4 Mini-Rennen von oben,
-  B6 Wolken-Wettklettern, B7 Tunnel-Überleben, B9 Pong-Achteck, B10 Straßen-Überquerung
+- **Fahrspiele:** Ausscheidungsrennen, Polizeijagd, Heiße Bombe, Turbo-Rennen mit Extras
+- **Arena-Spiele:** Lichtrad-Arena, Panzer-Arena, Autoscooter-Sumo, Mini-Rennen von oben,
+  Wolken-Wettklettern, Tunnel-Überleben, Pong-Achteck, Straßen-Überquerung
 
 Mit Tastatur: Pfeiltasten oder WASD, Leertaste für Aktionen (Extra, Feuer, Stoß, Schubser).
 
@@ -50,6 +49,6 @@ Mit Tastatur: Pfeiltasten oder WASD, Leertaste für Aktionen (Extra, Feuer, Sto�
 Reines HTML, CSS und JavaScript ohne Build-Schritt. `index.html` lädt die Dateien aus `js/`:
 `core.js` (Strecken, Autos, Grafiken), `race.js` (Fahrphysik, KI), `render.js` (Pseudo-3D),
 `audio.js` (Sound), `input.js` (Touch/Tastatur), `net.js` (Online), `main.js` (Menüs, Ablauf),
-`party.js` (Party-Lobby, Chat, Runden, Punkte), `partyrace.js` (Fahrspiele A1–A5),
+`party.js` (Party-Lobby, Chat, Runden, Punkte), `partyrace.js` (Fahrspiele),
 `arena.js` (Grundgerüst der 2D-Spiele) und `games/*.js` (die Arena-Spiele).
 Im Party-Modus rechnet der Gastgeber die Arena-Spiele, die anderen Geräte schicken nur ihre Tasten.

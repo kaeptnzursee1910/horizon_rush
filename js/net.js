@@ -84,7 +84,7 @@ HR.Net = {
     const p = this.makePeer();
     let done = false;
     const fail = msg => { if (done) return; done = true; cb(msg); this.close(); };
-    const timer = setTimeout(() => fail('Keine Verbindung zum Gastgeber. Prüfe den Code und den Online-Schlüssel.'), 20000);
+    const timer = setTimeout(() => fail('Keine Verbindung zum Gastgeber. Bitte den Code prüfen und es erneut versuchen.'), 20000);
     p.on('open', () => {
       this.peer = p;
       const conn = p.connect(this.prefix + code, { reliable: true, serialization: 'json' });
