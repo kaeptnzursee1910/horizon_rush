@@ -56,7 +56,7 @@ HR.Net = {
 
   acceptConn(conn) {
     conn.on('open', () => {
-      if (this.conns.size >= 3) { conn.send({ t: 'full' }); setTimeout(() => conn.close(), 300); return; }
+      if (this.conns.size >= HR.MAX_ONLINE - 1) { conn.send({ t: 'full' }); setTimeout(() => conn.close(), 300); return; }
       const id = this.nextId++;
       conn.hrId = id;
       this.conns.set(id, conn);
@@ -86,7 +86,7 @@ HR.Net = {
       const conn = p.connect(this.PREFIX + code, { reliable: true, serialization: 'json' });
       conn.on('data', d => {
         if (d.t === 'welcome' && !done) { done = true; clearTimeout(timer); this.myId = d.id; this.hostConn = conn; this.code = code; cb(null, d.id); return; }
-        if (d.t === 'full') { clearTimeout(timer); fail('Das Rennen ist schon voll (maximal 4 Spieler).'); return; }
+        if (d.t === 'full') { clearTimeout(timer); fail('Das Rennen ist schon voll (maximal ' + HR.MAX_ONLINE + ' Spieler).'); return; }
         if (this.onMsg) this.onMsg(d, 0);
       });
       const lost = () => { if (done && this.hostConn === conn) { this.hostConn = null; if (this.onDrop) this.onDrop(0); } };

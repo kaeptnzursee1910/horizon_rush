@@ -108,7 +108,7 @@ const Game = HR.Game = {
   // ---------- Rennen ----------
   startDemo() {
     this.paused = false;
-    const ai = HR.makeAI(6, 1).map((a, i) => Object.assign(a, { id: 'ai' + i, skill: U.uniform(0.85, 0.97) }));
+    const ai = HR.makeAI(HR.FIELD, 1).map((a, i) => Object.assign(a, { id: 'ai' + i, skill: U.uniform(0.85, 0.97) }));
     this.race = new HR.Race(this, { track: Math.floor(Math.random() * 3), laps: 999, mode: 'demo', demo: true, entrants: ai, startSpeed: 0.6 });
     HR.Audio.stopEngines();
     this.layoutViews();
@@ -120,7 +120,7 @@ const Game = HR.Game = {
     const n = params.picks.length;
     let ai = [];
     if (params.mode === 'champ') ai = this.champ.ai;
-    else if (params.mode !== 'trial') ai = HR.makeAI(n === 2 ? 4 : 5, this.diff);
+    else if (params.mode !== 'trial') ai = HR.makeAI(HR.FIELD - n, this.diff);
     const entrants = ai.map((a, i) => Object.assign({}, a, { id: 'ai' + i }));
     params.picks.forEach((p, i) => entrants.push({ id: 'p' + i, name: n === 1 ? 'Du' : 'Spieler ' + (i + 1), car: p.car, color: p.color, pid: i, human: true }));
     this.beginRace({ mode: params.mode, track: params.track, laps: params.laps, entrants }, n);
@@ -221,7 +221,7 @@ const Game = HR.Game = {
 
   // ---------- Meisterschaft ----------
   startChamp(pick) {
-    this.champ = { ai: HR.makeAI(5, this.diff), pick, idx: 0, points: {}, laps: 3 };
+    this.champ = { ai: HR.makeAI(HR.FIELD - 1, this.diff), pick, idx: 0, points: {}, laps: 3 };
     this.nextChamp();
   },
   nextChamp() {
@@ -274,7 +274,7 @@ const Game = HR.Game = {
 
   onlineStart() {
     const o = this.online;
-    const ai = HR.makeAI(Math.max(0, 6 - o.players.length), o.diff);
+    const ai = HR.makeAI(Math.max(0, HR.FIELD - o.players.length), o.diff);
     const entrants = ai.map((a, i) => Object.assign(a, { id: 'ai' + i }));
     for (const p of o.players) entrants.push({ id: 'h' + p.id, name: p.name, car: p.car, color: p.color, human: true });
     const opts = { mode: 'online', track: o.track, laps: o.laps, entrants };
@@ -673,7 +673,7 @@ const UI = HR.UI = {
     const me = o.players.find(p => p.id === myId);
     const myCar = me ? me.car : Game.settings.car;
     const plist = o.players.map(p => `<li class="${p.id === myId ? 'me' : ''}">${this.swatch(p.color)}<b>${this.esc(p.name)}</b><span>${HR.CARS[p.car].name}</span>${p.id === 0 ? '<small>Gastgeber</small>' : ''}</li>`).join('');
-    const free = Math.max(0, 6 - o.players.length);
+    const free = Math.max(0, HR.FIELD - o.players.length);
     const carBtns = HR.CARS.map((c, i) => `<button class="chip ${i === myCar ? 'on' : ''}" data-act="lobbyCar" data-arg="${i}">${c.name}</button>`).join('');
     const hostCtl = o.host ? `
       <nav class="list settings">
@@ -686,7 +686,7 @@ const UI = HR.UI = {
     this.show(`<div class="panel wide lobby"><header><button class="backbtn" data-act="quit">‹ Verlassen</button><h2>Online-Lobby</h2></header>
       <div class="lobbygrid">
         <div class="codebox"><span>Code</span><b>${o.code}</b><small>${o.host ? 'Mitspieler tippen auf „Online-Rennen“ und geben diesen Code ein.' : 'Verbunden'}</small></div>
-        <div><h3>Fahrer (${o.players.length}/4)</h3><ul class="players">${plist}</ul><p class="note">${free} Startplätze fährt die KI.</p></div>
+        <div><h3>Fahrer (${o.players.length}/${HR.MAX_ONLINE})</h3><ul class="players">${plist}</ul><p class="note">${free} Startplätze fährt die KI.</p></div>
       </div>
       <h3>Dein Auto</h3><div class="chips">${carBtns}</div>
       ${hostCtl}</div>`, () => this.acts.quit());

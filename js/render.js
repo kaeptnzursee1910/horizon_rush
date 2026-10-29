@@ -73,6 +73,13 @@ HR.Render = {
       if (y1 <= y2) continue;
       const [grass, rumble, road, lane] = colors[seg.dark][Math.min(i, HR.FOG.length - 1)];
       g.fillStyle = grass; g.fillRect(0, y2, vw, y1 - y2);
+      if (seg.sea) {
+        const [sand, water] = colors['sea' + (seg.dark ? 1 : 0)][Math.min(i, HR.FOG.length - 1)];
+        const sd = seg.sea, e1 = vw * (sd > 0 ? 1 : 0);
+        const a1 = X1 + sd * W1 * 1.17, a2 = X2 + sd * W2 * 1.17, b1 = X1 + sd * W1 * 1.6, b2 = X2 + sd * W2 * 1.6;
+        this.poly(g, sand, [[a1, y1], [b1, y1], [b2, y2], [a2, y2]]);
+        this.poly(g, water, [[b1, y1], [e1, y1], [e1, y2], [b2, y2]]);
+      }
       const r1 = W1 / 6, r2 = W2 / 6;
       this.poly(g, rumble, [[X1 - W1 - r1, y1], [X1 - W1, y1], [X2 - W2, y2], [X2 - W2 - r2, y2]]);
       this.poly(g, rumble, [[X1 + W1 + r1, y1], [X1 + W1, y1], [X2 + W2, y2], [X2 + W2 + r2, y2]]);
@@ -130,6 +137,15 @@ HR.Render = {
       }
       const yRoad = hy + sk * HR.CAMH;
       g.drawImage(img, half - dw / 2, yRoad - dh + bounce, dw, dh);
+      // Staub neben der Straße
+      if (viewer.offroad && viewer.speed > 800) {
+        const a = Math.min(0.5, viewer.speed / HR.MAXSPEED);
+        for (let q = 0; q < 8; q++) {
+          const side = q % 2 ? 1 : -1, t = Math.random();
+          g.fillStyle = `rgba(190,170,130,${a * (1 - t)})`;
+          g.beginPath(); g.arc(half + side * dw * (0.36 + t * 0.25), yRoad - dh * 0.1 - t * dh * 0.5, dw * (0.05 + t * 0.12), 0, 7); g.fill();
+        }
+      }
     }
     if (!race.demo) this.hud(g, game, view, viewer, vw, vh);
     g.restore();

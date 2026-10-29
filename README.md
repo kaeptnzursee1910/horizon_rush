@@ -8,7 +8,7 @@ Läuft auf iPad, Android-Tablet und Windows-PC in Safari, Chrome, Edge oder Fire
 ## Inhalt
 - 3 Strecken (Küstenstraße, Alpenpass, Wüstencanyon), 4 Autos mit Lackierungen
 - Einzelrennen, Meisterschaft, Zeitfahren, 2 Spieler im Splitscreen
-- Online-Rennen für 2–4 Geräte, freie Startplätze fährt die KI
+- Online-Rennen für 2–8 Geräte, freie Startplätze fährt die KI
 - Bestzeiten werden im Browser des Geräts gespeichert
 
 ## Steuerung

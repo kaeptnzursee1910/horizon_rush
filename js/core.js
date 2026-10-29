@@ -24,6 +24,8 @@ HR.CAR_W = 760;
 HR.CAR_LEN = 360;
 HR.CAR_HALF = HR.CAR_W / HR.ROADW / 2 * 0.8;
 HR.POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
+HR.FIELD = 8;              // Autos im Starterfeld
+HR.MAX_ONLINE = 8;         // Spieler in einem Online-Rennen
 HR.STEP = 1 / 60;
 HR.FONT = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
 
@@ -101,12 +103,17 @@ HR.TRACKS = [
     far: { color: [125, 165, 205], height: 0.28, ks: [3, 5, 8, 13], rough: 0.8 },
     near: { color: [70, 145, 85], height: 0.15, ks: [4, 7, 11, 17], rough: 0.6 },
     sun: [255, 248, 215], clouds: true,
-    decor: [['palm', 6, 1.3, 3.6], ['bush', 3, 1.25, 3.0], ['house', 1, 2.8, 4.6]],
-    spacing: [3, 7], both: 0.4, billboardEvery: 90,
+    decor: [['palm', 6, 1.3, 3.6], ['bush', 3, 1.25, 3.0], ['house', 1, 2.8, 4.6], ['villa', 1, 2.8, 4.8], ['lighthouse', 0.25, 4.5, 6.5]],
+    spacing: [3, 7], both: 0.4, billboardEvery: 90, post: 'lamp',
+    sea: { water: [[40, 125, 200], [34, 114, 186]], sand: [[236, 218, 165], [226, 207, 152]] },
     layout: [[10, 10, 10, 0, 0], [30, 40, 30, 0, 10], [40, 60, 40, 2, 0], [30, 30, 30, 0, 20],
       [30, 50, 30, -3, -10], [20, 20, 20, 0, 0], [40, 40, 40, 4, 15], [30, 40, 30, -2, -25],
       [25, 60, 25, 0, 0], [30, 30, 30, -4, 10], [30, 30, 30, 3, 0], [30, 40, 30, 0, -20],
-      [40, 50, 40, 2, 15], [30, 30, 30, -3, -10], [30, 60, 30, 0, 0]],
+      [40, 50, 40, 2, 15], [30, 30, 30, -3, -10], [30, 60, 30, 0, 0],
+      // Küstenabschnitt am Meer (Web-Version)
+      [30, 60, 30, 0, -10, { sea: -1, posts: 1 }], [40, 70, 40, -3, 0, { sea: -1 }], [30, 40, 30, 2, 10, { sea: -1, posts: 1 }],
+      [30, 40, 30, -4, -5], [25, 50, 25, 0, 20, { posts: 1 }], [35, 45, 35, 5, -15, { sea: 1 }],
+      [30, 60, 30, 0, 0, { sea: 1, posts: 1 }], [30, 30, 30, -2, 0]],
   },
   {
     name: 'Alpenpass', seed: 23,
@@ -117,13 +124,17 @@ HR.TRACKS = [
     far: { color: [115, 130, 165], height: 0.62, ks: [2, 3, 5, 7, 11], rough: 0.5, snow: true },
     near: { color: [55, 90, 75], height: 0.22, ks: [5, 9, 14, 21], rough: 0.4 },
     sun: null, clouds: true,
-    decor: [['pine', 8, 1.3, 4.0], ['rock_grey', 2, 1.3, 3.0]],
-    spacing: [2, 5], both: 0.6, billboardEvery: 150,
+    decor: [['pine', 8, 1.3, 4.0], ['rock_grey', 2, 1.3, 3.0], ['chalet', 0.6, 2.6, 4.6], ['snowman', 0.4, 1.4, 2.6]],
+    spacing: [2, 5], both: 0.6, billboardEvery: 150, post: 'snowpole', cliff: 'cliff_grey',
     layout: [[10, 10, 10, 0, 0], [20, 30, 20, 0, 30], [25, 25, 25, 5, 0], [20, 20, 20, 0, -20],
       [25, 30, 25, -6, 20], [20, 15, 20, 0, 40], [25, 25, 25, 6, -30], [20, 20, 20, -5, 0],
       [25, 40, 25, 0, -40], [25, 25, 25, 4, 30], [20, 20, 20, -6, 10], [25, 30, 25, 0, -30],
       [25, 25, 25, 5, 20], [20, 30, 20, -3, -20], [30, 30, 30, 0, 0], [25, 25, 25, -5, 30],
-      [25, 40, 25, 0, -30]],
+      [25, 40, 25, 0, -30],
+      // Felsenschlucht und Passhöhe (Web-Version)
+      [25, 30, 25, 0, 30, { cliffs: 1 }], [20, 25, 20, -6, 10, { cliffs: 1, posts: 1 }], [25, 30, 25, 5, -20, { cliffs: -1, posts: 1 }],
+      [20, 40, 20, 0, -30, { posts: 1 }], [25, 25, 25, -4, 20, { cliffs: 2 }], [20, 30, 20, 6, 0, { cliffs: 2 }],
+      [25, 40, 25, 0, -20, { posts: 1 }]],
   },
   {
     name: 'Wüstencanyon', seed: 37,
@@ -134,11 +145,14 @@ HR.TRACKS = [
     far: { color: [165, 75, 60], height: 0.40, ks: [2, 3, 5, 9], rough: 0.6, flat: 0.62 },
     near: { color: [190, 115, 72], height: 0.13, ks: [3, 6, 10], rough: 0.7 },
     sun: [255, 205, 130], clouds: false,
-    decor: [['cactus', 5, 1.3, 3.5], ['rock_red', 3, 1.3, 3.5], ['shrub', 3, 1.25, 3.0]],
-    spacing: [3, 8], both: 0.3, billboardEvery: 100,
+    decor: [['cactus', 5, 1.3, 3.5], ['rock_red', 3, 1.3, 3.5], ['shrub', 3, 1.25, 3.0], ['mesa', 0.8, 5.0, 9.0], ['skull', 0.5, 1.3, 2.4], ['gas', 0.15, 2.6, 3.4]],
+    spacing: [3, 8], both: 0.3, billboardEvery: 100, post: 'telegraph', cliff: 'cliff_red',
     layout: [[10, 10, 10, 0, 0], [50, 100, 50, 0, 20], [60, 60, 60, 2, -20], [40, 80, 40, 0, 30],
       [50, 50, 50, -3, -10], [50, 120, 50, 0, -20], [40, 40, 40, 4, 10], [40, 40, 40, -4, 0],
-      [60, 90, 60, 0, 20], [50, 50, 50, 2, -20], [50, 80, 50, 0, 0]],
+      [60, 90, 60, 0, 20], [50, 50, 50, 2, -20], [50, 80, 50, 0, 0],
+      // enge Schlucht (Web-Version)
+      [40, 80, 40, 0, 0, { cliffs: 2, posts: 1 }], [40, 50, 40, -3, 15, { cliffs: 2 }], [50, 60, 50, 3, -15, { cliffs: 2 }],
+      [40, 100, 40, 0, 10, { posts: 1 }], [40, 40, 40, -5, 0], [50, 80, 50, 0, -10, { posts: 1 }]],
   },
 ];
 HR.BILLBOARDS = [['HORIZON RUSH', [20, 20, 32], [255, 200, 0]], ['TURBO-ÖL', [200, 30, 30], [255, 255, 255]],
@@ -147,12 +161,15 @@ HR.BILLBOARDS = [['HORIZON RUSH', [20, 20, 32], [255, 200, 0]], ['TURBO-ÖL', [2
 HR.buildTrack = function (cfg, sprites) {
   const segs = [], curveStarts = [];
   const lastY = () => segs.length ? segs[segs.length - 1].y2 : 0;
+  let feat = null;
   const addSeg = (curve, y) => {
     const i = segs.length;
     segs.push({ index: i, z1: i * HR.SEG, z2: (i + 1) * HR.SEG, y1: lastY(), y2: y, curve, sprites: [],
-      dark: Math.floor(i / HR.RUMBLE) % 2 === 1, finish: false, clip: 0, ok: false });
+      dark: Math.floor(i / HR.RUMBLE) % 2 === 1, finish: false, clip: 0, ok: false,
+      sea: feat && feat.sea || 0, cliffs: feat && feat.cliffs || 0, posts: !!(feat && feat.posts) });
   };
-  const addRoad = (enter, hold, leave, curve, hill) => {
+  const addRoad = (enter, hold, leave, curve, hill, f) => {
+    feat = f || null;
     const y0 = lastY(), y1 = y0 + hill * HR.SEG, total = enter + hold + leave;
     if (Math.abs(curve) >= 4) curveStarts.push([segs.length, curve]);
     for (let i = 0; i < enter; i++) addSeg(U.easeIn(0, curve, i / enter), U.easeInOut(y0, y1, (i + 1) / total));
@@ -160,7 +177,7 @@ HR.buildTrack = function (cfg, sprites) {
     for (let i = 0; i < leave; i++) addSeg(U.easeInOut(curve, 0, i / leave), U.easeInOut(y0, y1, (enter + hold + i + 1) / total));
   };
   for (const p of cfg.layout) addRoad(...p);
-  addRoad(40, 40, 40, 0, -lastY() / HR.SEG);
+  addRoad(40, 40, 40, 0, -lastY() / HR.SEG, null);
   segs[segs.length - 1].y2 = 0;
   const n = segs.length;
   segs[0].finish = segs[1].finish = true;
@@ -176,10 +193,30 @@ HR.buildTrack = function (cfg, sprites) {
     const side = curve > 0 ? -1 : 1;
     for (let j = 0; j < 4; j++) if (start + j * 5 < n) segs[start + j * 5].sprites.push([curve > 0 ? 'chev_r' : 'chev_l', side * 1.3]);
   }
+  // Tribünen mit Publikum an Start und Ziel
+  for (const j of [4, 13, n - 22, n - 13]) for (const side of [-1, 1]) segs[j].sprites.push(['grandstand', side * 2.45]);
+  for (const j of [7, n - 8]) for (const side of [-1, 1]) segs[j].sprites.push(['flag', side * 1.3]);
+  const blocked = (seg, side) => (seg.sea && Math.sign(seg.sea) === side) || (seg.cliffs === 2 || seg.cliffs === side);
+  for (const seg of segs) {
+    const j = seg.index;
+    for (const side of [-1, 1]) {
+      if (seg.cliffs && (seg.cliffs === 2 || seg.cliffs === side) && j % 2 === 0) seg.sprites.push([cfg.cliff, side * (2.45 + (j % 6 === 0 ? 0.25 : 0))]);
+      if (seg.sea && Math.sign(seg.sea) === side) {
+        if (j % 11 === 0 && rnd.random() < 0.7) seg.sprites.push(['umbrella', side * rnd.uniform(1.3, 1.45)]);
+        if (j % 17 === 5) seg.sprites.push(['boat', side * rnd.uniform(4.5, 9)]);
+      }
+    }
+    if (seg.posts && cfg.post) {
+      if (cfg.post === 'snowpole' && j % 4 === 0) { seg.sprites.push(['snowpole', -1.15]); seg.sprites.push(['snowpole', 1.15]); }
+      if (cfg.post === 'lamp' && j % 10 === 0) seg.sprites.push(['lamp', (seg.sea === 1 ? -1 : 1) * 1.28]);
+      if (cfg.post === 'telegraph' && j % 12 === 0) seg.sprites.push(['telegraph', blocked(seg, 1) ? -2.05 : 2.05]);
+    }
+  }
   let i = 8;
   while (i < n - 4) {
     let sides = [rnd.choice([-1, 1])];
     if (rnd.random() < cfg.both) sides = [-1, 1];
+    sides = sides.filter(sd => !blocked(segs[i], sd));
     for (const side of sides) {
       const kind = rnd.choices(kinds, weights);
       const [lo, hi] = ranges[kind];
@@ -195,6 +232,12 @@ HR.buildTrack = function (cfg, sprites) {
     const pal = cfg[dark ? 'dark' : 'light'];
     colors[dark] = HR.FOG.map(f => [U.rgb(U.mix(cfg.fog, pal.grass, f)), U.rgb(U.mix(cfg.fog, pal.rumble, f)),
       U.rgb(U.mix(cfg.fog, pal.road, f)), pal.lane ? U.rgb(U.mix(cfg.fog, pal.lane, f)) : null]);
+  }
+  if (cfg.sea) {
+    for (const dark of [false, true]) {
+      const d = dark ? 1 : 0;
+      colors['sea' + d] = HR.FOG.map(f => [U.rgb(U.mix(cfg.fog, cfg.sea.sand[d], f)), U.rgb(U.mix(cfg.fog, cfg.sea.water[d], f))]);
+    }
   }
   return { cfg, segs, n, length: n * HR.SEG, colors, segAt(z) { return segs[Math.floor(z / HR.SEG) % n]; } };
 };
@@ -287,6 +330,125 @@ HR.makeSprites = function () {
   S.house = [house, 2600, 0.55]; S.chev_r = [chevron(1), 600, 0.1]; S.chev_l = [chevron(-1), 600, 0.1];
   S.banner = [banner, 4400, 0];
   HR.BILLBOARDS.forEach(([t, b, f], i) => S['bb' + i] = [billboard(t, b, f), 2000, 0.45]);
+  // ---------- zusätzliche Objekte der Web-Version ----------
+  const villa = mk(240, 180, (g) => {
+    g.fillStyle = col([246, 196, 190]); g.fillRect(14, 62, 212, 118);
+    g.fillStyle = col([236, 180, 172]); g.fillRect(14, 62, 212, 10);
+    poly(g, [[4, 66], [120, 18], [236, 66]], [170, 70, 45]);
+    g.fillStyle = col([255, 255, 255]); g.fillRect(30, 88, 44, 38); g.fillRect(166, 88, 44, 38);
+    g.fillStyle = col([60, 130, 190]); g.fillRect(34, 92, 36, 30); g.fillRect(170, 92, 36, 30);
+    g.fillStyle = col([95, 150, 60]); g.fillRect(28, 126, 48, 6); g.fillRect(164, 126, 48, 6);
+    g.fillStyle = col([110, 70, 45]); g.fillRect(104, 112, 32, 68);
+    g.fillStyle = col([255, 220, 120]); g.fillRect(110, 96, 20, 10);
+  });
+  const lighthouse = mk(120, 320, (g) => {
+    poly(g, [[34, 320], [44, 70], [76, 70], [86, 320]], [245, 245, 245]);
+    for (let k = 0; k < 4; k++) { const y = 110 + k * 55; poly(g, [[40 - k * 1.3, y + 26], [42 - k, y], [78 + k, y], [80 + k * 1.3, y + 26]], [210, 40, 40]); }
+    g.fillStyle = col([40, 40, 45]); g.fillRect(36, 58, 48, 12); g.fillRect(42, 28, 36, 8);
+    g.fillStyle = col([255, 236, 140]); g.fillRect(46, 36, 28, 22);
+    poly(g, [[38, 28], [60, 6], [82, 28]], [40, 40, 45]);
+    g.fillStyle = 'rgba(255,245,180,.35)'; poly(g, [[74, 40], [120, 22], [120, 60]], [255, 240, 170]);
+  });
+  const lamp = mk(110, 300, (g) => {
+    g.fillStyle = col([70, 75, 85]); g.fillRect(20, 40, 10, 260); g.fillRect(14, 288, 22, 12);
+    g.strokeStyle = col([70, 75, 85]); g.lineWidth = 8; g.beginPath(); g.moveTo(25, 44); g.quadraticCurveTo(30, 10, 80, 18); g.stroke();
+    g.fillStyle = col([50, 52, 60]); g.fillRect(66, 16, 34, 10);
+    g.fillStyle = col([255, 240, 190]); g.fillRect(70, 26, 26, 5);
+  });
+  const snowpole = mk(30, 200, (g) => {
+    for (let k = 0; k < 8; k++) { g.fillStyle = k % 2 ? '#fff' : col([215, 40, 40]); g.fillRect(10, k * 25, 10, 25); }
+  });
+  const telegraph = mk(140, 320, (g) => {
+    g.fillStyle = col([110, 80, 55]); g.fillRect(64, 20, 12, 300);
+    g.fillRect(14, 40, 112, 9); g.fillRect(26, 74, 88, 8);
+    g.fillStyle = col([220, 220, 200]); for (const x of [18, 44, 96, 120]) g.fillRect(x, 32, 5, 8); for (const x of [32, 104]) g.fillRect(x, 66, 5, 8);
+  });
+  const umbrella = mk(150, 150, (g) => {
+    g.fillStyle = col([90, 90, 90]); g.fillRect(72, 40, 6, 110);
+    for (let k = 0; k < 6; k++) {
+      g.fillStyle = k % 2 ? '#fff' : col([230, 70, 60]);
+      g.beginPath(); g.moveTo(75, 18); g.arc(75, 60, 70, Math.PI + k * Math.PI / 6, Math.PI + (k + 1) * Math.PI / 6); g.closePath(); g.fill();
+    }
+    g.fillStyle = col([60, 140, 220]); g.fillRect(14, 132, 54, 12);
+  });
+  const boat = mk(200, 210, (g) => {
+    poly(g, [[96, 10], [96, 150], [20, 150]], [250, 250, 250]);
+    poly(g, [[104, 30], [104, 150], [170, 150]], [240, 200, 60]);
+    g.fillStyle = col([90, 70, 50]); g.fillRect(96, 6, 8, 150);
+    poly(g, [[10, 160], [190, 160], [165, 196], [35, 196]], [30, 40, 70]);
+    g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(20, 200, 160, 4);
+  });
+  const chalet = mk(260, 200, (g) => {
+    g.fillStyle = col([130, 85, 45]); g.fillRect(22, 84, 216, 116);
+    for (let y = 92; y < 200; y += 14) { g.fillStyle = col([110, 70, 38]); g.fillRect(22, y, 216, 3); }
+    poly(g, [[0, 92], [130, 14], [260, 92]], [240, 244, 250]);
+    poly(g, [[8, 92], [130, 26], [252, 92], [252, 98], [8, 98]], [95, 60, 35]);
+    g.fillStyle = col([255, 225, 140]); g.fillRect(48, 112, 38, 30); g.fillRect(174, 112, 38, 30);
+    g.fillStyle = col([200, 60, 60]); g.fillRect(44, 142, 46, 8); g.fillRect(170, 142, 46, 8);
+    g.fillStyle = col([80, 50, 30]); g.fillRect(114, 140, 32, 60);
+  });
+  const snowman = mk(120, 170, (g) => {
+    circle(g, 60, 125, 42, [248, 250, 255]); circle(g, 60, 66, 30, [248, 250, 255]); circle(g, 60, 26, 21, [248, 250, 255]);
+    g.fillStyle = '#222'; g.fillRect(44, 0, 32, 8); g.fillRect(38, 7, 44, 5);
+    circle(g, 53, 23, 3, [20, 20, 20]); circle(g, 67, 23, 3, [20, 20, 20]);
+    poly(g, [[60, 28], [78, 32], [60, 34]], [245, 130, 30]);
+    g.fillStyle = col([200, 40, 40]); g.fillRect(38, 42, 44, 8);
+  });
+  const mesa = mk(300, 360, (g) => {
+    poly(g, [[20, 360], [52, 40], [80, 20], [230, 24], [252, 50], [282, 360]], [176, 82, 52]);
+    poly(g, [[200, 24], [230, 24], [252, 50], [282, 360], [215, 360]], [140, 62, 40]);
+    for (const y of [90, 160, 230, 300]) { g.fillStyle = 'rgba(110,40,25,.35)'; g.fillRect(36, y, 230, 9); }
+    g.fillStyle = 'rgba(255,200,140,.25)'; g.fillRect(52, 40, 30, 300);
+  });
+  const skull = mk(140, 70, (g) => {
+    g.strokeStyle = col([240, 232, 210]); g.lineWidth = 9; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(10, 14); g.quadraticCurveTo(40, 40, 58, 30); g.moveTo(130, 14); g.quadraticCurveTo(100, 40, 82, 30); g.stroke();
+    poly(g, [[52, 26], [88, 26], [82, 62], [58, 62]], [240, 232, 210]);
+    circle(g, 63, 38, 4, [60, 40, 30]); circle(g, 77, 38, 4, [60, 40, 30]);
+  });
+  const gas = mk(360, 200, (g) => {
+    g.fillStyle = col([230, 230, 225]); g.fillRect(10, 30, 340, 26);
+    g.fillStyle = col([215, 40, 40]); g.fillRect(10, 56, 340, 10);
+    g.fillStyle = '#fff'; g.font = `bold 22px ${HR.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('TANKSTELLE', 180, 44);
+    g.fillStyle = col([200, 200, 195]); g.fillRect(40, 66, 12, 134); g.fillRect(308, 66, 12, 134);
+    for (const x of [120, 210]) { g.fillStyle = col([215, 40, 40]); g.fillRect(x, 120, 34, 80); g.fillStyle = '#fff'; g.fillRect(x + 6, 128, 22, 16); }
+    g.fillStyle = col([245, 235, 210]); g.fillRect(250, 110, 90, 90);
+    g.fillStyle = col([80, 140, 200]); g.fillRect(262, 124, 30, 26);
+  });
+  const grandstand = mk(420, 220, (g) => {
+    poly(g, [[0, 220], [0, 120], [420, 40], [420, 220]], [120, 125, 140]);
+    const crowd = [[230, 60, 60], [250, 220, 70], [60, 120, 220], [250, 250, 250], [60, 170, 90], [240, 140, 40], [170, 80, 190]];
+    const r = U.rng(5);
+    for (let row = 0; row < 7; row++) for (let c = 0; c < 26; c++) {
+      const x = 10 + c * 16, yTop = 120 - (x / 420) * 80;
+      circle(g, x + r.uniform(-2, 2), yTop + 10 + row * 13 + r.uniform(-2, 2), 5.5, crowd[Math.floor(r.random() * crowd.length)]);
+    }
+    g.fillStyle = col([50, 55, 70]); g.fillRect(0, 205, 420, 15);
+    poly(g, [[0, 110], [420, 30], [420, 22], [0, 102]], [200, 40, 40]);
+  });
+  const flag = mk(110, 240, (g) => {
+    g.fillStyle = col([200, 200, 205]); g.fillRect(6, 0, 7, 240);
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) { g.fillStyle = (r + c) % 2 ? '#fff' : '#111'; g.fillRect(13 + c * 15, 6 + r * 15, 15, 15); }
+  });
+  const cliff = (base, snow) => mk(420, 300, (g) => {
+    const r = U.rng(base[0] * 7 + base[2]);
+    const pts = [[0, 300], [0, 70]];
+    for (let x = 0; x <= 420; x += 30) pts.push([x, 10 + r.uniform(0, 80)]);
+    pts.push([420, 300]);
+    poly(g, pts, base);
+    if (snow) { g.save(); g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const q of pts) g.lineTo(q[0], q[1]); g.closePath(); g.clip(); g.fillStyle = 'rgb(242,246,252)'; g.fillRect(0, 0, 420, 105); g.restore(); }
+    for (let k = 0; k < 5; k++) { g.fillStyle = `rgba(0,0,0,${0.06 + r.random() * 0.08})`; g.fillRect(0, 110 + k * 40 + r.uniform(-8, 8), 420, 8 + r.uniform(0, 8)); }
+    for (let k = 0; k < 10; k++) { const x = r.uniform(10, 400), y = r.uniform(100, 280); poly(g, [[x, y], [x + 26, y - 14], [x + 40, y + 6], [x + 10, y + 18]], U.shade(base, r.uniform(0.75, 1.2))); }
+    
+  });
+  Object.assign(S, {
+    villa: [villa, 2700, 0.6], lighthouse: [lighthouse, 1700, 0.2], lamp: [lamp, 900, 0.06],
+    snowpole: [snowpole, 140, 0.03], telegraph: [telegraph, 1200, 0.06], umbrella: [umbrella, 620, 0.08],
+    boat: [boat, 1600, 0], chalet: [chalet, 2700, 0.6], snowman: [snowman, 700, 0.14],
+    mesa: [mesa, 4200, 0], skull: [skull, 700, 0], gas: [gas, 3600, 0.85],
+    grandstand: [grandstand, 3800, 0.95], flag: [flag, 700, 0.05],
+    cliff_grey: [cliff([132, 134, 142], true), 2600, 0.65], cliff_red: [cliff([168, 78, 50]), 2600, 0.65],
+  });
   return S;
 };
 
