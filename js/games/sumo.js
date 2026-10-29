@@ -64,6 +64,7 @@ HR.AR.define({
   over(S) { return HR.AR.aliveCount(S) <= HR.AR.need(S); },
   rank(S) { return HR.AR.survival(S, p => -Math.round(Math.hypot(p.x - 800, p.y - 500))); },
   isOut: (S, p) => !p.al,
+  spot: (S, p) => [p.x, p.y],
   kill(S, p) { p.al = 0; p.dt = S.time; },
 
   pack(S) { return { t: +S.time.toFixed(3), R: +S.R.toFixed(1), p: S.p.map(p => ({ x: Math.round(p.x), y: Math.round(p.y), a: +p.a.toFixed(3), al: p.al, dt: p.dt, f: +p.f.toFixed(2), s: p.dash > 0 ? 1 : 0, c2: p.cd > 0 ? 1 : 0, g: p.gone ? 1 : 0 })) }; },

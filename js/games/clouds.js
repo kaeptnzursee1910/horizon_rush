@@ -91,6 +91,7 @@ HR.AR.define({
   over(S) { return HR.AR.aliveCount(S) <= HR.AR.need(S); },
   rank(S) { return HR.AR.survival(S, p => Math.round(p.h / 10)); },
   isOut: (S, p) => !p.al,
+  spot: (S, p) => [p.x, 1000 - (p.h - S.cb) - 24],
   status: (S, p) => Math.max(0, Math.floor(p.h / 50)) + ' m',
   kill(S, p) { p.al = 0; p.dt = S.time; },
 

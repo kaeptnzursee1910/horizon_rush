@@ -69,7 +69,7 @@ HR.AR.define({
   draw(g, S, G, W, H) {
     const me = S.p.find(p => p.id === G.me) || S.p[0];
     let view = me;
-    if (!me.al) view = S.p.find(p => p.al) || me;
+    if (!me.al) view = G.watching() || S.p.find(p => p.al) || me;
     const rot = Math.PI / 2 - view.a;
     const cx = W / 2, cy = H * 0.46, Rp = Math.min(W, H) * 0.46, F = 40;
     const R = d => Rp * F / (F + d);

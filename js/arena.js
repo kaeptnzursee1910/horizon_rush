@@ -57,6 +57,7 @@ HR.ArenaGame = class {
   frame(dt) {
     const bits = this.readInput();
     const edge = bits & ~this.myPrev; this.myPrev = bits;
+    if (edge & 3 && this.watching()) this.cycleWatch(edge & 1 ? -1 : 1);
     if (this.host) { this.inputs[this.me] = bits; this.edges[this.me] = (this.edges[this.me] | 0) | edge; }
     else {
       this.pendEdge |= edge;
@@ -160,6 +161,27 @@ HR.ArenaGame = class {
     return b;
   }
 
+  // Zuschauen nach dem Ausscheiden: mit ◀ ▶ zwischen den verbliebenen Spielern wechseln
+  watchList() { const d = this.def; return this.S.p.filter(p => !p.gone && !d.isOut(this.S, p)); }
+  watching() {
+    const d = this.def, S = this.S;
+    if (this.show || !d.isOut) return null;
+    const me = S.p.find(p => p.id === this.me);
+    if (!me || !d.isOut(S, me)) return null;
+    const list = this.watchList();
+    if (!list.length) return null;
+    const w = list.find(p => p.id === this.watchId) || list[0];
+    this.watchId = w.id;
+    return w;
+  }
+  cycleWatch(dir) {
+    const list = this.watchList(), n = list.length;
+    if (n < 2) return;
+    const i = Math.max(0, list.findIndex(p => p.id === this.watchId));
+    this.watchId = list[(i + dir + n) % n].id;
+    HR.Audio.play('select');
+  }
+
   drop(id) {
     const p = this.S.p.find(x => x.id === id);
     if (p) { p.gone = 1; if (this.def.kill) this.def.kill(this.S, p, this); }
@@ -177,6 +199,11 @@ HR.ArenaGame = class {
     g.save();
     this.def.draw(g, this.S, this, W, H);
     g.restore();
+    const w = this.watching();
+    if (w && this.def.spot && this.phase === 'play') {
+      const s = this.def.spot(this.S, w);
+      if (s) { g.save(); this.world(g); this.meMark(g, s[0], s[1], 46, this.S.time); this.label(g, this.name(w.id), s[0], s[1] - 50, 26, 'rgb(255,210,40)'); g.restore(); }
+    }
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (this.show) return;
     this.hud(g, W, H);
@@ -230,7 +257,8 @@ HR.ArenaGame = class {
     if (this.phase === 'end') R.text(g, 'ENDE!', W / 2, H * 0.42, 90 * sc, Y, 'center', 'middle');
     else if (this.phase === 'play' && this.def.isOut && this.def.isOut(S, S.p.find(p => p.id === this.me) || {})) {
       R.text(g, 'AUSGESCHIEDEN', W / 2, H * 0.12 + 20 * sc, 30 * sc, 'rgb(255,110,100)', 'center', 'middle');
-      R.text(g, 'Du schaust den anderen zu', W / 2, H * 0.12 + 50 * sc, 16 * sc, '#fff', 'center', 'middle');
+      const w = this.watching();
+      R.text(g, w ? 'Du schaust ' + this.name(w.id) + ' zu  ·  ◀ ▶ wechseln' : 'Du schaust den anderen zu', W / 2, H * 0.12 + 50 * sc, 16 * sc, '#fff', 'center', 'middle');
     }
   }
 };

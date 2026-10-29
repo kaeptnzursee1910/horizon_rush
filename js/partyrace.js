@@ -33,6 +33,17 @@ HR.PartyRace = class {
   // nach jedem Physikschritt
   tick(dt) {
     const race = this.race; if (!race || this.ended) return;
+    const me = this.meCar(), c = HR.Input.control(0);
+    if (me && me.out && race.state === 'racing') {
+      const dir = c.left && !this.wl ? -1 : c.right && !this.wr ? 1 : 0;
+      const list = race.order.filter(x => !x.out && !x.gone);
+      if (dir && list.length > 1) {
+        const i = Math.max(0, list.indexOf(PR.spectate(race)));
+        race.watch = list[(i + dir + list.length) % list.length].id;
+        HR.Audio.play('select');
+      }
+    }
+    this.wl = c.left; this.wr = c.right;
     this.sendT -= dt;
     if (this.sendT <= 0) {
       this.sendT = 0.05;
@@ -114,7 +125,8 @@ const PR = HR.PR = {
     outs.forEach((id, i) => { const c = race.cars.find(x => x.id === id); if (c && !c.gone) rows.push({ id: c.pidx, s: 500 - i, txt: 'raus nach ' + U.fmtTime(c.outT) }); });
     return rows;
   },
-  spectate: race => PR.leader(race),
+  // ausgeschieden: dem gewählten Auto zuschauen, sonst dem Führenden
+  spectate: race => race.cars.find(c => c.id === race.watch && !c.out && !c.gone) || PR.leader(race),
   endHud(g, R, race, p, vw, vh, sc) {
     const alive = PR.alive(race);
     const won = !p.out && alive.length === 1;
@@ -126,9 +138,9 @@ const PR = HR.PR = {
     if (sub) R.text(g, sub, vw / 2, vh * 0.13 + 30 * sc, 18 * sc, '#fff', 'center', 'middle');
   },
   outHud(g, R, race, p, vw, vh, sc) {
-    const lead = PR.leader(race);
-    R.text(g, 'AUSGESCHIEDEN', vw / 2, vh * 0.42, 44 * sc, 'rgb(255,110,100)', 'center', 'middle');
-    if (lead) R.text(g, 'Du schaust ' + lead.name + ' zu', vw / 2, vh * 0.42 + 40 * sc, 20 * sc, '#fff', 'center', 'middle');
+    const w = PR.spectate(race);
+    R.text(g, 'AUSGESCHIEDEN', vw / 2, vh * 0.16, 34 * sc, 'rgb(255,110,100)', 'center', 'middle');
+    if (w) R.text(g, 'Du schaust ' + w.name + ' zu' + (PR.alive(race).length > 1 ? '  ·  ◀ ▶ wechseln' : ''), vw / 2, vh * 0.16 + 34 * sc, 18 * sc, '#fff', 'center', 'middle');
   },
   // kleines Blaulicht über einem Auto
   siren(g, box, t) {

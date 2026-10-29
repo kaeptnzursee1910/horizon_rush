@@ -153,6 +153,13 @@ HR.Render = {
       }
     }
     if (!race.demo) this.hud(g, game, view, viewer, vw, vh);
+    const own = race.cars[view.car];
+    if (!race.demo && own.out && viewer !== own && race.state === 'racing') {
+      const sc = U.clamp(Math.min(vw / 1000, vh / 640), 0.62, 1.3), more = race.cars.filter(c => !c.out && !c.gone).length > 1;
+      g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(vw / 2 - 230 * sc, vh * 0.25 - 4 * sc, 460 * sc, 58 * sc);
+      this.text(g, 'AUSGESCHIEDEN', vw / 2, vh * 0.25, 22 * sc, 'rgb(255,110,100)', 'center');
+      this.text(g, 'Du schaust ' + viewer.name + ' zu' + (more ? '  ·  ◀ ▶ wechseln' : ''), vw / 2, vh * 0.25 + 27 * sc, 18 * sc, '#fff', 'center');
+    }
     if (R && R.flash > 0) { g.fillStyle = `rgba(255,255,255,${Math.min(0.7, R.flash)})`; g.fillRect(0, 0, vw, vh); }
     g.restore();
   },
