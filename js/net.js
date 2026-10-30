@@ -51,10 +51,19 @@ HR.Net = {
         if (!opened) cb(this.errText(e));
         else if (e.type !== 'peer-unavailable') console.warn('Netz', e);
       });
-      p.on('disconnected', () => { if (this.peer === p) try { p.reconnect(); } catch (_) { } });
+      p.on('disconnected', () => this.keepAlive(p));
       p.on('connection', conn => this.acceptConn(conn));
     };
     tryCode(0);
+  },
+
+  // Der Gastgeber muss beim Vermittlungsserver angemeldet bleiben, sonst finden neue Mitspieler
+  // seinen Code nicht mehr. Nach einem Abbruch (Standby, WLAN-Wechsel) immer wieder neu anmelden.
+  keepAlive(p) {
+    clearTimeout(this._ka);
+    if (this.peer !== p || p.destroyed || !p.disconnected) return;
+    try { p.reconnect(); } catch (_) { }
+    this._ka = setTimeout(() => this.keepAlive(p), 4000);
   },
 
   acceptConn(conn) {
@@ -77,7 +86,8 @@ HR.Net = {
     if (this.onDrop) this.onDrop(id);
   },
 
-  join(code, cb, prefix) {
+  join(code, cb, prefix, attempt) {
+    attempt = attempt || 0;
     this.close();
     this.prefix = prefix || this.PREFIX;
     this.isHost = false;
@@ -98,7 +108,11 @@ HR.Net = {
       conn.on('error', lost);
       this.watchIce(conn, lost);
     });
-    p.on('error', e => { clearTimeout(timer); if (!done) fail(this.errText(e)); else if (e.type === 'peer-unavailable' || e.type === 'network') { if (this.onDrop) this.onDrop(0); } });
+    p.on('error', e => {
+      clearTimeout(timer);
+      // Code noch nicht gefunden: kurz warten und es noch einmal versuchen (der Gastgeber meldet sich evtl. gerade neu an)
+      if (!done && e.type === 'peer-unavailable' && attempt < 1) { done = true; this.close(); setTimeout(() => this.join(code, cb, prefix, attempt + 1), 2000); return; }
+      if (!done) fail(this.errText(e)); else if (e.type === 'peer-unavailable' || e.type === 'network') { if (this.onDrop) this.onDrop(0); } });
   },
 
   watchIce(conn, onDead) {

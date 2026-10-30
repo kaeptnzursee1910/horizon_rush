@@ -59,6 +59,7 @@ const Game = HR.Game = {
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 250));
     document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && HR.Net.isHost && HR.Net.peer) HR.Net.keepAlive(HR.Net.peer);
       if (document.hidden && this.race && !this.race.demo && !this.online && !this.party && !this.paused && this.race.state !== 'done') this.togglePause();
     });
     HR.Net.onMsg = (m, from) => this.netMsg(m, from);
