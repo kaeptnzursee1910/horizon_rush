@@ -17,6 +17,8 @@ HR.ArenaGame = class {
     this.snaps = []; this.fx = []; this.fxSeq = 0; this.fxSeen = 0; this.ended = false;
     this.lerpKeys = new Set(['x', 'y', 'a', 't', 'u', 'h', 'z', 'R', 'cb'].concat(def.lerpKeys || []));
     this.view = { sc: 1, ox: 0, oy: 0 };
+    this.ai = ctx.players.filter(p => p.ai).map(p => p.id);   // Computer-Spieler (Singleplayer)
+    this.sloppy = [0.3, 0.12, 0.02][Game.diff] || 0;
   }
 
   start() {
@@ -95,6 +97,7 @@ HR.ArenaGame = class {
       if (this.endT > 2.5 && !this.ended) { this.ended = true; this.onEnd(this.def.rank(S, this)); }
       return;
     }
+    for (const id of this.ai) { const p = S.p.find(q => q.id === id); if (p) this.inputs[id] = HR.Showcase.botBits(this.def, S, p, this.sloppy); }
     const inp = {};
     for (const p of S.p) {
       const k = this.inputs[p.id] | 0, pk = this.prevIn[p.id] | 0, e = (this.edges[p.id] | 0) | (k & ~pk);

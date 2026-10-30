@@ -46,6 +46,30 @@ const Party = HR.Party = {
     }, HR.PARTY_PREFIX);
   },
 
+  // Singleplayer: dieselbe Party, aber nur auf diesem Gerät, die Mitspieler sind Computer
+  createSolo() {
+    HR.Audio.init();
+    this.P = {
+      host: true, solo: true, myId: 0, code: '', phase: 'lobby', max: 6, rounds: 5, pick: 'random', picks: HR.GAME_ORDER.slice(),
+      players: [{ id: 0, name: Game.settings.name, color: 0, car: Game.settings.car }],
+      scores: {}, round: 0, playlist: [], current: null, ready: [], last: null,
+    };
+    this.chat = [];
+    this.botPool = HR.makeAI(7, Game.diff);
+    this.fillBots();
+    Game.party = this;
+    this.show();
+  },
+
+  fillBots() {
+    const P = this.P, me = P.players[0];
+    const colors = [0, 1, 2, 3, 4, 5, 6, 7].filter(c => c !== me.color);
+    const [lo, hi] = HR.DIFFS[Game.diff][1];
+    P.players = [me].concat(this.botPool.slice(0, P.max - 1).map((a, i) => ({
+      id: i + 1, name: a.name, color: colors[i], car: a.car, ai: true, skill: lo + (hi - lo) * (i % 3) / 2,
+    })));
+  },
+
   join(code) {
     UI.busy('Verbinde mit Party ' + code + ' …');
     HR.Net.onMsg = (m, from) => this.msg(m, from);
@@ -186,6 +210,11 @@ const Party = HR.Party = {
   // ---------- Einstellungen (nur Gastgeber) ----------
   set(key, val) {
     const P = this.P; if (!P || !P.host || P.phase !== 'lobby') return;
+    if (P.solo && (key === 'max' || key === 'diff')) {
+      if (key === 'max') P.max = U.clamp(P.max + val, 2, 8);
+      else { Game.diff = U.clamp(Game.diff + val, 0, 2); Game.save(); }
+      this.fillBots(); this.refresh(); return;
+    }
     if (key === 'max') P.max = U.clamp(P.max + val, Math.max(2, P.players.length), 8);
     if (key === 'rounds') P.rounds = U.clamp(P.rounds + val, 1, 20);
     if (key === 'pick') P.pick = val;
@@ -197,6 +226,7 @@ const Party = HR.Party = {
 
   cycleColor(id) {
     const P = this.P, p = this.player(id); if (!p || P.phase !== 'lobby') return;
+    if (P.solo) { p.color = (p.color + 1) % 8; this.fillBots(); this.refresh(); return; }
     const used = P.players.filter(x => x !== p).map(x => x.color);
     for (let k = 1; k <= 8; k++) { const c = (p.color + k) % 8; if (!used.includes(c)) { p.color = c; break; } }
     this.changed();
@@ -247,6 +277,7 @@ const Party = HR.Party = {
 
   ready() {
     if (!this.P || this.P.phase !== 'intro') return;
+    if (this.P.solo) { this.P.ready = this.P.players.map(p => p.id); this.checkReady(); return; }
     if (this.P.host) this.setReady(0); else HR.Net.send({ t: 'pready' });
     const b = UI.el.querySelector('[data-act="pready"]'); if (b) { b.disabled = true; b.textContent = 'Warte auf die anderen …'; }
   },
@@ -269,7 +300,7 @@ const Party = HR.Party = {
     const P = this.P; if (!P.host || P.phase !== 'intro') return;
     const def = HR.GAMES[P.current];
     const seed = Math.floor(Math.random() * 2 ** 31);
-    const players = P.players.map(p => ({ id: p.id, name: p.name, color: p.color, car: p.car }));
+    const players = P.players.map(p => ({ id: p.id, name: p.name, color: p.color, car: p.car, ai: p.ai, skill: p.skill }));
     const setup = def.setup ? def.setup(players, seed) : null;
     P.phase = 'play';
     this.broadcastState();
@@ -379,9 +410,9 @@ const PUI = HR.PUI = {
   frame(title, sub, body) {
     const P = Party.P;
     UI.show(`<div class="panel wide party">
-      <header><button class="backbtn" data-act="pleave">‹ Verlassen</button><div class="ptitle"><h2>${title}</h2>${sub ? `<span>${sub}</span>` : ''}</div>
-        <span class="codepill">Code <b>${P.code}</b></span></header>
-      <div class="pgrid"><div class="pmain">${body}</div><div class="pside"><section><h3>Spieler <span id="pcount"></span></h3><ul class="players" id="pplayers"></ul></section>${this.chatBox()}</div></div>
+      <header><button class="backbtn" data-act="pleave">‹ ${P.solo ? 'Beenden' : 'Verlassen'}</button><div class="ptitle"><h2>${title}</h2>${sub ? `<span>${sub}</span>` : ''}</div>
+        ${P.solo ? '' : `<span class="codepill">Code <b>${P.code}</b></span>`}</header>
+      <div class="pgrid"><div class="pmain">${body}</div><div class="pside"><section><h3>Spieler <span id="pcount"></span></h3><ul class="players" id="pplayers"></ul></section>${P.solo ? '' : this.chatBox()}</div></div>
     </div>`, null);
     this.bindChat();
     this.players();
@@ -391,20 +422,20 @@ const PUI = HR.PUI = {
     const P = Party.P, ul = document.getElementById('pplayers'); if (!ul) return;
     const phase = P.phase;
     ul.innerHTML = P.players.map(p => {
-      let right = p.id === 0 ? '<small>Gastgeber</small>' : '';
+      let right = p.ai ? '<small>Computer</small>' : p.id === 0 && !P.solo ? '<small>Gastgeber</small>' : '';
       if (phase === 'intro') right = P.ready.includes(p.id) ? '<small class="ok">✓ bereit</small>' : '<small class="wait">liest …</small>';
       if (phase === 'round' || phase === 'final') right = `<small>${P.scores[p.id] || 0} Pkt.</small>`;
       const me = p.id === P.myId;
       const dot = me && phase === 'lobby' ? `<button class="pdot btn" data-act="pcolor" title="Farbe wechseln" aria-label="Farbe wechseln" style="background:${U.rgb(Party.color(p))}"></button>` : this.dot(p);
       return `<li class="${me ? 'me' : ''}">${dot}<b>${UI.esc(p.name)}</b>${right}</li>`;
     }).join('');
-    const c = document.getElementById('pcount'); if (c) c.textContent = phase === 'lobby' ? `(${P.players.length}/${P.max})` : `(${P.players.length})`;
+    const c = document.getElementById('pcount'); if (c) c.textContent = phase === 'lobby' && !P.solo ? `(${P.players.length}/${P.max})` : `(${P.players.length})`;
     UI.bind(ul);
   },
 
   // --- Lobby: alle sehen die Einstellungen des Gastgebers ---
   lobby() {
-    this.frame('Party-Lobby', '', '<div id="pset"></div>');
+    this.frame(Party.P.solo ? 'Singleplayer' : 'Party-Lobby', Party.P.solo ? 'Minispiele gegen Computergegner' : '', '<div id="pset"></div>');
     this.settings();
   },
 
@@ -422,14 +453,16 @@ const PUI = HR.PUI = {
     const n = HR.GAME_ORDER.length;
     el.innerHTML = `
       <h3>Einstellungen</h3>
-      ${step('max', 'Spieler', P.max)}
+      ${P.solo ? step('max', 'Gegner', P.max - 1) + step('diff', 'Stärke', HR.DIFFS[Game.diff][0]) : step('max', 'Spieler', P.max)}
       ${step('rounds', 'Runden', P.rounds)}
       <div class="pstep"><span>Minispiele</span><div class="seg">
         <button class="${P.pick === 'random' ? 'on' : ''}" data-act="ppick" data-arg="random" ${dis}>Zufällig</button>
         <button class="${P.pick === 'pick' ? 'on' : ''}" data-act="ppick" data-arg="pick" ${dis}>Auswählen</button></div></div>
       <p class="note">${P.pick === 'random' ? `Jede Runde kommt ein zufälliges Spiel aus allen ${n} Minispielen.` : `Vor jeder Runde wählt ${host ? 'du' : UI.esc(Party.hostName())} eines der ${n} Minispiele aus.`}</p>
       <div class="games">${games}</div>
-      ${host ? `<nav class="list row"><button class="hot" data-act="pstart">Party starten</button></nav>
+      ${P.solo ? `<nav class="list row"><button class="hot" data-act="pstart">Starten</button></nav>
+        <p class="note">Lieber ein normales Rennen? <button class="link" data-act="soloRace">Freies Rennen fahren</button></p>`
+      : host ? `<nav class="list row"><button class="hot" data-act="pstart">Party starten</button></nav>
         <p class="note">Die anderen tippen auf <b>Party → Beitreten</b> und geben den Code <b>${P.code}</b> ein.</p>`
         : `<p class="note wait">Nur ${UI.esc(Party.hostName())} kann die Einstellungen ändern. Warte, bis die Party startet …</p>`}`;
     UI.bind(el);
@@ -445,7 +478,7 @@ const PUI = HR.PUI = {
       return `<button class="gcard" data-act="pchoose" data-arg="${c}" ${host ? '' : 'disabled'}>
         <i>${g.kind === 'race' ? 'Fahrspiel' : 'Arena-Spiel'}</i><strong>${g.name}</strong><span>${g.short || ''}</span>${n ? `<small>schon ${n}× gespielt</small>` : ''}</button>`;
     }).join('');
-    const body = `${host ? '<p class="note">Tippe auf das Minispiel für diese Runde. Alle sehen deine Auswahl.</p>'
+    const body = `${host ? `<p class="note">Tippe auf das Minispiel für diese Runde.${P.solo ? '' : ' Alle sehen deine Auswahl.'}</p>`
       : `<p class="note wait">${UI.esc(Party.hostName())} wählt gerade das Minispiel für diese Runde …</p>`}<div class="gcards">${cards}</div>`;
     this.frame('Minispiel wählen', `Runde ${P.round} von ${P.rounds}`, body);
     if (host) { const b = UI.el.querySelector('.gcard'); if (b) b.focus({ preventScroll: true }); }
@@ -461,7 +494,7 @@ const PUI = HR.PUI = {
       <h3>Ziel</h3><p>${def.goal}</p>
       <h3>Steuerung</h3>
       <div class="ctrl"><div class="${touch ? 'cur' : ''}"><b>Touch</b><span>${def.touch}</span></div><div class="${touch ? '' : 'cur'}"><b>Tastatur</b><span>${def.keys}</span></div></div>
-      <nav class="list row"><button class="hot" data-act="pready" ${P.ready.includes(P.myId) ? 'disabled' : 'autofocus'}>${P.ready.includes(P.myId) ? 'Warte auf die anderen …' : 'Bereit!'}</button></nav>
+      <nav class="list row"><button class="hot" data-act="pready" ${P.ready.includes(P.myId) ? 'disabled' : 'autofocus'}>${P.ready.includes(P.myId) ? 'Warte auf die anderen …' : P.solo ? 'Los!' : 'Bereit!'}</button></nav>
       <p class="note" id="preadynote"></p></div>`;
     this.frame(def.name, `Runde ${P.round} von ${P.rounds}`, body);
     this.refresh.intro();
@@ -502,7 +535,7 @@ const PUI = HR.PUI = {
     const rest = st.map((p, i) => `<tr class="${p.id === P.myId ? 'me' : ''}"><td>${i + 1}.</td><td>${this.dot(p)}${UI.esc(p.name)}</td><td class="num">${P.scores[p.id] || 0} Pkt.</td></tr>`).join('');
     const body = `<p class="champ">${st[0] ? UI.esc(st[0].name) + ' gewinnt die Party!' : ''}</p><div class="podium">${pod}</div>
       <div class="tablewrap"><table class="res"><tbody>${rest}</tbody></table></div>
-      ${P.host ? `<nav class="list row"><button class="hot" data-act="plobby" autofocus>Neue Party-Runde</button><button data-act="pleave">Party beenden</button></nav>`
+      ${P.host ? `<nav class="list row"><button class="hot" data-act="plobby" autofocus>${P.solo ? 'Nochmal spielen' : 'Neue Party-Runde'}</button><button data-act="pleave">${P.solo ? 'Beenden' : 'Party beenden'}</button></nav>`
         : `<p class="note wait">${UI.esc(Party.hostName())} entscheidet, ob es weitergeht.</p>`}`;
     this.frame('Siegerehrung', `${P.rounds} Runde${P.rounds === 1 ? '' : 'n'} gespielt`, body);
     HR.Audio.play('finish');
@@ -514,7 +547,8 @@ PUI.refresh = {
   intro() {
     PUI.players();
     const P = Party.P, n = document.getElementById('preadynote');
-    if (n) { const wait = P.players.filter(p => !P.ready.includes(p.id)).map(p => p.name); n.textContent = wait.length ? 'Warte auf: ' + wait.join(', ') : 'Alle bereit – los geht’s!'; }
+    if (n && P.solo) n.textContent = '';
+    else if (n) { const wait = P.players.filter(p => !P.ready.includes(p.id)).map(p => p.name); n.textContent = wait.length ? 'Warte auf: ' + wait.join(', ') : 'Alle bereit – los geht’s!'; }
   },
   choose() { PUI.players(); },
   round() { PUI.players(); },
@@ -541,7 +575,9 @@ Object.assign(UI.acts, {
   pnext() { clearInterval(PUI._auto); Party.nextRound(); },
   plobby() { Party.toLobby(); },
   pcolor() { Party.myColor(); },
-  presume() { UI.hide(); },
+  presume() { Game.paused = false; UI.hide(); },
+  solo() { Party.createSolo(); },
+  soloRace() { Party.reset(); Game.startDemo(); UI.acts.mode('race'); },
   pabort() { Party.toLobby(); },
 });
 
@@ -566,12 +602,13 @@ UI.party = function () {
 
 // Menü während eines Party-Spiels
 UI.partyPause = function () {
-  const host = Party.isHost();
-  this.show(`<div class="panel narrow"><h2>MENÜ</h2><p class="note">Das Spiel läuft weiter.</p>
+  const host = Party.isHost(), solo = Party.P.solo;
+  if (solo) { Game.paused = true; HR.Audio.silence(); }
+  this.show(`<div class="panel narrow"><h2>${solo ? 'PAUSE' : 'MENÜ'}</h2>${solo ? '' : '<p class="note">Das Spiel läuft weiter.</p>'}
     <nav class="list">
       <button data-act="presume" autofocus>Weiter</button>
       <button data-act="sound">${Game.settings.sound ? 'Ton aus' : 'Ton an'}</button>
-      ${host ? '<button data-act="pabort">Runde abbrechen (zur Lobby)</button>' : ''}
-      <button data-act="pleave">Party verlassen</button>
-    </nav></div>`, () => UI.hide());
+      ${host ? `<button data-act="pabort">Runde abbrechen (zur ${solo ? 'Auswahl' : 'Lobby'})</button>` : ''}
+      <button data-act="pleave">${solo ? 'Beenden' : 'Party verlassen'}</button>
+    </nav></div>`, () => UI.acts.presume());
 };

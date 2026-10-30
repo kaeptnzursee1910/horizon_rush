@@ -46,11 +46,7 @@ HR.Showcase = {
     a.acc += dt;
     let n = 0;
     while (a.acc >= HR.STEP && n++ < 4) {
-      const bot = this.bots[this.code];
-      for (const p of a.S.p) {
-        const o = bot ? bot(a.S, p, a.def) : {};
-        a.inputs[p.id] = (o.l ? 1 : 0) | (o.r ? 2 : 0) | (o.u ? 4 : 0) | (o.d ? 8 : 0) | (o.a ? 16 : 0);
-      }
+      for (const p of a.S.p) a.inputs[p.id] = this.botBits(a.def, a.S, p, 0);
       a.step(HR.STEP); a.acc -= HR.STEP;
     }
     if (n >= 4) a.acc = 0;
@@ -63,7 +59,7 @@ HR.Showcase = {
     const f = Math.max(this.t < this.FADE ? 1 - this.t / this.FADE : 0, this.t > this.PERIOD - this.FADE ? 1 - (this.PERIOD - this.t) / this.FADE : 0);
     if (f > 0) { g.fillStyle = `rgba(0,0,0,${f})`; g.fillRect(0, 0, W, H); }
     const def = HR.GAMES[this.code];
-    if (def) {
+    if (def && document.querySelector('.panel.main')) {
       const sc = U.clamp(Math.min(W / 1000, H / 640), 0.7, 1.3);
       g.globalAlpha = 0.85 * (1 - f);
       HR.Render.text(g, def.name.toUpperCase(), W - 14 * sc, H - 14 * sc - 16 * sc, 16 * sc, 'rgb(255,210,40)', 'right');
@@ -72,6 +68,14 @@ HR.Showcase = {
   },
 
   // ---------- Computer-Spieler ----------
+  // Tasten eines Computer-Spielers; sloppy = Anteil der Momente, in denen er nicht reagiert
+  botBits(def, S, p, sloppy) {
+    const bot = this.bots[def.code];
+    if (!bot || (sloppy && Math.random() < sloppy)) return 0;
+    const o = bot(S, p, def);
+    return (o.l ? 1 : 0) | (o.r ? 2 : 0) | (o.u ? 4 : 0) | (o.d ? 8 : 0) | (o.a ? 16 : 0);
+  },
+
   bots: {
     B1(S, p, def) {
       const D = def.DIRS, free = d => {
@@ -125,6 +129,23 @@ HR.Showcase = {
       for (const b of S.b) { const d = geo.ap - (b.x * s.n[0] + b.y * s.n[1]); if (d < bd) { bd = d; tu = ((b.x - s.A[0]) * s.dir[0] + (b.y - s.A[1]) * s.dir[1]) / s.L; } }
       return { l: tu < p.u - 0.03, r: tu > p.u + 0.03 };
     },
-    B10() { return Math.random() < 0.08 ? { u: 1 } : {}; },
+    // erst hüpfen, wenn die nächste Spur frei ist (Straße) oder ein Stamm da ist (Fluss)
+    B10(S, p, def) {
+      if (p.dead > 0) return {};
+      const safe = (r, x) => {
+        const L = S.lanes[r];
+        if (!L) return true;
+        if (L.type === 'road') {
+          for (const o of L.o) for (const dt of [0, 0.25, 0.5]) { const ox = def.ox(L, o, S.time + dt); if (x + 44 > ox && x - 44 < ox + L.len) return false; }
+        } else if (L.type === 'river') {
+          const ox = L.o.map(([o, len]) => [def.ox(L, o, S.time + 0.12), len]);
+          if (!ox.some(([a, len]) => x > a + 26 && x < a + len - 26) || x < 90 || x > 1510) return false;
+        }
+        return true;
+      };
+      if (safe(p.r + 1, p.x)) return { u: 1 };
+      if (!safe(p.r, p.x) && S.lanes[p.r].type === 'road' && safe(p.r - 1, p.x)) return { d: 1 };
+      return {};
+    },
   },
 };

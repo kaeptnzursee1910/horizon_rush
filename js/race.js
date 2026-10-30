@@ -148,6 +148,7 @@ HR.Race = class {
     const ahead = tr.segAt(this.mod(c.dist + HR.SEG * 12));
     const curv = Math.max(Math.abs(seg.curve), Math.abs(ahead.curve));
     let target = c.maxSpeed * Math.min(1, c.skill) * (1 - curv * 0.022 / c.handling);
+    if (this.rules) target *= this.rules.speedMul(this, c);
     if (this.humans.length && !c.human && c.pid == null && !this.demo) {
       const lead = Math.max(...this.humans.map(p => p.dist));
       const gap = (c.dist - lead) / L;

@@ -71,7 +71,7 @@ const Game = HR.Game = {
       const dt = Math.min(1 / 20, (now - last) / 1000); last = now;
       const arena = HR.Party.arena;
       if (arena) {
-        try { arena.frame(dt); arena.render(this.g, this.W, this.H, this.dpr); } catch (e) { console.error(e); }
+        try { if (!this.paused) arena.frame(dt); arena.render(this.g, this.W, this.H, this.dpr); } catch (e) { console.error(e); }
         requestAnimationFrame(frame);
         return;
       }
@@ -480,7 +480,7 @@ const UI = HR.UI = {
         <p class="tag">Das Party-Spiel für bis zu 8 Spieler</p>
         <nav class="list bigmenu">
           <button data-act="party" class="big hot" autofocus><b>Multiplayer</b><span>Party mit Freunden · 12 Minispiele</span></button>
-          <button data-act="mode" data-arg="race" class="big"><b>Singleplayer</b><span>Rennen gegen 7 Computergegner</span></button>
+          <button data-act="solo" class="big"><b>Singleplayer</b><span>Alle 12 Minispiele gegen Computergegner</span></button>
         </nav>
         <nav class="minor"><button data-act="settings">Einstellungen</button></nav>
         <p class="hint">${HR.Input.touchMode ? 'Tippen zum Wählen' : '↑↓ wählen  ·  Enter bestätigen  ·  F11 Vollbild  ·  M Ton'}</p>
