@@ -568,7 +568,9 @@ Object.assign(UI.acts, {
   // Einladungslink: über das Teilen-Menü (WhatsApp usw.) oder in die Zwischenablage
   pinvite() {
     const P = Party.P; if (!P || !P.code) return;
-    const url = location.origin + location.pathname + '?party=' + P.code;
+    // die Zugangsdaten des Verbindungsservers reisen im Teil nach # mit: der wird nie an einen Server geschickt
+    const k = HR.Net.getKey();
+    const url = location.origin + location.pathname + '?party=' + P.code + (k && k.user && k.pass ? '#k=' + btoa(unescape(encodeURIComponent(JSON.stringify([k.user, k.pass])))).replace(/=+$/, '') : '');
     const text = 'Komm in meine Horizon-Rush-Party! Code ' + P.code;
     if (navigator.share) { navigator.share({ title: 'Horizon Rush', text, url }).catch(() => {}); return; }
     const done = () => UI.toast('Link kopiert: ' + url);

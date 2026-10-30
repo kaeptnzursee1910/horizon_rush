@@ -22,6 +22,8 @@ Auf dem iPad: In Safari öffnen, dann *Teilen → Zum Home-Bildschirm*. So start
 2. Alle anderen tippen auf *Multiplayer*, geben den Code ein und tippen auf *Beitreten*.
    Einfacher: Der Gastgeber tippt in der Lobby auf *Einladungslink teilen* und schickt den Link,
    z. B. per WhatsApp. Wer ihn öffnet, gibt nur noch seinen Namen ein und tippt auf *Beitreten*.
+   Hat der Gastgeber einen Verbindungsserver eingetragen, nimmt der Link die Zugangsdaten mit
+   (im Teil nach `#`, der nie an einen Server geht) und trägt sie beim Gast automatisch ein.
 3. In der Lobby sehen alle die Einstellungen des Gastgebers: Spielerzahl, Runden und ob die
    Minispiele zufällig kommen oder ausgewählt werden. Nebenan ist ein Chat. Bei „Auswählen“
    wählt der Gastgeber vor jeder Runde das Minispiel, alle sehen dabei die Spielerliste und den Chat.

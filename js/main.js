@@ -68,7 +68,10 @@ const Game = HR.Game = {
     this.startDemo();
     // Einladungslink ?party=1234: direkt zum Beitreten
     const inv = (new URLSearchParams(location.search).get('party') || '').replace(/\D/g, '').slice(0, 4);
-    if (inv.length === 4) { history.replaceState(null, '', location.pathname); UI.main(); UI.party(inv); }
+    const km = /[#&]k=([A-Za-z0-9+/]+)/.exec(location.hash);
+    if (km) { try { const [u, p] = JSON.parse(decodeURIComponent(escape(atob(km[1])))); if (u && p) HR.Net.setKey(String(u), String(p)); } catch (_) { } }
+    if (inv.length === 4 || km) history.replaceState(null, '', location.pathname);
+    if (inv.length === 4) { UI.main(); UI.party(inv); }
     else UI.main();
     let last = performance.now(), acc = 0;
     const frame = now => {
