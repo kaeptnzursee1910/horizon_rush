@@ -66,7 +66,10 @@ const Game = HR.Game = {
     HR.Net.onDrop = id => this.netDrop(id);
     this.resize();
     this.startDemo();
-    UI.main();
+    // Einladungslink ?party=1234: direkt zum Beitreten
+    const inv = (new URLSearchParams(location.search).get('party') || '').replace(/\D/g, '').slice(0, 4);
+    if (inv.length === 4) { history.replaceState(null, '', location.pathname); UI.main(); UI.party(inv); }
+    else UI.main();
     let last = performance.now(), acc = 0;
     const frame = now => {
       const dt = Math.min(1 / 20, (now - last) / 1000); last = now;

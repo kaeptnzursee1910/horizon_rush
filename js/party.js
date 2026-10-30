@@ -462,8 +462,8 @@ const PUI = HR.PUI = {
       <div class="games">${games}</div>
       ${P.solo ? `<nav class="list row"><button class="hot" data-act="pstart">Starten</button></nav>
         <p class="note">Lieber ein normales Rennen? <button class="link" data-act="soloRace">Freies Rennen fahren</button></p>`
-      : host ? `<nav class="list row"><button class="hot" data-act="pstart">Party starten</button></nav>
-        <p class="note">Die anderen tippen auf <b>Party → Beitreten</b> und geben den Code <b>${P.code}</b> ein.</p>`
+      : host ? `<nav class="list row"><button class="hot" data-act="pstart">Party starten</button><button data-act="pinvite">Einladungslink teilen</button></nav>
+        <p class="note">Wer den Link öffnet, kommt direkt in die Party. Oder: <b>Multiplayer</b> tippen und den Code <b>${P.code}</b> eingeben.</p>`
         : `<p class="note wait">Nur ${UI.esc(Party.hostName())} kann die Einstellungen ändern. Warte, bis die Party startet …</p>`}`;
     UI.bind(el);
     if (focus) { const b = el.querySelector(`[data-act="${focus[0]}"]${focus[1] != null ? `[data-arg="${focus[1]}"]` : ''}`); if (b && !b.disabled) b.focus({ preventScroll: true }); }
@@ -565,6 +565,16 @@ Object.assign(UI.acts, {
     Party.join(c);
   },
   pleave() { Party.leave(); },
+  // Einladungslink: über das Teilen-Menü (WhatsApp usw.) oder in die Zwischenablage
+  pinvite() {
+    const P = Party.P; if (!P || !P.code) return;
+    const url = location.origin + location.pathname + '?party=' + P.code;
+    const text = 'Komm in meine Horizon-Rush-Party! Code ' + P.code;
+    if (navigator.share) { navigator.share({ title: 'Horizon Rush', text, url }).catch(() => {}); return; }
+    const done = () => UI.toast('Link kopiert: ' + url);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text + '\n' + url).then(done, () => window.prompt('Link kopieren:', url));
+    else window.prompt('Link kopieren:', url);
+  },
   pset(a) { const [k, d] = a.split(':'); Party.set(k, +d); },
   ppick(v) { Party.set('pick', v); },
   ptoggle(c) { Party.set('toggle', c); },
@@ -582,17 +592,18 @@ Object.assign(UI.acts, {
 });
 
 // Startbildschirm des Party-Modus
-UI.party = function () {
+UI.party = function (invite) {
   const s = Game.settings, key = HR.Net.getKey();
   if (!HR.Net.available()) { this.error('Der Party-Modus konnte nicht geladen werden. Ist das Gerät mit dem Internet verbunden?', () => this.main()); return; }
   UI._keyBack = () => UI.party();
   this.show(`<div class="panel narrow"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Party</h2></header>
-    <p class="note">Bis zu 8 Spieler, jeder auf seinem eigenen Gerät. Mehrere Runden mit wechselnden Minispielen, am Ende gibt es eine Siegerehrung.</p>
+    ${invite ? `<p class="note">Du wurdest in die Party <b>${invite}</b> eingeladen. Gib deinen Namen ein und tippe auf <b>Beitreten</b>.</p>`
+      : '<p class="note">Bis zu 8 Spieler, jeder auf seinem eigenen Gerät. Mehrere Runden mit wechselnden Minispielen, am Ende gibt es eine Siegerehrung.</p>'}
     <label class="field"><span>Dein Name</span><input id="pname" maxlength="16" value="${this.esc(s.name)}" autocomplete="off"></label>
-    <nav class="list"><button data-act="pcreate" autofocus>Party eröffnen</button></nav>
+    ${invite ? '' : '<nav class="list"><button data-act="pcreate" autofocus>Party eröffnen</button></nav>'}
     <div class="join">
-      <label class="field"><span>Code einer Party</span><input id="jcode" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off"></label>
-      <button data-act="pjoin">Beitreten</button>
+      <label class="field"><span>Code einer Party</span><input id="jcode" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" value="${invite || ''}"></label>
+      <button data-act="pjoin" ${invite ? 'class="hot" autofocus' : ''}>Beitreten</button>
     </div>
     <p class="note"><button class="link" data-act="keyform">Verbindungseinstellungen</button></p>
     <p class="error" id="err" hidden></p></div>`, () => this.main());
