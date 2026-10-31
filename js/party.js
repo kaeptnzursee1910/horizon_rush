@@ -369,6 +369,8 @@ const Party = HR.Party = {
     const P = this.P; if (!P) return;
     if (P.phase === 'play') { if (!this.ctl) this.screen = null; return; }
     if (!Game.race || !Game.race.demo) Game.startDemo();
+    // Vorschau: in der Spielerklärung läuft im Hintergrund nur das kommende Spiel
+    HR.Showcase.focus(P.phase === 'intro' ? P.current : null);
     this.screen = P.phase + ':' + P.round;
     PUI[P.phase]();
   },
@@ -489,6 +491,7 @@ const PUI = HR.PUI = {
     const P = Party.P, def = HR.GAMES[P.current];
     const touch = HR.Input.touchMode;
     const body = `<div class="intro">
+      <canvas id="ppreview" class="preview" aria-label="Vorschau: ${def.name}"></canvas>
       <p class="gcode">${def.kind === 'race' ? 'Fahrspiel' : 'Arena-Spiel'}</p>
       <p class="gdesc">${def.desc}</p>
       <h3>Ziel</h3><p>${def.goal}</p>

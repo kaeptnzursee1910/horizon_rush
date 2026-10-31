@@ -85,7 +85,7 @@ const Game = HR.Game = {
       const show = HR.Showcase.active();
       if (show) HR.Showcase.tick(dt);
       if (show && HR.Showcase.arena) {
-        try { HR.Showcase.render(this.g, this.W, this.H, this.dpr); } catch (e) { console.error(e); }
+        try { HR.Showcase.render(this.g, this.W, this.H, this.dpr); HR.Showcase.copyPreview(this.canvas); } catch (e) { console.error(e); }
         requestAnimationFrame(frame);
         return;
       }
@@ -94,7 +94,7 @@ const Game = HR.Game = {
         while (acc >= HR.STEP) { this.update(HR.STEP); acc -= HR.STEP; }
       } else acc = 0;
       this.render();
-      if (show) HR.Showcase.render(this.g, this.W, this.H, this.dpr);
+      if (show) { HR.Showcase.render(this.g, this.W, this.H, this.dpr); HR.Showcase.copyPreview(this.canvas); }
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);

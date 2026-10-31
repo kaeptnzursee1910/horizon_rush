@@ -199,6 +199,7 @@ body.portrait #rotate { display: flex; }
 .chatform input { flex: 1; min-width: 0; font: inherit; font-size: 16px; color: var(--text); background: rgba(0, 0, 0, .35); border: 2px solid var(--line); border-radius: 4px; padding: 7px 10px; -webkit-user-select: text; user-select: text; }
 .chatform input:focus { outline: none; border-color: var(--gold); }
 .chatform button { background: rgba(200, 120, 0, .6); border: 0; border-radius: 4px; padding: 0 12px; font-weight: bold; }
+.intro .preview { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 34vh; object-fit: cover; border-radius: 10px; border: 2px solid var(--line); background: #15112a; margin: 0 0 12px; }
 .intro .gcode { color: var(--dim); font-weight: bold; margin: 0 0 6px; }
 .intro .gdesc { font-size: 17px; line-height: 1.5; margin: 0; }
 .intro p { line-height: 1.45; margin: 0; }

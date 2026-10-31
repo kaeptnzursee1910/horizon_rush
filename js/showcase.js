@@ -8,10 +8,20 @@ HR.Showcase = {
 
   // neuer Durchlauf (wird bei jedem Start der Menü-Animation aufgerufen)
   reset() {
+    this.only = null;
     this.list = U.shuffle(HR.GAME_ORDER.slice());
     this.idx = 0;
     this.load(this.list[0]);
   },
+
+  // nur noch ein Spiel zeigen (Vorschau in der Spielerklärung); null = wieder alle im Wechsel
+  focus(code) {
+    if (code === this.only) return;
+    if (!code) { if (this.only) this.reset(); return; }
+    this.only = code; this.list = [code]; this.idx = 0; this.load(code);
+  },
+
+  period() { return this.only ? 14 : this.PERIOD; },
 
   active() { return !!(Game.race && Game.race.demo && !HR.Party.arena); },
 
@@ -19,7 +29,7 @@ HR.Showcase = {
     if (!this.active()) return;
     this.t += dt;
     const a = this.arena;
-    if (this.t >= this.PERIOD || (a && a.phase !== 'play')) {
+    if (this.t >= this.period() || (a && a.phase !== 'play')) {
       this.idx = (this.idx + 1) % this.list.length;
       this.load(this.list[this.idx]);
       return;
@@ -56,7 +66,7 @@ HR.Showcase = {
     if (this.arena) this.arena.render(g, W, H, dpr);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     // weiche Überblendung beim Wechsel
-    const f = Math.max(this.t < this.FADE ? 1 - this.t / this.FADE : 0, this.t > this.PERIOD - this.FADE ? 1 - (this.PERIOD - this.t) / this.FADE : 0);
+    const f = Math.max(this.t < this.FADE ? 1 - this.t / this.FADE : 0, this.t > this.period() - this.FADE ? 1 - (this.period() - this.t) / this.FADE : 0);
     if (f > 0) { g.fillStyle = `rgba(0,0,0,${f})`; g.fillRect(0, 0, W, H); }
     const def = HR.GAMES[this.code];
     if (def && document.querySelector('.panel.main')) {
@@ -65,6 +75,23 @@ HR.Showcase = {
       HR.Render.text(g, def.name.toUpperCase(), W - 14 * sc, H - 14 * sc - 16 * sc, 16 * sc, 'rgb(255,210,40)', 'right');
       g.globalAlpha = 1;
     }
+  },
+
+  // Bild der Hauptleinwand in die Vorschau der Spielerklärung kopieren
+  copyPreview(src) {
+    const cv = document.getElementById('ppreview');
+    if (!cv || !this.only) return;
+    const r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+    if (!w || !h) return;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    // Fahrspiele: Ausschnitt mit dem Seitenverhältnis der Vorschau aus der Mitte des Hauptbilds
+    const sw = src.width, sh = src.height, k = Math.min(sw / w, sh / h), cw = w * k, ch = h * k;
+    const g = cv.getContext('2d');
+    // Arena-Spiele direkt passend hineinzeichnen, damit das ganze Spielfeld zu sehen ist
+    if (this.arena) { this.arena.render(g, w / dpr, h / dpr, dpr); g.setTransform(1, 0, 0, 1, 0, 0); return; }
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.drawImage(src, (sw - cw) / 2, (sh - ch) / 2, cw, ch, 0, 0, w, h);
   },
 
   // ---------- Computer-Spieler ----------
