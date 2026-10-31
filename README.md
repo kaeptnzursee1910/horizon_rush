@@ -3,7 +3,7 @@
 Das Party-Spiel für bis zu 8 Spieler im Browser.
 Läuft auf iPad, Android-Tablet und Windows-PC in Safari, Chrome, Edge oder Firefox.
 
-**Spielen:** https://simkol34-ai.github.io/horizon_rush/
+**Spielen:** https://kaeptnzursee1910.github.io/horizon_rush/
 
 ## Inhalt
 - **Multiplayer:** Party für bis zu 8 Spieler mit 24 Minispielen, Chat und Siegerehrung
