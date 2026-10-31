@@ -6,7 +6,7 @@ Läuft auf iPad, Android-Tablet und Windows-PC in Safari, Chrome, Edge oder Fire
 **Spielen:** https://kaeptnzursee1910.github.io/horizon_rush/
 
 ## Inhalt
-- **Multiplayer:** Party für bis zu 8 Spieler mit 24 Minispielen, Chat und Siegerehrung
+- **Multiplayer:** Party für bis zu 8 Spieler mit 24 Minispielen, Chat und Siegerehrung. Freie Plätze füllen beim Start Computergegner auf.
 - **Singleplayer:** alle 24 Minispiele gegen 1 bis 7 Computergegner, mit Runden, Punkten und Siegerehrung.
   Dort gibt es auch ein freies Rennen gegen 7 Computergegner.
 - 3 Strecken (Küstenstraße, Alpenpass, Wüstencanyon), 4 Autos mit Lackierungen

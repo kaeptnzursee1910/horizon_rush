@@ -70,6 +70,20 @@ const Party = HR.Party = {
     })));
   },
 
+  // Online-Party: freie Plätze beim Start mit Computergegnern auffüllen (laufen beim Gastgeber)
+  addBots() {
+    const P = this.P;
+    P.players = P.players.filter(p => !p.ai);
+    const free = P.max - P.players.length; if (free <= 0) return;
+    const used = P.players.map(p => p.color), colors = [0, 1, 2, 3, 4, 5, 6, 7].filter(c => !used.includes(c));
+    const taken = P.players.map(p => p.name.toLowerCase());
+    const [lo, hi] = HR.DIFFS[Game.diff][1];
+    HR.makeAI(HR.AI_NAMES.length, Game.diff).filter(a => !taken.includes(a.name.toLowerCase())).slice(0, free).forEach((a, i) => {
+      P.players.push({ id: 100 + i, name: a.name, color: colors[i] == null ? (i + 1) % 8 : colors[i], car: a.car, ai: true, skill: lo + (hi - lo) * (i % 3) / 2 });
+    });
+    this.sys(P.players.filter(p => p.ai).length + ' Computergegner füllen die freien Plätze auf.');
+  },
+
   join(code) {
     UI.busy('Verbinde mit Party ' + code + ' …');
     HR.Net.onMsg = (m, from) => this.msg(m, from);
@@ -246,6 +260,7 @@ const Party = HR.Party = {
       list.push(...bag);
     }
     P.playlist = list.slice(0, P.rounds);
+    if (!P.solo) this.addBots();
     P.scores = {}; for (const p of P.players) P.scores[p.id] = 0;
     P.round = 0; P.last = null;
     this.sys('Die Party beginnt: ' + P.rounds + (P.rounds === 1 ? ' Runde.' : ' Runden.'));
@@ -256,7 +271,7 @@ const Party = HR.Party = {
     const P = this.P;
     if (P.round >= P.rounds) { P.phase = 'final'; this.changed(); this.show(); return; }
     P.round += 1;
-    P.ready = [];
+    P.ready = P.players.filter(p => p.ai).map(p => p.id);   // Computergegner sind immer bereit
     if (P.pick === 'pick') { P.current = null; P.phase = 'choose'; }
     else { P.current = P.playlist[P.round - 1]; P.phase = 'intro'; }
     this.broadcastState();
@@ -353,6 +368,7 @@ const Party = HR.Party = {
     const P = this.P; if (!P.host) return;
     this.stopGame();
     P.phase = 'lobby'; P.round = 0; P.ready = []; P.current = null;
+    if (!P.solo) P.players = P.players.filter(p => !p.ai);
     this.broadcastState();
     Game.startDemo();
     this.show();
@@ -465,6 +481,7 @@ const PUI = HR.PUI = {
       ${P.solo ? `<nav class="list row"><button class="hot" data-act="pstart">Starten</button></nav>
         <p class="note">Lieber ein normales Rennen? <button class="link" data-act="soloRace">Freies Rennen fahren</button></p>`
       : host ? `<nav class="list row"><button class="hot" data-act="pstart">Party starten</button><button data-act="pinvite">Einladungslink teilen</button></nav>
+        <p class="note">Freie Plätze bis ${P.max} Spieler füllen beim Start Computergegner auf (Stärke wie in den Einstellungen).</p>
         <p class="note">Wer den Link öffnet, kommt direkt in die Party. Oder: <b>Multiplayer</b> tippen und den Code <b>${P.code}</b> eingeben.</p>`
         : `<p class="note wait">Nur ${UI.esc(Party.hostName())} kann die Einstellungen ändern. Warte, bis die Party startet …</p>`}`;
     UI.bind(el);

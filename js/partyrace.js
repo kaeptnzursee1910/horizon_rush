@@ -18,7 +18,7 @@ HR.PartyRace = class {
     for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rnd.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
     const entrants = order.map(p => ({
       id: 'h' + p.id, pidx: p.id, name: p.name, car: p.car, color: HR.PARTY_COLORS[p.color], human: !p.ai, skill: p.skill,
-      pid: p.id === ctx.me ? 0 : null, remote: p.id !== ctx.me && !p.ai,
+      pid: p.id === ctx.me ? 0 : null, remote: p.id !== ctx.me && (!p.ai || !this.host),   // Computerautos fährt der Gastgeber, Gäste bekommen sie per Schnappschuss
     }));
     HR.Input.actKeys = !!this.rules.extraButton;
     Game.beginRace({ mode: 'party', party: true, online: true, track: ctx.setup.track, laps: this.rules.laps || 999, entrants, rules: this.rules }, 1);
