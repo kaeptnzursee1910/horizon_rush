@@ -162,7 +162,7 @@ const PR = HR.PR = {
 
 const raceDef = (def) => Object.assign({ kind: 'race', setup: (players, seed) => ({ track: U.rng(seed + 7).randint(0, HR.TRACKS.length - 1) }), create: ctx => new HR.PartyRace(def, ctx) }, def);
 const KEYS_DRIVE = '← → lenken, ↑ Gas, ↓ Bremse (oder WASD)';
-const TOUCH_DRIVE = 'links ◀ ▶ lenken, rechts GAS und BREMSE';
+const TOUCH_DRIVE = 'Steuerkreuz ◀ ▶ lenken, rechts GAS und BREMSE';
 
 // ======================================================================
 // A1 Ausscheidungsrennen

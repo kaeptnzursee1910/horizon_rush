@@ -486,8 +486,8 @@ const UI = HR.UI = {
         <h1 class="logo">HORIZON RUSH</h1>
         <p class="tag">Das Party-Spiel für bis zu 8 Spieler</p>
         <nav class="list bigmenu">
-          <button data-act="party" class="big hot" autofocus><b>Multiplayer</b><span>Party mit Freunden · 12 Minispiele</span></button>
-          <button data-act="solo" class="big"><b>Singleplayer</b><span>Alle 12 Minispiele gegen Computergegner</span></button>
+          <button data-act="party" class="big hot" autofocus><b>Multiplayer</b><span>Party mit Freunden · ${HR.GAME_ORDER.length} Minispiele</span></button>
+          <button data-act="solo" class="big"><b>Singleplayer</b><span>Alle ${HR.GAME_ORDER.length} Minispiele gegen Computergegner</span></button>
         </nav>
         <nav class="minor"><button data-act="settings">Einstellungen</button></nav>
         <p class="hint">${HR.Input.touchMode ? 'Tippen zum Wählen' : '↑↓ wählen  ·  Enter bestätigen  ·  F11 Vollbild  ·  M Ton'}</p>

@@ -31,7 +31,7 @@ HR.ArenaGame = class {
     if (this.def.start) this.def.start(this.S, this);
   }
 
-  layout() { HR.Input.layoutPad(this.def.padL || [], this.def.padR || [], Game.W, Game.H); }
+  layout() { HR.Input.layoutPad(this.def.btns || [], Game.W, Game.H); }
 
   stop() {
     if (HR.Party.arena === this) HR.Party.arena = null;
@@ -53,7 +53,7 @@ HR.ArenaGame = class {
 
   readInput() {
     const c = HR.Input.control(0);
-    return (c.left ? 1 : 0) | (c.right ? 2 : 0) | (c.gas ? 4 : 0) | (c.brake ? 8 : 0) | (c.act ? 16 : 0);
+    return (c.left ? 1 : 0) | (c.right ? 2 : 0) | (c.gas ? 4 : 0) | (c.brake ? 8 : 0) | (c.act ? 16 : 0) | (c.act2 ? 32 : 0);
   }
 
   frame(dt) {
@@ -101,8 +101,8 @@ HR.ArenaGame = class {
     const inp = {};
     for (const p of S.p) {
       const k = this.inputs[p.id] | 0, pk = this.prevIn[p.id] | 0, e = (this.edges[p.id] | 0) | (k & ~pk);
-      inp[p.id] = { l: !!(k & 1), r: !!(k & 2), u: !!(k & 4), d: !!(k & 8), a: !!(k & 16),
-        pl: !!(e & 1), pr: !!(e & 2), pu: !!(e & 4), pd: !!(e & 8), pa: !!(e & 16) };
+      inp[p.id] = { l: !!(k & 1), r: !!(k & 2), u: !!(k & 4), d: !!(k & 8), a: !!(k & 16), b: !!(k & 32),
+        pl: !!(e & 1), pr: !!(e & 2), pu: !!(e & 4), pd: !!(e & 8), pa: !!(e & 16), pb: !!(e & 32) };
       this.prevIn[p.id] = k; this.edges[p.id] = 0;
     }
     S.time += dt;
@@ -193,7 +193,7 @@ HR.ArenaGame = class {
   // ---------- Zeichnen ----------
   render(g, W, H, dpr) {
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.fillStyle = this.def.bg || '#05060f'; g.fillRect(0, 0, W, H);
+    HR.ST.backdrop(g, W, H, this.def.bgTop, this.def.bgBot);
     // mit Touch-Tasten bleibt unten ein Streifen für die Tasten frei
     const band = HR.Input.touchMode && !this.show ? Math.min(H * 0.24, 150 * U.clamp(Math.min(W / 900, H / 560), 0.6, 1.15)) : 0;
     const avH = H - band;
@@ -221,11 +221,14 @@ HR.ArenaGame = class {
     g.beginPath(); g.arc(x, y, r, 0, 7); g.stroke();
   }
 
-  label(g, txt, x, y, size, color) {
-    g.font = `bold ${size}px ${HR.FONT}`; g.textAlign = 'center'; g.textBaseline = 'bottom';
-    g.fillStyle = 'rgba(0,0,0,.7)'; g.fillText(txt, x + 1, y + 1);
-    g.fillStyle = color || '#fff'; g.fillText(txt, x, y);
+  // Party-Figur eines Spielers mit "DU"-Pfeil
+  fig(g, p, x, y, r, o) {
+    o = Object.assign({ t: this.S.time }, o || {});
+    HR.ST.char(g, x, y, r, this.color(p), o);
+    if (p.id === this.me && !o.dead && !o.noMark) HR.ST.you(g, x, y - r * (o.hat ? 1.9 : 1.25), this.S.time, r > 22 ? 'DU' : '');
   }
+
+  label(g, txt, x, y, size, color) { HR.ST.text(g, txt, x, y, size, color || '#fff', 'center', 'bottom'); }
 
   hud(g, W, H) {
     const R = HR.Render, S = this.S, sc = U.clamp(Math.min(W / 1000, H / 640), 0.62, 1.3);
@@ -233,12 +236,13 @@ HR.ArenaGame = class {
     // Spielerliste oben links
     const rows = S.p.filter(p => !p.gone);
     const fs = Math.round(13 * sc), lh = fs * 1.45, w = 190 * sc;
-    g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(6, 6, w, rows.length * lh + 8);
+    g.fillStyle = 'rgba(37,31,58,.78)'; g.beginPath(); g.roundRect(6, 6, w + 8, rows.length * lh + 10, 10 * sc); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,.25)'; g.lineWidth = 2; g.stroke();
     rows.forEach((p, i) => {
       const y = 10 + i * lh, st = this.def.status ? this.def.status(S, p, this) : '';
       const out = this.def.isOut ? this.def.isOut(S, p) : false;
       g.globalAlpha = out ? 0.45 : 1;
-      g.fillStyle = this.rgb(p); g.fillRect(12, y + lh * 0.2, fs * 0.8, fs * 0.8);
+      g.fillStyle = this.rgb(p); g.beginPath(); g.arc(12 + fs * 0.4, y + lh * 0.2 + fs * 0.4, fs * 0.45, 0, 7); g.fill();
       g.font = `${p.id === this.me ? 'bold ' : ''}${fs}px ${HR.FONT}`; g.textAlign = 'left'; g.textBaseline = 'top';
       g.fillStyle = p.id === this.me ? Y : '#fff';
       let nm = this.name(p.id); if (nm.length > 12) nm = nm.slice(0, 11) + '…';
@@ -248,20 +252,21 @@ HR.ArenaGame = class {
       g.globalAlpha = 1;
     });
     // Titel und Zeit oben rechts
-    R.text(g, this.def.name.toUpperCase(), W - 12, 10, 15 * sc, Y, 'right');
-    if (this.def.duration && this.phase !== 'count') R.text(g, U.fmtTime(Math.max(0, this.def.duration - S.time)).replace(/\.\d+$/, ''), W - 12, 10 + 19 * sc, 26 * sc, '#fff', 'right');
+    const T = HR.ST.text;
+    T(g, this.def.name.toUpperCase(), W - 12, 18 * sc, 15 * sc, Y, 'right');
+    if (this.def.duration && this.phase !== 'count') T(g, U.fmtTime(Math.max(0, this.def.duration - S.time)).replace(/\.\d+$/, ''), W - 12, 18 * sc + 26 * sc, 28 * sc, '#fff', 'right');
     if (this.def.hud) this.def.hud(g, S, this, W, H, sc);
     // Countdown, LOS, Ende
     if (this.phase === 'count') {
       const c = Math.ceil(this.count);
-      if (c > 0 && c <= 3) R.text(g, String(c), W / 2, H * 0.42, 120 * sc, Y, 'center', 'middle');
-      R.text(g, this.def.short || '', W / 2, H * 0.42 + 80 * sc, 20 * sc, '#fff', 'center', 'middle');
-    } else if (this.goT > 0) R.text(g, 'LOS!', W / 2, H * 0.42, 110 * sc, 'rgb(80,255,100)', 'center', 'middle');
-    if (this.phase === 'end') R.text(g, 'ENDE!', W / 2, H * 0.42, 90 * sc, Y, 'center', 'middle');
+      if (c > 0 && c <= 3) T(g, String(c), W / 2, H * 0.42, 120 * sc, Y);
+      T(g, this.def.short || '', W / 2, H * 0.42 + 85 * sc, 24 * sc, '#fff');
+    } else if (this.goT > 0) T(g, 'LOS!', W / 2, H * 0.42, 110 * sc, 'rgb(90,235,110)');
+    if (this.phase === 'end') T(g, 'ENDE!', W / 2, H * 0.42, 90 * sc, Y);
     else if (this.phase === 'play' && this.def.isOut && this.def.isOut(S, S.p.find(p => p.id === this.me) || {})) {
-      R.text(g, 'AUSGESCHIEDEN', W / 2, H * 0.12 + 20 * sc, 30 * sc, 'rgb(255,110,100)', 'center', 'middle');
+      T(g, 'AUSGESCHIEDEN', W / 2, H * 0.12 + 20 * sc, 30 * sc, 'rgb(255,110,100)');
       const w = this.watching();
-      R.text(g, w ? 'Du schaust ' + this.name(w.id) + ' zu  ·  ◀ ▶ wechseln' : 'Du schaust den anderen zu', W / 2, H * 0.12 + 50 * sc, 16 * sc, '#fff', 'center', 'middle');
+      T(g, w ? 'Du schaust ' + this.name(w.id) + ' zu  ·  ◀ ▶ wechseln' : 'Du schaust den anderen zu', W / 2, H * 0.12 + 52 * sc, 17 * sc, '#fff');
     }
   }
 };

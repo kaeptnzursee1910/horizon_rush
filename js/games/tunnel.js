@@ -5,8 +5,8 @@ HR.AR.define({
   code: 'B7', name: 'Tunnel-Überleben', short: 'Flieg durch die Lücken!',
   desc: 'Alle fliegen gleichzeitig durch denselben Tunnel, der immer schneller wird. Dir kommen Ringe mit Lücken entgegen. Du kreist an der Tunnelwand nach links oder rechts, um rechtzeitig in einer Lücke zu sein. Die anderen siehst du als farbige Lichter an der Wand.',
   goal: 'Keinen Ring berühren. Wer als Letzter übrig ist, gewinnt.',
-  touch: '◀ links herum, ▶ rechts herum', keys: '← / A links herum, → / D rechts herum',
-  padL: [['left', '◀']], padR: [['right', '▶']],
+  touch: 'Steuerkreuz ◀ links herum, ▶ rechts herum', keys: '← / A links herum, → / D rechts herum',
+  btns: [],
   duration: 150, K: 16, GAP: 26, Z0: 70, bg: '#02030a',
 
   init(players, rnd) {
@@ -67,6 +67,7 @@ HR.AR.define({
   unpack(S, d) { S.time = d.t; S.z = d.z; d.p.forEach((q, i) => { const p = S.p[i]; p.a = q.a; p.al = q.al; p.dt = q.dt; p.gone = q.g; }); },
 
   draw(g, S, G, W, H) {
+    const ST = HR.ST;
     const me = S.p.find(p => p.id === G.me) || S.p[0];
     let view = me;
     if (!me.al) view = G.watching() || S.p.find(p => p.al) || me;
@@ -74,14 +75,19 @@ HR.AR.define({
     const cx = W / 2, cy = H * 0.46, Rp = Math.min(W, H) * 0.46, F = 40;
     const R = d => Rp * F / (F + d);
     const K = this.K, sw = Math.PI * 2 / K;
-    g.fillStyle = this.bg; g.fillRect(0, 0, W, H);
-    // Tunnelwände: Ringe und Linien
-    g.strokeStyle = 'rgba(90,120,255,.25)'; g.lineWidth = 1;
+    // Röhre: helle Segmente mit Umriss, nach hinten dunkler
+    const bg = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.8);
+    bg.addColorStop(0, '#120d26'); bg.addColorStop(0.25, '#3a2f6b'); bg.addColorStop(1, '#8a6ad8');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    for (let k = 0; k < K; k++) {
+      if (k % 2) continue;
+      const a0 = k * sw + rot, a1 = a0 + sw;
+      g.fillStyle = 'rgba(255,255,255,.07)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, Math.max(W, H), a0, a1); g.closePath(); g.fill();
+    }
+    g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 3;
     const off = S.z % 13;
     for (let d = 13 - off; d < 420; d += 13) { g.globalAlpha = Math.exp(-d / 160); g.beginPath(); g.arc(cx, cy, R(d), 0, 7); g.stroke(); }
     g.globalAlpha = 1;
-    g.strokeStyle = 'rgba(90,120,255,.18)';
-    for (let k = 0; k < K; k++) { const a = k * sw + rot; g.beginPath(); g.moveTo(cx + Math.cos(a) * R(420), cy + Math.sin(a) * R(420)); g.lineTo(cx + Math.cos(a) * Rp * 1.6, cy + Math.sin(a) * Rp * 1.6); g.stroke(); }
     // Hindernisringe von hinten nach vorn
     const j0 = Math.max(0, Math.floor((S.z - this.Z0) / this.GAP) + 1);
     for (let j = j0 + 16; j >= j0; j--) {
@@ -89,30 +95,29 @@ HR.AR.define({
       if (d <= -2 || d > 430) continue;
       const r = this.ring(S, j), ro = R(Math.max(0, d)), ri = ro * 0.62, fog = Math.exp(-d / 170);
       const hue = r.hue || 200;
-      g.fillStyle = `hsla(${hue},85%,${50 + 10 * fog}%,${0.25 + 0.7 * fog})`;
-      g.strokeStyle = `hsla(${hue},100%,80%,${fog})`; g.lineWidth = 1.5;
+      g.globalAlpha = 0.25 + 0.75 * fog;
       for (let k = 0; k < K; k++) {
         if (!r.b[k]) continue;
         const a0 = k * sw + rot, a1 = a0 + sw;
-        g.beginPath(); g.arc(cx, cy, ro, a0, a1); g.arc(cx, cy, ri, a1, a0, true); g.closePath(); g.fill(); g.stroke();
+        g.beginPath(); g.arc(cx, cy, ro, a0, a1); g.arc(cx, cy, ri, a1, a0, true); g.closePath();
+        ST.fill(g, `hsl(${hue},80%,${48 + 14 * fog}%)`, Math.max(1.5, 5 * fog));
+        g.fillStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.arc(cx, cy, ro - Math.max(1, (ro - ri) * 0.12), a0 + 0.04, a1 - 0.04); g.arc(cx, cy, ro - (ro - ri) * 0.3, a1 - 0.04, a0 + 0.04, true); g.closePath(); g.fill();
       }
+      g.globalAlpha = 1;
     }
-    // Mitspieler als Lichter, eigener Gleiter unten
-    const rp = Rp * 0.82;
+    // Mitspieler am Rand, eigene Figur unten
+    const rp = Rp * 0.82, s = Rp * 0.075;
     for (const p of S.p) {
       if (p.gone || !p.al || p === view) continue;
       const a = p.a + rot, x = cx + Math.cos(a) * rp, y = cy + Math.sin(a) * rp;
-      g.fillStyle = G.rgb(p, 0.3); g.beginPath(); g.arc(x, y, 26, 0, 7); g.fill();
-      g.fillStyle = G.rgb(p); g.beginPath(); g.arc(x, y, 12, 0, 7); g.fill();
+      g.globalAlpha = 0.85; ST.char(g, x, y, s * 0.9, G.color(p), { look: [-Math.cos(a), -Math.sin(a)], t: S.time, noShadow: true }); g.globalAlpha = 1;
     }
     if (view.al) {
-      const x = cx, y = cy + rp, s = Rp * 0.07;
-      g.fillStyle = G.rgb(view, 0.35); g.beginPath(); g.arc(x, y, s * 2.2, 0, 7); g.fill();
-      g.fillStyle = G.rgb(view); g.beginPath(); g.moveTo(x, y - s * 1.3); g.lineTo(x + s * 1.6, y + s * 0.8); g.lineTo(x - s * 1.6, y + s * 0.8); g.closePath(); g.fill();
-      g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y - s * 0.1, s * 0.4, 0, 7); g.fill();
-      if (view === me && !G.show) G.label(g, 'DU', x, y - s * 2, Math.max(14, s), '#fff');
-      else G.label(g, 'Du schaust ' + G.name(view.id) + ' zu', x, y - s * 2, Math.max(14, s * 0.8), '#fff');
+      const x = cx, y = cy + rp;
+      ST.char(g, x, y, s * 1.3, G.color(view), { look: [0, -1], t: S.time });
+      if (view === me && !G.show) ST.you(g, x, y - s * 1.8, S.time, 'DU');
+      else ST.text(g, 'Du schaust ' + G.name(view.id) + ' zu', x, y - s * 2.2, Math.max(14, s * 0.8), '#fff');
     }
-    G.label(g, Math.floor(S.z / 10) + ' m', W - 14 - 40, H - 14, 18, 'rgba(255,255,255,.6)');
+    ST.text(g, Math.floor(S.z / 10) + ' m', W / 2, H - 24, 22, '#fff');
   },
 });

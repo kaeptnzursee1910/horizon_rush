@@ -264,6 +264,7 @@ HR.Render = {
   touch(g) {
     if (!HR.Input.touchMode) return;
     for (const b of HR.Input.buttons) {
+      if (b.action === 'dpad') { this.dpad(g, b); continue; }
       const on = HR.Input.pressed(b);
       g.fillStyle = on ? 'rgba(255,210,40,.55)' : 'rgba(10,12,30,.35)';
       g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 2;
@@ -272,5 +273,27 @@ HR.Render = {
       g.font = `bold ${Math.round(b.label.length > 2 ? b.r * 0.36 : b.r * 0.6)}px ${HR.FONT}`;
       g.fillText(b.label, b.x, b.y + 1);
     }
+  },
+
+  // Steuerkreuz: vier Arme, gedrückte Richtungen leuchten
+  dpad(g, b) {
+    const on = HR.Input.dpadDirs(b), w = b.r * 0.62, L = b.r * 0.98;
+    g.save(); g.translate(b.x, b.y);
+    g.fillStyle = 'rgba(10,12,30,.28)'; g.beginPath(); g.arc(0, 0, b.r * 1.05, 0, 7); g.fill();
+    const arms = [['gas', 0, -1], ['brake', 0, 1], ['left', -1, 0], ['right', 1, 0]];
+    for (const [a, dx, dy] of arms) {
+      const x = dx ? (dx > 0 ? w / 2 : -L) : -w / 2, y = dy ? (dy > 0 ? w / 2 : -L) : -w / 2;
+      const ww = dx ? L - w / 2 : w, hh = dy ? L - w / 2 : w;
+      g.fillStyle = on.has(a) ? 'rgba(255,210,40,.75)' : 'rgba(30,32,55,.6)';
+      g.beginPath(); g.roundRect(x, y, ww, hh, w * 0.25); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.stroke();
+      // Pfeil
+      const ax = dx * (L * 0.68), ay = dy * (L * 0.68), s = w * 0.24;
+      g.fillStyle = '#fff'; g.beginPath();
+      g.moveTo(ax + dx * s, ay + dy * s); g.lineTo(ax - dx * s * 0.6 - dy * s, ay - dy * s * 0.6 - dx * s); g.lineTo(ax - dx * s * 0.6 + dy * s, ay - dy * s * 0.6 + dx * s);
+      g.closePath(); g.fill();
+    }
+    g.fillStyle = 'rgba(30,32,55,.6)'; g.fillRect(-w / 2, -w / 2, w, w);
+    g.restore();
   },
 };

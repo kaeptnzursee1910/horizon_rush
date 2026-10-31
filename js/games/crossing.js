@@ -5,8 +5,8 @@ HR.AR.define({
   code: 'B10', name: 'Straßen-Überquerung', short: 'Dreimal sicher rüber!',
   desc: 'Alle starten unten und hüpfen Feld für Feld nach oben: erst über eine vielbefahrene Straße, dann über einen Fluss auf treibenden Baumstämmen. Wer überfahren wird oder ins Wasser fällt, muss zurück zum Start. Oben angekommen geht es wieder unten los.',
   goal: 'Als Erster dreimal sicher oben ankommen. Nach 2 Minuten gewinnt, wer am öftesten drüben war.',
-  touch: 'links ◀ ▶ zur Seite, rechts ▲ vor und ▼ zurück', keys: 'Pfeiltasten oder WASD: ein Feld hüpfen',
-  padL: [['left', '◀'], ['right', '▶']], padR: [['gas', '▲'], ['brake', '▼']],
+  touch: 'Steuerkreuz: ein Feld hüpfen', keys: 'Pfeiltasten oder WASD: ein Feld hüpfen',
+  btns: [],
   duration: 120, ROWS: 11, CW: 80, LW: 2000, GOAL: 3,
 
   init(players, rnd) {
@@ -77,52 +77,48 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
+    const ST = HR.ST;
     g.beginPath(); g.rect(0, 0, 1600, 1000); g.clip();
     const RH = S.RH, Y = r => 1000 - (r + 1) * RH;
     S.lanes.forEach((L, r) => {
       const y = Y(r);
       if (L.type === 'road') {
-        g.fillStyle = '#3b3d45'; g.fillRect(0, y, 1600, RH);
-        if (r < 4) { g.fillStyle = 'rgba(255,255,255,.55)'; for (let x = 10; x < 1600; x += 80) g.fillRect(x, y - 2, 40, 4); }
+        g.fillStyle = '#5c5873'; g.fillRect(0, y, 1600, RH);
+        g.fillStyle = 'rgba(255,255,255,.7)'; for (let x = 10; x < 1600; x += 90) { ST.rrect(g, x, y + RH / 2 - 3, 44, 6, 3); g.fill(); }
+        g.fillStyle = ST.INK; g.fillRect(0, y, 1600, 4); g.fillRect(0, y + RH - 4, 1600, 4);
         for (const o of L.o) {
           const x = this.ox(L, o, S.time), w = L.len, h = RH * 0.62, cy = y + RH / 2;
-          g.fillStyle = 'rgba(0,0,0,.3)'; HR.AR.rr(g, x + 4, cy - h / 2 + 5, w, h, 10); g.fill();
-          g.fillStyle = L.col; HR.AR.rr(g, x, cy - h / 2, w, h, 10); g.fill();
-          g.fillStyle = 'rgba(30,40,60,.8)';
-          const fx = L.dir > 0 ? x + w - 34 : x + 10; g.fillRect(fx, cy - h / 2 + 6, 24, h - 12);
-          g.fillStyle = 'rgba(255,255,210,.9)'; const lx = L.dir > 0 ? x + w - 4 : x; g.fillRect(lx, cy - h / 2 + 4, 4, 8); g.fillRect(lx, cy + h / 2 - 12, 4, 8);
+          g.fillStyle = 'rgba(20,10,40,.25)'; ST.rrect(g, x + 4, cy - h / 2 + 8, w, h, 12); g.fill();
+          for (const wx of [x + 14, x + w - 30]) for (const wy of [cy - h / 2 - 5, cy + h / 2 - 7]) { ST.rrect(g, wx, wy, 16, 12, 4); ST.fill(g, ST.INK, 2); }
+          ST.rrect(g, x, cy - h / 2, w, h, 12); ST.fill(g, L.col, 4);
+          const fx = L.dir > 0 ? x + w - 38 : x + 12; ST.rrect(g, fx, cy - h / 2 + 7, 26, h - 14, 6); ST.fill(g, '#9fd8ff', 3);
+          g.fillStyle = 'rgba(255,255,255,.3)'; ST.rrect(g, x + 8, cy - h / 2 + 5, w - 16, 7, 3); g.fill();
+          g.fillStyle = '#fff3a0'; const lx = L.dir > 0 ? x + w - 6 : x + 1; g.fillRect(lx, cy - h / 2 + 5, 5, 9); g.fillRect(lx, cy + h / 2 - 14, 5, 9);
         }
       } else if (L.type === 'river') {
-        g.fillStyle = '#1f6fb5'; g.fillRect(0, y, 1600, RH);
-        g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 2;
+        g.fillStyle = '#4fb6e8'; g.fillRect(0, y, 1600, RH);
+        g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 4; g.lineCap = 'round';
         for (let x = (S.time * 30 * L.dir) % 120 - 120; x < 1700; x += 120) { g.beginPath(); g.moveTo(x, y + RH * 0.5); g.quadraticCurveTo(x + 30, y + RH * 0.35, x + 60, y + RH * 0.5); g.stroke(); }
         for (const [o, len] of L.o) {
           const x = this.ox(L, o, S.time), h = RH * 0.66, cy = y + RH / 2;
-          g.fillStyle = '#7a4a22'; HR.AR.rr(g, x, cy - h / 2, len, h, h / 2); g.fill();
-          g.fillStyle = '#9a6634'; HR.AR.rr(g, x + 6, cy - h / 2 + 6, len - 12, h * 0.3, h * 0.15); g.fill();
-          g.fillStyle = '#c99a5a'; g.beginPath(); g.ellipse(x + len - h * 0.25, cy, h * 0.2, h * 0.42, 0, 0, 7); g.fill();
+          ST.rrect(g, x, cy - h / 2, len, h, h / 2); ST.fill(g, '#b0743c', 4);
+          g.strokeStyle = 'rgba(80,40,20,.35)'; g.lineWidth = 3; g.beginPath(); g.moveTo(x + h * 0.5, cy - h * 0.12); g.lineTo(x + len - h * 0.6, cy - h * 0.12); g.moveTo(x + h * 0.7, cy + h * 0.16); g.lineTo(x + len - h * 0.8, cy + h * 0.16); g.stroke();
+          g.beginPath(); g.ellipse(x + len - h * 0.28, cy, h * 0.2, h * 0.4, 0, 0, 7); ST.fill(g, '#e8c08a', 3);
         }
       } else if (L.type === 'goal') {
-        g.fillStyle = '#3a8a3a'; g.fillRect(0, y, 1600, RH);
-        for (let x = 0; x < 1600; x += 40) for (let k = 0; k < 2; k++) { g.fillStyle = (x / 40 + k) % 2 ? '#fff' : '#222'; g.fillRect(x, y + RH - 20 + k * 10, 40, 10); }
-        G.label(g, 'ZIEL', 800, y + RH * 0.7, 40, 'rgb(255,210,40)');
+        g.fillStyle = '#8fd06a'; g.fillRect(0, y, 1600, RH);
+        for (let x = 0; x < 1600; x += 40) for (let k = 0; k < 2; k++) { g.fillStyle = (x / 40 + k) % 2 ? '#fff' : ST.INK; g.fillRect(x, y + RH - 20 + k * 10, 40, 10); }
+        ST.text(g, 'ZIEL', 800, y + RH * 0.42, 40, '#ffd23c');
       } else {
-        g.fillStyle = r % 2 ? '#4caf50' : '#5cbf60'; g.fillRect(0, y, 1600, RH);
-        g.fillStyle = 'rgba(0,0,0,.08)'; for (let x = 20; x < 1600; x += 90) g.fillRect(x, y + RH * 0.3, 6, 10);
+        g.fillStyle = r % 2 ? '#8fd06a' : '#84c35f'; g.fillRect(0, y, 1600, RH);
+        g.fillStyle = 'rgba(40,90,30,.25)'; for (let x = 20 + (r * 37) % 60; x < 1600; x += 110) { g.beginPath(); g.moveTo(x, y + RH * 0.7); g.lineTo(x + 5, y + RH * 0.45); g.lineTo(x + 10, y + RH * 0.7); g.fill(); }
       }
     });
     S.p.forEach((p, idx) => {
       if (p.gone) return;
-      const x = p.x + ((idx % 3) - 1) * 6, y = Y(p.r) + RH / 2 + ((idx % 2) ? 4 : -4);
-      if (p.dead > 0) {
-        g.fillStyle = G.rgb(p, 0.5); g.beginPath(); g.ellipse(x, y, 34, 14, 0, 0, 7); g.fill();
-        return;
-      }
-      g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x + 3, y + 6, 24, 18, 0, 0, 7); g.fill();
-      g.fillStyle = G.rgb(p); g.beginPath(); g.ellipse(x, y, 24, 20, 0, 0, 7); g.fill();
-      g.fillStyle = '#fff'; g.beginPath(); g.arc(x - 10, y - 14, 8, 0, 7); g.arc(x + 10, y - 14, 8, 0, 7); g.fill();
-      g.fillStyle = '#111'; g.beginPath(); g.arc(x - 10, y - 16, 4, 0, 7); g.arc(x + 10, y - 16, 4, 0, 7); g.fill();
-      if (p.id === G.me) { G.meMark(g, x, y, 34, S.time); G.label(g, 'DU', x, y - 30, 20); }
+      const x = p.x + ((idx % 3) - 1) * 6, y = Y(p.r) + RH / 2 + ((idx % 2) ? 4 : -4) - 6;
+      if (p.dead > 0) { G.fig(g, p, x, y + 8, 22, { dead: true, squash: 0.35, alpha: 0.75, noMark: true }); return; }
+      G.fig(g, p, x, y, 22, { look: [0, -1] });
     });
   },
 });

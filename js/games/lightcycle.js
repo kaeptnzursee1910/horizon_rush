@@ -5,8 +5,8 @@ HR.AR.define({
   code: 'B1', name: 'Lichtrad-Arena', short: 'Nicht gegen Spuren und Wände fahren!',
   desc: 'Jeder fährt ein Lichtrad, das eine leuchtende Spur hinter sich herzieht. Die Räder fahren von selbst geradeaus und werden mit der Zeit schneller. Du lenkst nur nach links oder rechts, immer im rechten Winkel.',
   goal: 'Nicht in eine Spur oder die Wand fahren. Wer als Letzter übrig ist, gewinnt.',
-  touch: '◀ links abbiegen, ▶ rechts abbiegen', keys: '← / A links abbiegen, → / D rechts abbiegen',
-  padL: [['left', '◀']], padR: [['right', '▶']],
+  touch: 'Steuerkreuz ◀ links abbiegen, ▶ rechts abbiegen', keys: '← / A links abbiegen, → / D rechts abbiegen',
+  btns: [],
   duration: 120,
   DIRS: [[1, 0], [0, 1], [-1, 0], [0, -1]],
 
@@ -81,33 +81,26 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    // Boden mit Raster
-    g.fillStyle = '#070b1c'; g.fillRect(0, 0, 1600, 1000);
-    g.strokeStyle = 'rgba(80,140,255,.12)'; g.lineWidth = 1;
-    g.beginPath();
-    for (let x = 0; x <= 1600; x += 50) { g.moveTo(x, 0); g.lineTo(x, 1000); }
-    for (let y = 0; y <= 1000; y += 50) { g.moveTo(0, y); g.lineTo(1600, y); }
-    g.stroke();
-    g.strokeStyle = 'rgba(120,180,255,.8)'; g.lineWidth = 6; g.strokeRect(3, 3, 1594, 994);
+    const ST = HR.ST;
+    ST.floor(g, 0, 0, 1600, 1000, '#cbbcff', '#bdabf6', 100);
+    g.beginPath(); g.rect(3, 3, 1594, 994); g.lineWidth = 10; g.strokeStyle = ST.INK; g.stroke();
     g.lineCap = 'round'; g.lineJoin = 'round';
+    // Spuren als dicke Bänder mit Umriss
     for (const p of S.p) {
       if (p.gone) continue;
       const pts = p.v.concat([[p.x, p.y]]);
-      const a = p.al ? 1 : 0.35;
-      for (const [w, al] of [[16, 0.18], [8, 0.45], [3, 1]]) {
-        g.strokeStyle = w === 3 ? `rgba(255,255,255,${a * 0.85})` : G.rgb(p, al * a); g.lineWidth = w;
-        g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
-        for (let k = 1; k < pts.length; k++) g.lineTo(pts[k][0], pts[k][1]);
-        g.stroke();
-      }
-      if (p.al) {
-        g.fillStyle = G.rgb(p); g.beginPath(); g.arc(p.x, p.y, 11, 0, 7); g.fill();
-        g.fillStyle = '#fff'; g.beginPath(); g.arc(p.x, p.y, 5, 0, 7); g.fill();
-        if (p.id === G.me) { G.meMark(g, p.x, p.y, 22, S.time); G.label(g, 'DU', p.x, p.y - 26, 22, '#fff'); }
-      } else {
-        g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 3;
-        g.beginPath(); g.moveTo(p.x - 12, p.y - 12); g.lineTo(p.x + 12, p.y + 12); g.moveTo(p.x + 12, p.y - 12); g.lineTo(p.x - 12, p.y + 12); g.stroke();
-      }
+      const path = () => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) g.lineTo(pts[k][0], pts[k][1]); };
+      g.globalAlpha = p.al ? 1 : 0.45;
+      path(); g.strokeStyle = ST.INK; g.lineWidth = 22; g.stroke();
+      path(); g.strokeStyle = G.rgb(p); g.lineWidth = 12; g.stroke();
+      path(); g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 3; g.stroke();
+      g.globalAlpha = 1;
+    }
+    for (const p of S.p) {
+      if (p.gone) continue;
+      const [dx, dy] = this.DIRS[p.d];
+      if (!p.al) { ST.burst(g, p.x, p.y, Math.min(1, (S.time - p.dt) / 0.6), G.rgb(p), 10, 60); }
+      G.fig(g, p, p.x, p.y - 6, 18, { look: [dx, dy], dead: !p.al, alpha: p.al ? 1 : 0.6 });
     }
   },
 });

@@ -73,7 +73,14 @@ HR.Showcase = {
     const bot = this.bots[def.code];
     if (!bot || (sloppy && Math.random() < sloppy)) return 0;
     const o = bot(S, p, def);
-    return (o.l ? 1 : 0) | (o.r ? 2 : 0) | (o.u ? 4 : 0) | (o.d ? 8 : 0) | (o.a ? 16 : 0);
+    return (o.l ? 1 : 0) | (o.r ? 2 : 0) | (o.u ? 4 : 0) | (o.d ? 8 : 0) | (o.a ? 16 : 0) | (o.b ? 32 : 0);
+  },
+
+  // Richtung zu einem Ziel als Tasten (8 Richtungen)
+  toward(x, y, tx, ty, tol) {
+    const dx = tx - x, dy = ty - y, d = Math.hypot(dx, dy) || 1;
+    if (d < (tol || 4)) return {};
+    return { l: dx / d < -0.38, r: dx / d > 0.38, u: dy / d < -0.38, d: dy / d > 0.38 };
   },
 
   bots: {
@@ -130,6 +137,162 @@ HR.Showcase = {
       return { l: tu < p.u - 0.03, r: tu > p.u + 0.03 };
     },
     // erst hüpfen, wenn die nächste Spur frei ist (Straße) oder ein Stamm da ist (Fluss)
+    // ---------- neue Minispiele ----------
+    C1(S, p, def) {
+      if (!p.al) return {};
+      if (!def._nb) { def._nb = []; for (let i = 0; i < S.T.length; i++) { const [x, y] = def.center(i); def._nb[i] = []; for (let j = 0; j < S.T.length; j++) { const [u, v] = def.center(j); if (j !== i && Math.hypot(u - x, v - y) < def.R * 1.9) def._nb[i].push(j); } } }
+      const good = i => S.T[i] >= 0 && S.T[i] < def.POINT * 0.4, pass = i => S.T[i] >= 0 && S.T[i] < def.POINT;
+      const cur = def.tileAt(p.x, p.y);
+      const at = p._t != null && Math.hypot(def.center(p._t)[0] - p.x, def.center(p._t)[1] - p.y) < 22;
+      if (cur >= 0 && (p._t == null || !pass(p._t) || at)) {
+        // Breitensuche über begehbare Platten zur nächsten guten festen Platte, dann nur den ersten Schritt gehen
+        const first = new Map([[cur, -1]]), q = [cur]; let best = null, bs = -1e9;
+        for (let h = 0; h < q.length && q.length < 160; h++) {
+          const c = q[h];
+          for (const j of def._nb[c]) {
+            if (first.has(j) || !pass(j)) continue;
+            first.set(j, first.get(c) === -1 ? j : first.get(c)); q.push(j);
+            if (good(j) && j !== p._last) {
+              const [x, y] = def.center(j), dep = q.length;
+              const sc = def._nb[j].filter(good).length * 10 - Math.hypot(x - 800, y - 500) * 0.02 - Math.hypot(x - p.x, y - p.y) * 0.06 + Math.random() * 10;
+              if (sc > bs) { bs = sc; best = j; }
+            }
+          }
+        }
+        p._last = cur; p._t = best == null ? null : first.get(best);
+      }
+      if (p._t == null) return {};
+      const [tx, ty] = def.center(p._t);
+      return HR.Showcase.toward(p.x, p.y, tx, ty, 8);
+    },
+    C2(S, p, def) {
+      if (!p.al) return {};
+      const pa = Math.atan2(p.y - 520, p.x - 800), d = Math.max(1, Math.hypot(p.x - 800, p.y - 520)), w = 26 / d, sp = Math.max(0.3, S.sp || 1);
+      let tmin = 9, inside = false;
+      for (const l of S.L) {
+        let gap = ((pa - l.a) * (S.dir || 1)) % 6.283; if (gap < 0) gap += 6.283;
+        if (gap < w || gap > 6.283 - w) inside = true;
+        tmin = Math.min(tmin, (gap - w) / sp);
+      }
+      // Sprung so legen, dass die Figur hoch ist, während der Strahl durchläuft
+      const o = inside || (tmin > 0.03 && tmin < 0.11) ? { a: 1 } : {};
+      if (tmin < 0.7 || inside || p.z > 0) return o;
+      p._w = (p._w || 0) + 1;
+      const ang = (p.id * 1.7 + p._w * 0.004), tx = 800 + Math.cos(ang) * 240, ty = 520 + Math.sin(ang) * 240;
+      return Object.assign(HR.Showcase.toward(p.x, p.y, tx, ty, 30), o);
+    },
+    C3(S, p, def) {
+      if (!p.al) return {};
+      const cur = def.cellOf(p.x, p.y), GX = def.GX;
+      const danger = new Set(); for (const f of S.fall) danger.add(f.c);
+      let best = cur, bs = -1e9;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const cx = cur % GX + dx, cy = Math.floor(cur / GX) + dy; if (cx < 0 || cy < 0 || cx >= GX || cy >= def.GY) continue;
+        const c = cy * GX + cx; if (S.box[c]) continue;
+        let sc = -Math.hypot(dx, dy) * 6 - (danger.has(c) ? 1000 : 0) - Math.hypot(cx - GX / 2, cy - def.GY / 2) * 2;
+        for (const [ex, ey] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = (cy + ey) * GX + cx + ex; if (danger.has(n)) sc -= 30; if (S.box[n]) sc -= 8; }
+        if (S.sh.some(s => s.c === c)) sc += 60;
+        if (sc > bs) { bs = sc; best = c; }
+      }
+      const [tx, ty] = def.cellXY(best);
+      return HR.Showcase.toward(p.x, p.y, tx, ty, 6);
+    },
+    C4(S, p, def) {
+      if (S.cr < 0) return HR.Showcase.toward(p.x, p.y, S.cx, S.cy, 4);
+      if (S.cr === p.id) {
+        let fx = 800 - p.x, fy = 510 - p.y; fx *= 0.004; fy *= 0.004;
+        for (const q of S.p) if (q !== p && !q.gone) { const dx = p.x - q.x, dy = p.y - q.y, d = Math.hypot(dx, dy) || 1; fx += dx / d * 300 / d; fy += dy / d * 300 / d; }
+        return HR.Showcase.toward(p.x, p.y, p.x + fx * 100, p.y + fy * 100, 2);
+      }
+      const h = S.p.find(q => q.id === S.cr), d = Math.hypot(h.x - p.x, h.y - p.y);
+      return Object.assign(HR.Showcase.toward(p.x, p.y, h.x, h.y, 4), d < 170 && S.imm <= 0 && Math.random() < 0.3 ? { a: 1 } : {});
+    },
+    C5(S, p) {
+      if (p.fz > 0 || p.mk > 0) return {};
+      if (!p.am) return Math.random() < 0.5 ? { a: 1 } : {};
+      let t = null, td = 1e9;
+      for (const q of S.p) if (q !== p && !q.gone && q.fz <= 0) { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < td) { td = d; t = q; } }
+      if (!t) return {};
+      if (td > 480) return HR.Showcase.toward(p.x, p.y, t.x, t.y, 10);
+      // in einer der 8 Richtungen zielen: passt die Linie, werfen, sonst seitlich ausrichten
+      const ang = Math.atan2(t.y - p.y, t.x - p.x), q = Math.round(ang / (Math.PI / 4)), diff = ang - q * Math.PI / 4;
+      const qx = Math.round(Math.cos(q * Math.PI / 4)), qy = Math.round(Math.sin(q * Math.PI / 4));
+      const o = { l: qx < 0, r: qx > 0, u: qy < 0, d: qy > 0 };
+      if (Math.abs(Math.sin(diff)) * td < 26) return Math.random() < 0.4 ? Object.assign(o, { a: 1 }) : o;
+      const px = -Math.sin(q * Math.PI / 4) * Math.sign(diff), py = Math.cos(q * Math.PI / 4) * Math.sign(diff);
+      return HR.Showcase.toward(0, 0, -px, -py, 0.1);
+    },
+    C6(S, p, def) {
+      if (!p.al) return {};
+      if (S.ph !== 'go' || p.ok) { const [x, y] = def.tileXY(5 + (p.id % 2) * 5); return HR.Showcase.toward(p.x, p.y, x + (p.id % 3) * 30 - 30, y, 30); }
+      if (p._rd !== S.rd) { p._rd = S.rd; p._plan = S.seq.map(t => Math.random() < 0.035 * S.n ? (t + 1 + Math.floor(Math.random() * 15)) % 16 : t); p._st = 0; }
+      const t = p._plan[p.pg]; if (t == null) return {};
+      const [x, y] = def.tileXY(t);
+      if (Math.abs(x - p.x) < 50 && Math.abs(y - p.y) < 50) { p._st = !p._st; return p._st ? { a: 1 } : {}; }
+      return HR.Showcase.toward(p.x, p.y, x, y, 10);
+    },
+    C7(S, p) {
+      if (p.ft) return {};
+      if (S.L === 'g') { p._y = null; return { a: 1 }; }
+      if (p._y == null) { p._y = S.time; p._rx = 0.08 + Math.random() * 0.3; p._brave = Math.random() < 0.12; }
+      return S.time - p._y < p._rx || (p._brave && S.L === 'y') ? { a: 1 } : {};
+    },
+    C8(S, p) {
+      if (p.st > 0) return {};
+      let best = null, bs = 1e9;
+      for (const d of S.drops) { const v = Math.hypot(d.x - p.x, d.y - p.y) - 120; if (v < bs) { bs = v; best = d; } }
+      for (const m of S.m) { if (m.d) continue; const v = Math.hypot(m.x - p.x, m.y - p.y) - (m.sp ? 150 : 0) + (p.id % 3) * 20; if (v < bs) { bs = v; best = m; } }
+      if (!best) return {};
+      if (best.c !== undefined || best.sp !== undefined) { if (Math.hypot(best.x - p.x, best.y - p.y) < 34) return { a: 1 }; }
+      return HR.Showcase.toward(p.x, p.y, best.x, best.y, 4);
+    },
+    C9(S, p) {
+      if (p._rd !== S.rd) { p._rd = S.rd; p._r = 0.19 + Math.random() * 0.28; p._k = 0; }
+      if (S.ph === 'sig' && !p.pr && !p.er && S.time - S.sigT > p._r) { p._k = !p._k; return p._k ? { a: 1 } : {}; }
+      if ((S.ph === 'wait') && Math.random() < (S.fake ? 0.006 : 0.0006)) return { a: 1 };
+      return {};
+    },
+    C10(S, p) {
+      if (S.ph !== 'pump' || p.bk || p.pop) return {};
+      if (p._rd !== S.rd) { p._rd = S.rd; p._tg = Math.max(3, Math.round(S.lim * (0.55 + Math.random() * 0.5))); p._k = 0; }
+      if (p.s >= p._tg || (S.tm < 1.3 && p.s > 0)) return { b: 1 };
+      p._k = (p._k + 1) % 8;
+      return p._k === 0 ? { a: 1 } : {};
+    },
+    C11(S, p, def) {
+      const c = def.cellOf(p.x, p.y), gc = def.cellOf(S.gh.x, S.gh.y);
+      let next;
+      if (Math.hypot(S.gh.x - p.x, S.gh.y - p.y) < 190 && S.gh.st <= 0) {
+        let bd = -1; for (const m of def.nbrs(S, c)) { const d = Math.hypot(def.cx(m) - S.gh.x, def.cy(m) - S.gh.y); if (d > bd) { bd = d; next = m; } }
+      } else {
+        const dist = def.dist(S, c); let best = null, bd = 1e9;
+        for (const gm of S.gems) { const v = dist.get(def.cellOf(gm.x, gm.y)); if (v != null && v + (gm.i % 3) * 0.3 < bd) { bd = v; best = gm; } }
+        if (best) { const bc = def.cellOf(best.x, best.y); if (bc === c) return HR.Showcase.toward(p.x, p.y, best.x, best.y, 2); next = def.nextStep(S, c, bc); }
+      }
+      if (next == null || next === c) return {};
+      const cx = def.cx(c), cy = def.cy(c), horiz = Math.abs(next - c) === 1;
+      if (horiz && Math.abs(p.y - cy) > 6) return p.y < cy ? { d: 1 } : { u: 1 };
+      if (!horiz && Math.abs(p.x - cx) > 6) return p.x < cx ? { r: 1 } : { l: 1 };
+      return HR.Showcase.toward(p.x, p.y, def.cx(next), def.cy(next), 2);
+    },
+    C12(S, p, def) {
+      if (p.st > 0) return {};
+      let best = null, bs = 1e9, flee = 0;
+      for (const it of S.it) {
+        const dx = it.x - p.x, dy = (p.y - 30) - it.y;
+        if (it.k === 'b') { if (Math.abs(dx) < 130 && dy > -60 && dy < 480) flee = dx > 0 ? -1 : 1; continue; }
+        if (it.lt > 2.8) continue;
+        const v = Math.abs(dx) + Math.abs(dy) * 0.5 - (it.k === 'g' ? 200 : 0) + (p.id % 3) * 15;
+        if (v < bs) { bs = v; best = it; }
+      }
+      if (flee) return flee > 0 ? { r: 1 } : { l: 1 };
+      if (!best) return {};
+      const dx = best.x - p.x, o = Math.abs(dx) > 14 ? (dx > 0 ? { r: 1 } : { l: 1 }) : {};
+      const above = best.y < p.y - 70;
+      if (p.og && above && Math.abs(dx) < 150) o.a = 1;
+      if (best.y > p.y + 20 && p.y < def.GY - 5 && Math.abs(dx) < 220) o.d = 1;
+      return o;
+    },
     B10(S, p, def) {
       if (p.dead > 0) return {};
       const safe = (r, x) => {

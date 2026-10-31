@@ -5,8 +5,8 @@ HR.AR.define({
   code: 'B6', name: 'Wolken-Wettklettern', short: 'Immer nach oben!',
   desc: 'Alle hüpfen gleichzeitig von Wolke zu Wolke nach oben. Gesprungen wird von selbst, du steuerst nur nach links und rechts. Wer links aus dem Bild hüpft, kommt rechts wieder herein. Das Bild scrollt immer schneller nach oben. Goldene Wolken sind Sprungfedern, mit dem Schubser stößt du Mitspieler in der Nähe weg.',
   goal: 'Nicht unten aus dem Bild fallen. Wer als Letzter übrig ist, gewinnt.',
-  touch: 'links ◀ ▶ bewegen, rechts SCHUBS', keys: '← → bewegen, Leertaste schubsen',
-  padL: [['left', '◀'], ['right', '▶']], padR: [['act', 'SCHUBS']],
+  touch: 'Steuerkreuz ◀ ▶ bewegen, rechts SCHUBS', keys: '← → bewegen, Leertaste schubsen',
+  btns: [['act', 'SCHUBS']],
   duration: 120, ROW: 95, wrap: { x: 1600 },
 
   init(players, rnd) {
@@ -103,14 +103,15 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
+    const ST = HR.ST;
     g.beginPath(); g.rect(0, 0, 1600, 1000); g.clip();
     const hgt = Math.min(1, S.cb / 9000);
-    const top = U.mix([110, 180, 245], [12, 14, 50], hgt), bot = U.mix([190, 225, 255], [40, 50, 110], hgt);
+    const top = U.mix([110, 190, 255], [40, 30, 110], hgt), bot = U.mix([200, 235, 255], [120, 90, 190], hgt);
     const grd = g.createLinearGradient(0, 0, 0, 1000); grd.addColorStop(0, U.rgb(top)); grd.addColorStop(1, U.rgb(bot));
     g.fillStyle = grd; g.fillRect(0, 0, 1600, 1000);
     if (hgt > 0.3) {
       g.fillStyle = `rgba(255,255,255,${(hgt - 0.3) * 0.9})`;
-      for (let k = 0; k < 60; k++) { const sx = (k * 263) % 1600, sy = ((k * 157 + S.cb * 0.1) % 1000); g.fillRect(sx, 1000 - sy, 2, 2); }
+      for (let k = 0; k < 60; k++) { const sx = (k * 263) % 1600, sy = ((k * 157 + S.cb * 0.1) % 1000); g.beginPath(); g.arc(sx, 1000 - sy, 2.5, 0, 7); g.fill(); }
     }
     const Y = h => 1000 - (h - S.cb);
     const r0 = Math.max(0, Math.floor((S.cb - 60) / this.ROW)), r1 = Math.ceil((S.cb + 1060) / this.ROW);
@@ -119,18 +120,21 @@ HR.AR.define({
         const y = Y(r * this.ROW);
         if (c.k === 'g') {
           if (S.time > 8) continue;
-          g.fillStyle = '#5cb85c'; g.fillRect(0, y, 1600, 1100 - y); g.fillStyle = '#4a9a4a'; g.fillRect(0, y, 1600, 10);
+          g.beginPath(); g.rect(-10, y, 1620, 1110 - y); ST.fill(g, '#a8683a', 6);
+          g.beginPath(); g.rect(-10, y, 1620, 24); ST.fill(g, '#6cc04a', 5);
           continue;
         }
         const x = this.cx(c, S.time);
         for (const xx of [x - 1600, x, x + 1600]) {
           if (xx < -200 || xx > 1800) continue;
-          g.fillStyle = c.k === 's' ? '#ffd84a' : c.k === 'm' ? '#dff0ff' : '#ffffff';
+          // Wolke: Umriss um alle Teile, dann gefüllt
           g.beginPath();
           g.ellipse(xx, y + 4, c.w / 2, 16, 0, 0, 7);
-          g.ellipse(xx - c.w * 0.2, y - 6, c.w * 0.22, 18, 0, 0, 7);
-          g.ellipse(xx + c.w * 0.18, y - 8, c.w * 0.25, 20, 0, 0, 7);
-          g.fill();
+          g.moveTo(xx - c.w * 0.2 + c.w * 0.22, y - 6); g.ellipse(xx - c.w * 0.2, y - 6, c.w * 0.22, 18, 0, 0, 7);
+          g.moveTo(xx + c.w * 0.18 + c.w * 0.25, y - 8); g.ellipse(xx + c.w * 0.18, y - 8, c.w * 0.25, 20, 0, 0, 7);
+          g.lineWidth = 10; g.strokeStyle = ST.INK; g.lineJoin = 'round'; g.stroke();
+          g.fillStyle = c.k === 's' ? '#ffd84a' : c.k === 'm' ? '#d6ecff' : '#ffffff'; g.fill();
+          g.fillStyle = 'rgba(120,150,200,.25)'; g.beginPath(); g.ellipse(xx, y + 10, c.w * 0.42, 6, 0, 0, 7); g.fill();
           if (c.k === 's') { g.strokeStyle = '#a07000'; g.lineWidth = 4; g.beginPath(); for (let z = 0; z < 4; z++) { g.moveTo(xx - 14, y - 4 - z * 6); g.lineTo(xx + 14, y - 7 - z * 6); } g.stroke(); }
         }
       }
@@ -140,17 +144,12 @@ HR.AR.define({
       const y = Y(p.h) - 24;
       for (const xx of [p.x - 1600, p.x, p.x + 1600]) {
         if (xx < -60 || xx > 1660) continue;
-        g.fillStyle = G.rgb(p); g.beginPath(); g.ellipse(xx, y, 24, p.vh > 0 ? 26 : 22, 0, 0, 7); g.fill();
-        g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.ellipse(xx - p.f * 14, y + 4, 9, 14, 0, 0, 7); g.fill();
-        g.fillStyle = '#fff'; g.beginPath(); g.arc(xx + p.f * 8, y - 6, 8, 0, 7); g.fill();
-        g.fillStyle = '#111'; g.beginPath(); g.arc(xx + p.f * 10, y - 6, 4, 0, 7); g.fill();
-        g.fillStyle = '#f90'; g.beginPath(); g.moveTo(xx + p.f * 20, y); g.lineTo(xx + p.f * 32, y + 4); g.lineTo(xx + p.f * 20, y + 8); g.fill();
-        if (p.pf > 0) { g.strokeStyle = G.rgb(p, 0.7); g.lineWidth = 6; g.beginPath(); g.arc(xx, y, 70, 0, 7); g.stroke(); }
-        if (p.id === G.me) { G.meMark(g, xx, y, 38, S.time); G.label(g, 'DU', xx, y - 40, 22); }
+        if (p.pf > 0) { g.strokeStyle = G.rgb(p, 0.7); g.lineWidth = 8; g.beginPath(); g.arc(xx, y, 70, 0, 7); g.stroke(); }
+        G.fig(g, p, xx, y, 24, { look: [p.f, p.vh > 0 ? -0.6 : 0.4], squash: p.vh > 0 ? -0.08 : 0.04, noShadow: true });
       }
     }
     // Gefahrenzone unten
-    const gz = g.createLinearGradient(0, 940, 0, 1000); gz.addColorStop(0, 'rgba(255,60,60,0)'); gz.addColorStop(1, 'rgba(255,60,60,.45)');
-    g.fillStyle = gz; g.fillRect(0, 940, 1600, 60);
+    const gz = g.createLinearGradient(0, 930, 0, 1000); gz.addColorStop(0, 'rgba(255,77,94,0)'); gz.addColorStop(1, 'rgba(255,77,94,.55)');
+    g.fillStyle = gz; g.fillRect(0, 930, 1600, 70);
   },
 });

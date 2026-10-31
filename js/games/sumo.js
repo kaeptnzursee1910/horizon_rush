@@ -5,8 +5,8 @@ HR.AR.define({
   code: 'B3', name: 'Autoscooter-Sumo', short: 'Schubs die anderen ins Wasser!',
   desc: 'Alle fahren Autoscooter auf einer runden Eisscholle. Auf dem Eis rutscht man weit. Mit dem Stoß machst du einen kurzen, kräftigen Satz nach vorn. Die Scholle schmilzt mit der Zeit und wird immer kleiner.',
   goal: 'Die anderen ins Wasser schubsen und selbst auf dem Eis bleiben. Wer als Letzter übrig ist, gewinnt.',
-  touch: 'links ◀ ▶ lenken, rechts GAS und STOSS', keys: '← → lenken, ↑ Gas, ↓ rückwärts, Leertaste Stoß',
-  padL: [['left', '◀'], ['right', '▶']], padR: [['act', 'STOSS'], ['gas', 'GAS']],
+  touch: 'Steuerkreuz ◀ ▶ lenken, ▲ Gas, ▼ rückwärts, rechts STOSS', keys: '← → lenken, ↑ Gas, ↓ rückwärts, Leertaste Stoß',
+  btns: [['act', 'STOSS']],
   duration: 75, CR: 30,
 
   init(players) {
@@ -75,36 +75,27 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
+    const ST = HR.ST, R = S.R;
     // Wasser
-    g.fillStyle = '#0d3a66'; g.fillRect(-2000, -2000, 5600, 5000);
-    g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 3;
-    for (let y = -40; y < 1040; y += 60) {
-      g.beginPath();
-      for (let x = -40; x <= 1640; x += 40) g.lineTo(x, y + Math.sin(x / 70 + S.time * 2 + y) * 6);
-      g.stroke();
+    g.fillStyle = '#4fb6e8'; g.fillRect(-2000, -2000, 5600, 5000);
+    g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 5; g.lineCap = 'round';
+    for (let y = -40; y < 1040; y += 70) for (let x = ((y * 7) % 160) - 80; x < 1640; x += 160) {
+      const o = Math.sin(S.time * 2 + x * 0.01 + y) * 8;
+      g.beginPath(); g.moveTo(x + o, y); g.quadraticCurveTo(x + 20 + o, y - 10, x + 40 + o, y); g.stroke();
     }
-    // Eisscholle
-    const R = S.R;
-    g.fillStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.arc(800, 506, R + 6, 0, 7); g.fill();
-    const grd = g.createRadialGradient(760, 460, R * 0.1, 800, 500, R);
-    grd.addColorStop(0, '#f4fbff'); grd.addColorStop(1, '#b8dcf2');
-    g.fillStyle = grd; g.beginPath(); g.arc(800, 500, R, 0, 7); g.fill();
-    g.strokeStyle = 'rgba(80,140,190,.35)'; g.lineWidth = 2;
-    for (let k = 0; k < 7; k++) { const a = k * 0.9; g.beginPath(); g.moveTo(800 + Math.cos(a) * R * 0.2, 500 + Math.sin(a) * R * 0.2); g.lineTo(800 + Math.cos(a + 0.2) * R * 0.95, 500 + Math.sin(a + 0.2) * R * 0.95); g.stroke(); }
-    if (R < 465 && Math.floor(S.time * 2) % 2) { g.strokeStyle = 'rgba(255,90,90,.5)'; g.lineWidth = 4; g.beginPath(); g.arc(800, 500, R - 2, 0, 7); g.stroke(); }
-    for (const p of S.p) {
-      if (p.gone) continue;
-      if (!p.al && p.f >= 1) continue;
-      const sc = p.al ? 1 : 1 - p.f * 0.8;
-      g.save(); g.translate(p.x, p.y); g.rotate(p.a); g.scale(sc, sc);
-      g.globalAlpha = p.al ? 1 : 1 - p.f;
-      g.fillStyle = '#222'; HR.AR.rr(g, -34, -28, 68, 56, 22); g.fill();
-      g.fillStyle = G.rgb(p); HR.AR.rr(g, -27, -21, 54, 42, 15); g.fill();
-      g.fillStyle = 'rgba(255,255,255,.35)'; HR.AR.rr(g, -18, -14, 22, 28, 8); g.fill();
-      g.fillStyle = '#fff'; g.beginPath(); g.arc(18, 0, 6, 0, 7); g.fill();
-      g.restore(); g.globalAlpha = 1;
-      if (p.al && p.dash > 0) { g.strokeStyle = G.rgb(p, 0.6); g.lineWidth = 6; g.beginPath(); g.arc(p.x, p.y, 44, 0, 7); g.stroke(); }
-      if (p.al && p.id === G.me) { G.meMark(g, p.x, p.y, 50, S.time); G.label(g, p.cd > 0 ? 'DU' : 'DU · STOSS', p.x, p.y - 52, 22); }
+    // Eisscholle mit Kante
+    g.beginPath(); g.ellipse(800, 522, R, R * 0.98, 0, 0, 7); ST.fill(g, '#7fc0e0', 6);
+    const grd = g.createRadialGradient(740, 440, R * 0.1, 800, 500, R);
+    grd.addColorStop(0, '#ffffff'); grd.addColorStop(1, '#c9e9fa');
+    g.beginPath(); g.arc(800, 500, R, 0, 7); ST.fill(g, grd, 6);
+    g.strokeStyle = 'rgba(80,140,190,.4)'; g.lineWidth = 3;
+    for (let k = 0; k < 7; k++) { const a = k * 0.9; g.beginPath(); g.moveTo(800 + Math.cos(a) * R * 0.25, 500 + Math.sin(a) * R * 0.25); g.lineTo(800 + Math.cos(a + 0.15) * R * 0.6, 500 + Math.sin(a + 0.15) * R * 0.6); g.lineTo(800 + Math.cos(a + 0.05) * R * 0.92, 500 + Math.sin(a + 0.05) * R * 0.92); g.stroke(); }
+    if (R < 465 && Math.floor(S.time * 2) % 2) { g.strokeStyle = 'rgba(255,77,94,.7)'; g.lineWidth = 8; g.beginPath(); g.arc(800, 500, R - 6, 0, 7); g.stroke(); }
+    for (const p of S.p.filter(p => !p.gone && (p.al || p.f < 1)).sort((a, b) => a.y - b.y)) {
+      const sc = p.al ? 1 : 1 - p.f * 0.7;
+      if (p.al && p.dash > 0) { g.strokeStyle = G.rgb(p, 0.7); g.lineWidth = 8; g.beginPath(); g.arc(p.x, p.y, 46, 0, 7); g.stroke(); }
+      G.fig(g, p, p.x, p.y + (p.al ? 0 : p.f * 40), 30 * sc, { look: [Math.cos(p.a), Math.sin(p.a)], dead: !p.al, alpha: p.al ? 1 : 1 - p.f, squash: p.dash > 0 ? -0.08 : 0 });
+      if (p.al && p.id === G.me && p.cd <= 0) ST.text(g, 'STOSS bereit', p.x, p.y + 52, 18, '#ffd23c');
     }
   },
 });

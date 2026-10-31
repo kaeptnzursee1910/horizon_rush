@@ -8,7 +8,7 @@ HR.PARTY_COLOR_NAMES = ['Rot', 'Gelb', 'Blau', 'Grün', 'Orange', 'Lila', 'Türk
 
 // Spiele melden sich hier an (partyrace.js und games/*.js)
 HR.GAMES = {};
-HR.GAME_ORDER = ['A1', 'A2', 'A3', 'A5', 'B1', 'B2', 'B3', 'B4', 'B6', 'B7', 'B9', 'B10'];
+HR.GAME_ORDER = ['A1', 'A2', 'A3', 'A5', 'B1', 'B2', 'B3', 'B4', 'B6', 'B7', 'B9', 'B10', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12'];
 HR.addGame = def => { HR.GAMES[def.code] = def; };
 
 const Party = HR.Party = {

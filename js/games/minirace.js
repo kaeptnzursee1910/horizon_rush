@@ -6,8 +6,8 @@ HR.AR.define({
   code: 'B4', name: 'Mini-Rennen von oben', short: 'Bleib im Bild!',
   desc: 'Kleine Spielzeugautos rasen über einen Esstisch, eine Werkbank oder durch den Sandkasten. Alle sehen dasselbe Bild, und die Kamera folgt dem Führenden. Wer zu weit zurückfällt und aus dem Bild rutscht, verliert den Lauf. Ist nur noch einer übrig, gewinnt er den Lauf, und alle starten neben ihm neu.',
   goal: 'Die meisten Läufe gewinnen. Wer zuerst 5 Läufe gewinnt oder nach 2,5 Minuten vorn liegt, siegt.',
-  touch: 'links ◀ ▶ lenken, rechts GAS und BREMSE', keys: '← → lenken, ↑ Gas, ↓ Bremse/rückwärts',
-  padL: [['left', '◀'], ['right', '▶']], padR: [['gas', 'GAS'], ['brake', 'BREMSE']],
+  touch: 'Steuerkreuz ◀ ▶ lenken, rechts GAS und BREMSE', keys: '← → lenken, ↑ Gas, ↓ Bremse/rückwärts',
+  btns: [['gas', 'GAS'], ['brake', 'BREMSE']],
   W: 1400, H: 875, duration: 150, lerpKeys: ['cx', 'cy', 'zm'], ROAD: 78, WIN: 5,
   TRACKS: [
     { name: 'Esstisch', bg: '#8a5a32', bg2: '#7a4e2a', pts: [[400, 400], [1400, 300], [2000, 520], [2700, 350], [2950, 900], [2500, 1300], [2850, 1700], [1900, 1780], [1500, 1300], [1000, 1680], [400, 1520], [300, 900]] },
@@ -155,7 +155,7 @@ HR.AR.define({
     // Strecke
     g.lineJoin = 'round'; g.lineCap = 'round';
     const path = () => { g.beginPath(); g.moveTo(T.s[0][0], T.s[0][1]); for (let i = 1; i < T.s.length; i++) g.lineTo(T.s[i][0], T.s[i][1]); g.closePath(); };
-    path(); g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = this.ROAD * 2 + 30; g.stroke();
+    path(); g.strokeStyle = HR.ST.INK; g.lineWidth = this.ROAD * 2 + 30; g.stroke();
     path(); g.strokeStyle = '#d33'; g.lineWidth = this.ROAD * 2 + 18; g.stroke();
     g.setLineDash([26, 26]); path(); g.strokeStyle = '#fff'; g.stroke(); g.setLineDash([]);
     path(); g.strokeStyle = S.ti === 2 ? '#a3804a' : '#4a4d55'; g.lineWidth = this.ROAD * 2; g.stroke();
@@ -168,15 +168,18 @@ HR.AR.define({
     // Autos
     for (const p of S.p) {
       if (p.gone) continue;
+      const ST = HR.ST;
       g.globalAlpha = p.on ? 1 : 0.25;
       g.save(); g.translate(p.x, p.y); g.rotate(p.a);
-      g.fillStyle = 'rgba(0,0,0,.3)'; HR.AR.rr(g, -17, -9, 38, 22, 6); g.fill();
-      g.fillStyle = '#111'; g.fillRect(-14, -12, 9, 5); g.fillRect(8, -12, 9, 5); g.fillRect(-14, 7, 9, 5); g.fillRect(8, 7, 9, 5);
-      g.fillStyle = G.rgb(p); HR.AR.rr(g, -19, -10, 38, 20, 6); g.fill();
-      g.fillStyle = 'rgba(20,30,50,.8)'; g.fillRect(2, -7, 8, 14);
-      g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(-14, -7, 10, 4);
-      g.restore(); g.globalAlpha = 1;
-      if (p.on && p.id === G.me) { G.meMark(g, p.x, p.y, 30, S.time); G.label(g, 'DU', p.x, p.y - 32, 20); }
+      g.fillStyle = 'rgba(20,10,40,.3)'; ST.rrect(g, -17, -8, 40, 22, 7); g.fill();
+      for (const [wx, wy] of [[-15, -14], [7, -14], [-15, 8], [7, 8]]) { ST.rrect(g, wx, wy, 10, 6, 2); ST.fill(g, ST.INK, 1.5); }
+      ST.rrect(g, -20, -11, 40, 22, 7); ST.fill(g, G.rgb(p), 3);
+      ST.rrect(g, 4, -7, 9, 14, 3); ST.fill(g, '#9fd8ff', 2);
+      g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(-15, -8, 12, 3);
+      g.restore();
+      ST.char(g, p.x - Math.cos(p.a) * 4, p.y - Math.sin(p.a) * 4 - 4, 8, G.color(p), { look: [Math.cos(p.a), Math.sin(p.a)], t: S.time, noShadow: true, still: true });
+      g.globalAlpha = 1;
+      if (p.on && p.id === G.me) ST.you(g, p.x, p.y - 20, S.time, 'DU');
     }
   },
 

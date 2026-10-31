@@ -5,8 +5,8 @@ HR.AR.define({
   code: 'B9', name: 'Pong-Achteck', short: 'Lass keinen Ball durch!',
   desc: 'Das Spielfeld ist ein Achteck. Jeder verteidigt eine Seite mit seinem Schläger, deine Seite ist immer unten. Freie Seiten sind Wände. Wer einen Ball durchlässt, verliert ein Leben. Mit der Zeit kommen weitere Bälle dazu und die Bälle werden schneller. Je weiter außen der Ball den Schläger trifft, desto schräger fliegt er zurück.',
   goal: 'Mit 3 Leben möglichst lange durchhalten. Wer als Letzter noch Leben hat, gewinnt.',
-  touch: '◀ ▶ Schläger bewegen', keys: '← → (oder A D) Schläger bewegen',
-  padL: [['left', '◀']], padR: [['right', '▶']],
+  touch: 'Steuerkreuz ◀ ▶ Schläger bewegen', keys: '← → (oder A D) Schläger bewegen',
+  btns: [],
   duration: 150, RV: 470, BR: 11, HL: 0.14, LIVES: 3, lerpKeys: ['u'],
 
   geo() {
@@ -103,40 +103,42 @@ HR.AR.define({
   },
 
   draw(g, S, G) {
-    const { sides, ap } = this.geo();
+    const ST = HR.ST, { sides, ap } = this.geo();
     const me = S.p.find(p => p.id === G.me) || S.p[0];
     const rot = Math.PI / 2 - sides[me.k].phi;
     G.world(g);
-    g.fillStyle = '#060818'; g.fillRect(0, 0, 1600, 1000);
     g.translate(800, 500); g.rotate(rot);
-    g.fillStyle = '#0d1230';
-    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0], s.B[1])); g.closePath(); g.fill();
-    g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 90, 0, 7); g.stroke();
+    // Spielfeld: Achteck mit Rand und Karo
+    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0] * 1.06, s.B[1] * 1.06 + 16)); g.closePath(); ST.fill(g, '#5b4aa8', 6);
+    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0] * 1.06, s.B[1] * 1.06)); g.closePath(); ST.fill(g, '#7a66d0', 6);
+    g.save(); g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0], s.B[1])); g.closePath(); g.clip();
+    ST.floor(g, -600, -600, 1200, 1200, '#bfe4ff', '#acd8fa', 80); g.restore();
+    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0], s.B[1])); g.closePath(); g.lineWidth = 5; g.strokeStyle = ST.INK; g.stroke();
+    g.strokeStyle = 'rgba(37,31,58,.15)'; g.lineWidth = 6; g.beginPath(); g.arc(0, 0, 90, 0, 7); g.stroke();
     g.lineCap = 'round';
-    for (let k = 0; k < 8; k++) {
-      const s = sides[k], o = S.p.find(p => p.k === k && !p.gone);
-      if (!o || !o.al) { g.strokeStyle = '#7d849c'; g.lineWidth = 10; g.beginPath(); g.moveTo(s.A[0], s.A[1]); g.lineTo(s.B[0], s.B[1]); g.stroke(); continue; }
-      g.strokeStyle = G.rgb(o, 0.25); g.lineWidth = 4; g.beginPath(); g.moveTo(s.A[0], s.A[1]); g.lineTo(s.B[0], s.B[1]); g.stroke();
-      const a = o.u - this.HL, b = o.u + this.HL, off = 8;
-      g.strokeStyle = G.rgb(o); g.lineWidth = 16;
+    const seg = (s, a, b, off, w, col) => {
       g.beginPath();
       g.moveTo(s.A[0] + s.dir[0] * a * s.L - s.n[0] * off, s.A[1] + s.dir[1] * a * s.L - s.n[1] * off);
       g.lineTo(s.A[0] + s.dir[0] * b * s.L - s.n[0] * off, s.A[1] + s.dir[1] * b * s.L - s.n[1] * off);
-      g.stroke();
+      g.strokeStyle = ST.INK; g.lineWidth = w + 10; g.stroke(); g.strokeStyle = col; g.lineWidth = w; g.stroke();
+    };
+    for (let k = 0; k < 8; k++) {
+      const s = sides[k], o = S.p.find(p => p.k === k && !p.gone);
+      if (!o || !o.al) { seg(s, 0, 1, 0, 14, '#9a94b0'); continue; }
+      g.strokeStyle = G.rgb(o, 0.35); g.lineWidth = 6; g.beginPath(); g.moveTo(s.A[0], s.A[1]); g.lineTo(s.B[0], s.B[1]); g.stroke();
+      seg(s, o.u - this.HL, o.u + this.HL, 10, 18, G.rgb(o));
+      // Figur hinter dem Schläger
+      const fx = s.A[0] + s.dir[0] * o.u * s.L + s.n[0] * 30, fy = s.A[1] + s.dir[1] * o.u * s.L + s.n[1] * 30;
+      g.save(); g.translate(fx, fy); g.rotate(-rot); HR.ST.char(g, 0, 0, 18, G.color(o), { look: [-(s.n[0] * Math.cos(rot) - s.n[1] * Math.sin(rot)), -(s.n[0] * Math.sin(rot) + s.n[1] * Math.cos(rot))], t: S.time, noShadow: true }); g.restore();
     }
-    for (const b of S.b) {
-      g.fillStyle = b.w ? 'rgba(255,255,255,.4)' : '#fff';
-      g.beginPath(); g.arc(b.x, b.y, this.BR, 0, 7); g.fill();
-    }
+    for (const b of S.b) { g.globalAlpha = b.w ? 0.45 : 1; g.beginPath(); g.arc(b.x, b.y, this.BR + 2, 0, 7); ST.fill(g, '#fff', 4); g.globalAlpha = 1; }
     // Namen und Leben außen, aufrecht
     g.rotate(-rot);
     for (const p of S.p) {
       if (p.gone) continue;
-      const s = sides[p.k], a = s.phi + rot, x = Math.cos(a) * (ap + 26), y = Math.sin(a) * (ap + 26);
-      g.font = `bold ${p.id === G.me ? 22 : 17}px ${HR.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillStyle = p.al ? G.rgb(p) : 'rgba(255,255,255,.35)';
+      const s = sides[p.k], a = s.phi + rot, x = Math.cos(a) * (ap + 64), y = Math.sin(a) * (ap + 64);
       const label = (p.id === G.me ? 'DU' : G.name(p.id)) + (p.al ? '  ' + '♥'.repeat(Math.max(0, p.l)) : '  ✕');
-      g.fillText(label, x, y);
+      ST.text(g, label, x, y, p.id === G.me ? 22 : 17, p.al ? G.rgb(p) : 'rgba(255,255,255,.5)');
     }
   },
 });

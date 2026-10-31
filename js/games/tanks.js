@@ -5,8 +5,8 @@ HR.AR.define({
   code: 'B2', name: 'Panzer-Arena', short: 'Triff die anderen Panzer!',
   desc: 'Alle fahren mit einem kleinen Panzer durch ein Labyrinth. Die Geschosse prallen mehrmals von den Wänden ab, auch auf dich selbst. Wer getroffen wird, ist 3 Sekunden weg und taucht dann an einer freien Stelle wieder auf.',
   goal: 'In 90 Sekunden die meisten Treffer landen. Jeder Treffer gibt einen Punkt.',
-  touch: 'links ◀ ▶ drehen, rechts GAS (vorwärts), ZURÜCK und FEUER', keys: '← → drehen, ↑ vorwärts, ↓ rückwärts, Leertaste feuern',
-  padL: [['left', '◀'], ['right', '▶']], padR: [['act', 'FEUER'], ['gas', 'GAS'], ['brake', 'ZURÜCK']],
+  touch: 'Steuerkreuz ◀ ▶ drehen, ▲ vorwärts, ▼ rückwärts, rechts FEUER', keys: '← → drehen, ↑ vorwärts, ↓ rückwärts, Leertaste feuern',
+  btns: [['act', 'FEUER']],
   duration: 90, TR: 24,
 
   init(players, rnd) {
@@ -117,33 +117,31 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    g.fillStyle = '#2d3a26'; g.fillRect(0, 0, 1600, 1000);
-    g.fillStyle = 'rgba(255,255,255,.035)';
-    for (let x = 0; x < 1600; x += 100) for (let y = (x / 100) % 2 * 100; y < 1000; y += 200) g.fillRect(x, y, 100, 100);
+    const ST = HR.ST;
+    ST.floor(g, 0, 0, 1600, 1000, '#8fd06a', '#84c35f', 100);
+    g.beginPath(); g.rect(3, 3, 1594, 994); g.lineWidth = 10; g.strokeStyle = ST.INK; g.stroke();
+    // Mauern als Holzkisten-Blöcke
     for (const w of S.walls) {
-      g.fillStyle = '#8a8f99'; g.fillRect(w[0], w[1], w[2], w[3]);
-      g.fillStyle = '#b9bec8'; g.fillRect(w[0], w[1], w[2], Math.min(5, w[3]));
+      g.fillStyle = 'rgba(20,10,40,.2)'; g.fillRect(w[0] + 8, w[1] + 10, w[2], w[3]);
+      ST.rrect(g, w[0], w[1], w[2], w[3], 8); ST.fill(g, '#c98a4e', 5);
+      ST.rrect(g, w[0] + 6, w[1] + 6, w[2] - 12, Math.min(14, w[3] - 12), 5); g.fillStyle = 'rgba(255,255,255,.25)'; g.fill();
     }
-    for (const b of S.b) { g.fillStyle = '#fff'; g.beginPath(); g.arc(b.x, b.y, 5, 0, 7); g.fill(); }
+    for (const b of S.b) { g.beginPath(); g.arc(b.x, b.y, 8, 0, 7); ST.fill(g, '#fff4b0', 3); }
     for (const p of S.p) {
       if (p.gone || p.rt > 0) continue;
-      if (p.inv > 0 && Math.floor(S.time * 10) % 2) g.globalAlpha = 0.45;
-      g.save(); g.translate(p.x, p.y); g.rotate(p.a);
-      g.fillStyle = '#222'; g.fillRect(-24, -22, 48, 10); g.fillRect(-24, 12, 48, 10);
-      g.fillStyle = G.rgb(p); g.fillRect(-20, -14, 40, 28);
-      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-20, 6, 40, 8);
-      g.fillStyle = '#333'; g.fillRect(4, -4, 28, 8);
-      g.fillStyle = G.rgb(p); g.beginPath(); g.arc(0, 0, 11, 0, 7); g.fill();
-      g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = 2; g.stroke();
+      const blink = p.inv > 0 && Math.floor(S.time * 10) % 2;
+      g.save(); if (blink) g.globalAlpha = 0.45;
+      ST.shadow(g, p.x, p.y + 22, 30, 10);
+      g.translate(p.x, p.y); g.rotate(p.a);
+      ST.rrect(g, -26, -25, 52, 14, 6); ST.fill(g, '#4a4460', 4);
+      ST.rrect(g, -26, 11, 52, 14, 6); ST.fill(g, '#4a4460', 4);
+      ST.rrect(g, 2, -6, 34, 12, 4); ST.fill(g, '#6a6480', 4);
+      ST.rrect(g, -22, -16, 44, 32, 10); ST.fill(g, G.rgb(p), 4);
       g.restore();
-      g.globalAlpha = 1;
-      if (p.id === G.me) { G.meMark(g, p.x, p.y, 36, S.time); G.label(g, 'DU', p.x, p.y - 38, 22); }
+      G.fig(g, p, p.x, p.y - 4, 14, { look: [Math.cos(p.a), Math.sin(p.a)], noShadow: true, alpha: blink ? 0.45 : 1 });
     }
-    for (const e of S.boom) {
-      const k = 1 - e.t / 0.6;
-      g.fillStyle = `rgba(255,${Math.round(200 - 150 * k)},40,${1 - k})`; g.beginPath(); g.arc(e.x, e.y, 20 + 50 * k, 0, 7); g.fill();
-    }
+    for (const e of S.boom) { const k = 1 - e.t / 0.6; ST.burst(g, e.x, e.y, k, '#ff9a3c', 12, 70); g.globalAlpha = Math.max(0, 1 - k); g.beginPath(); g.arc(e.x, e.y, 18 + 30 * k, 0, 7); ST.fill(g, '#ffd23c', 4); g.globalAlpha = 1; }
     const me = S.p.find(p => p.id === G.me);
-    if (me && me.rt > 0) G.label(g, 'Gleich wieder da … ' + Math.ceil(me.rt), 800, 520, 44, '#fff');
+    if (me && me.rt > 0) ST.text(g, 'Gleich wieder da … ' + Math.ceil(me.rt), 800, 520, 44, '#fff');
   },
 });
