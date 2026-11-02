@@ -142,72 +142,73 @@ HR.AR.define({
   },
 
   draw(g, S, G) {
-    const tr = this.TRACKS[S.ti], T = S.T;
+    const tr = this.TRACKS[S.ti], T = S.T, ST = HR.ST, acc = [ST.ORANGE, ST.CYAN, ST.YELLOW][S.ti] || ST.CYAN;
     G.world(g);
     g.beginPath(); g.rect(0, 0, this.W, this.H); g.clip();
     g.translate(this.W / 2, this.H / 2); g.scale(S.zm, S.zm); g.translate(-S.cx, -S.cy);
-    // Untergrund
-    g.fillStyle = tr.bg; g.fillRect(S.cx - this.W, S.cy - this.H, this.W * 2, this.H * 2);
-    if (S.ti === 0) { g.fillStyle = tr.bg2; for (let y = -400; y < 2600; y += 180) g.fillRect(-600, y, 4400, 8); }
-    if (S.ti === 1) { g.strokeStyle = 'rgba(0,0,0,.12)'; g.lineWidth = 3; for (let x = -600; x < 4000; x += 140) { g.beginPath(); g.moveTo(x, -400); g.lineTo(x + 60, 2600); g.stroke(); } }
-    if (S.ti === 2) { g.fillStyle = 'rgba(160,120,60,.18)'; for (const d of S.deco) { g.beginPath(); g.arc(d[0] + 40, d[1] + 70, d[2] * 0.3, 0, 7); g.fill(); } }
+    // Untergrund: Raster in der Farbe der Strecke, fest in der Welt
+    const cell = 180, x0 = Math.floor((S.cx - this.W) / (cell * 2)) * cell * 2, y0 = Math.floor((S.cy - this.H) / (cell * 2)) * cell * 2;
+    ST.floor(g, x0, y0, this.W * 2 + cell * 4, this.H * 2 + cell * 4, acc, null, cell);
     for (const d of S.deco) this.decor(g, S.ti, d);
-    // Strecke
+    // Strecke: dunkle Fahrbahn mit Leuchträndern
     g.lineJoin = 'round'; g.lineCap = 'round';
     const path = () => { g.beginPath(); g.moveTo(T.s[0][0], T.s[0][1]); for (let i = 1; i < T.s.length; i++) g.lineTo(T.s[i][0], T.s[i][1]); g.closePath(); };
-    path(); g.strokeStyle = HR.ST.INK; g.lineWidth = this.ROAD * 2 + 30; g.stroke();
-    path(); g.strokeStyle = '#d33'; g.lineWidth = this.ROAD * 2 + 18; g.stroke();
-    g.setLineDash([26, 26]); path(); g.strokeStyle = '#fff'; g.stroke(); g.setLineDash([]);
-    path(); g.strokeStyle = S.ti === 2 ? '#a3804a' : '#4a4d55'; g.lineWidth = this.ROAD * 2; g.stroke();
-    g.setLineDash([30, 30]); path(); g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 5; g.stroke(); g.setLineDash([]);
+    if (ST.fx) { path(); g.strokeStyle = 'rgba(255,43,214,.14)'; g.lineWidth = this.ROAD * 2 + 50; g.stroke(); }
+    path(); g.strokeStyle = ST.MAGENTA; g.lineWidth = this.ROAD * 2 + 14; g.stroke();
+    path(); g.strokeStyle = '#ffc4f3'; g.lineWidth = this.ROAD * 2 + 5; g.stroke();
+    path(); g.strokeStyle = '#0d0b1c'; g.lineWidth = this.ROAD * 2; g.stroke();
+    path(); g.strokeStyle = 'rgba(155,92,255,.22)'; g.lineWidth = this.ROAD * 1.2; g.stroke();
+    g.setLineDash([30, 30]); path(); g.strokeStyle = 'rgba(24,231,255,.6)'; g.lineWidth = 4; g.stroke(); g.setLineDash([]);
+    g.lineJoin = 'miter'; g.lineCap = 'butt';
     // Start/Ziel
     const a0 = this.dir(T, 0), s0 = T.s[0];
     g.save(); g.translate(s0[0], s0[1]); g.rotate(a0);
-    for (let k = -6; k < 6; k++) for (let r = 0; r < 2; r++) { g.fillStyle = (k + r) % 2 ? '#fff' : '#111'; g.fillRect(r * 13 - 13, k * 13, 13, 13); }
+    for (let k = -6; k < 6; k++) for (let r = 0; r < 2; r++) { g.fillStyle = (k + r) % 2 ? '#f2eeff' : '#0b0918'; g.fillRect(r * 13 - 13, k * 13, 13, 13); }
+    ST.line(g, -13, -78, -13, 78); ST.glow(g, ST.ICE, 2); ST.line(g, 13, -78, 13, 78); ST.glow(g, ST.ICE, 2);
     g.restore();
-    // Autos
+    // Autos von oben
     for (const p of S.p) {
       if (p.gone) continue;
-      const ST = HR.ST;
+      const c = G.color(p);
       g.globalAlpha = p.on ? 1 : 0.25;
+      ST.pool(g, p.x, p.y, 46, c, 0.22);
       g.save(); g.translate(p.x, p.y); g.rotate(p.a);
-      g.fillStyle = 'rgba(20,10,40,.3)'; ST.rrect(g, -17, -8, 40, 22, 7); g.fill();
-      for (const [wx, wy] of [[-15, -14], [7, -14], [-15, 8], [7, 8]]) { ST.rrect(g, wx, wy, 10, 6, 2); ST.fill(g, ST.INK, 1.5); }
-      ST.rrect(g, -20, -11, 40, 22, 7); ST.fill(g, G.rgb(p), 3);
-      ST.rrect(g, 4, -7, 9, 14, 3); ST.fill(g, '#9fd8ff', 2);
-      g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(-15, -8, 12, 3);
+      for (const [wx, wy] of [[-15, -15], [7, -15], [-15, 9], [7, 9]]) { g.fillStyle = '#05040b'; g.fillRect(wx, wy, 10, 6); g.strokeStyle = 'rgba(155,150,200,.7)'; g.lineWidth = 1; g.strokeRect(wx, wy, 10, 6); }
+      ST.rrect(g, -20, -11, 40, 22, 7); g.fillStyle = ST.BODY; g.fill(); g.fillStyle = ST.rgb(c, 0.22); g.fill(); ST.glow(g, c, 2.2);
+      ST.rrect(g, 4, -7, 9, 14, 3); ST.thin(g, ST.CYAN, 1.5, 0.9);
+      ST.line(g, -19, -7, -19, 7); ST.glow(g, ST.RED, 2);
       g.restore();
-      ST.char(g, p.x - Math.cos(p.a) * 4, p.y - Math.sin(p.a) * 4 - 4, 8, G.color(p), { look: [Math.cos(p.a), Math.sin(p.a)], t: S.time, noShadow: true, still: true });
+      ST.symbol(g, ST.symFor(c), p.x - Math.cos(p.a) * 5, p.y - Math.sin(p.a) * 5, 6, c);
       g.globalAlpha = 1;
-      if (p.on && p.id === G.me) ST.you(g, p.x, p.y - 20, S.time, 'DU');
+      if (p.on && p.id === G.me) ST.you(g, p.x, p.y - 22, S.time, 'DU');
     }
   },
 
   decor(g, ti, d) {
-    const [x, y, r, k, rot] = d;
+    const [x, y, r, k, rot] = d, ST = HR.ST;
     g.save(); g.translate(x, y); g.rotate(rot);
     if (ti === 0) { // Teller, Gläser, Servietten
-      if (k < 2) { g.fillStyle = '#f2f2f2'; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill(); g.strokeStyle = '#ccc'; g.lineWidth = 4; g.beginPath(); g.arc(0, 0, r * 0.7, 0, 7); g.stroke(); }
-      else if (k === 2) { g.fillStyle = 'rgba(200,230,255,.5)'; g.beginPath(); g.arc(0, 0, r * 0.4, 0, 7); g.fill(); }
-      else { g.fillStyle = '#c84'; g.fillRect(-r * 0.6, -r * 0.6, r * 1.2, r * 1.2); }
+      if (k < 2) { g.beginPath(); g.arc(0, 0, r, 0, 7); g.fillStyle = 'rgba(232,244,255,.05)'; g.fill(); ST.glow(g, ST.ICE, 2.5, 0.7); g.beginPath(); g.arc(0, 0, r * 0.7, 0, 7); ST.thin(g, ST.ICE, 2, 0.4); }
+      else if (k === 2) { g.beginPath(); g.arc(0, 0, r * 0.4, 0, 7); ST.glow(g, ST.CYAN, 2, 0.7); g.beginPath(); g.arc(-r * 0.12, -r * 0.12, r * 0.18, 3.5, 5); ST.thin(g, '#ffffff', 2, 0.6); }
+      else { ST.rrect(g, -r * 0.6, -r * 0.6, r * 1.2, r * 1.2, r * 0.15); ST.glow(g, ST.ORANGE, 2.5, 0.7); ST.line(g, -r * 0.6, -r * 0.6, r * 0.6, r * 0.6); ST.thin(g, ST.ORANGE, 2, 0.4); }
     } else if (ti === 1) { // Schrauben, Bretter, Werkzeug
-      if (k < 2) { g.fillStyle = '#6d6d72'; g.beginPath(); g.arc(0, 0, r * 0.25, 0, 7); g.fill(); g.strokeStyle = '#333'; g.lineWidth = 4; g.beginPath(); g.moveTo(-r * 0.15, 0); g.lineTo(r * 0.15, 0); g.stroke(); }
-      else if (k === 2) { g.fillStyle = '#c99a5a'; g.fillRect(-r, -r * 0.2, r * 2, r * 0.4); }
-      else { g.fillStyle = '#d33'; g.fillRect(-r * 0.7, -10, r * 0.6, 20); g.fillStyle = '#999'; g.fillRect(-r * 0.1, -6, r * 0.9, 12); }
+      if (k < 2) { ST.oct(g, 0, 0, r * 0.25); ST.glow(g, [170, 162, 220], 2, 0.8); ST.line(g, -r * 0.15, 0, r * 0.15, 0); ST.thin(g, ST.ICE, 3, 0.7); }
+      else if (k === 2) { ST.rrect(g, -r, -r * 0.2, r * 2, r * 0.4, 6); ST.glow(g, ST.YELLOW, 2.5, 0.6); for (let q = -0.6; q <= 0.6; q += 0.4) { ST.line(g, r * q, -r * 0.2, r * q, r * 0.2); ST.thin(g, ST.YELLOW, 1.5, 0.3); } }
+      else { ST.rrect(g, -r * 0.7, -10, r * 0.6, 20, 4); ST.glow(g, ST.RED, 2.5, 0.8); ST.rrect(g, -r * 0.1, -6, r * 0.9, 12, 3); ST.glow(g, [170, 162, 220], 2, 0.8); }
     } else { // Förmchen, Steine, Schaufel
-      if (k < 2) { g.fillStyle = ['#e44', '#4ae', '#fc3', '#5c5'][(k + Math.round(r)) % 4]; g.beginPath(); g.arc(0, 0, r * 0.45, 0, 7); g.fill(); }
-      else if (k === 2) { g.fillStyle = '#9a8f80'; g.beginPath(); g.ellipse(0, 0, r * 0.3, r * 0.2, 0, 0, 7); g.fill(); }
-      else { g.fillStyle = '#e60'; g.fillRect(-r * 0.6, -8, r, 16); g.fillStyle = '#39f'; g.fillRect(r * 0.4, -20, r * 0.5, 40); }
+      if (k < 2) { const c = [ST.RED, ST.CYAN, ST.YELLOW, ST.LIME][(k + Math.round(r)) % 4]; ST.oct(g, 0, 0, r * 0.45); g.fillStyle = ST.rgba(c, 0.12); g.fill(); ST.glow(g, c, 2.5, 0.8); ST.oct(g, 0, 0, r * 0.25); ST.thin(g, c, 2, 0.5); }
+      else if (k === 2) { g.beginPath(); g.ellipse(0, 0, r * 0.3, r * 0.2, 0, 0, 7); ST.glow(g, [170, 162, 220], 2, 0.6); }
+      else { ST.rrect(g, -r * 0.6, -8, r, 16, 4); ST.glow(g, ST.ORANGE, 2.5, 0.8); ST.rrect(g, r * 0.4, -20, r * 0.5, 40, 6); ST.glow(g, ST.CYAN, 2.5, 0.8); }
     }
     g.restore();
   },
 
   hud(g, S, G, W, H, sc) {
     const R = HR.Render;
-    if (S.msgT > 0 && S.msg) R.text(g, S.msg, W / 2, H * 0.3, 34 * sc, 'rgb(255,210,40)', 'center', 'middle');
+    if (S.msgT > 0 && S.msg) R.text(g, S.msg, W / 2, H * 0.3, 34 * sc, '#ffe23d', 'center', 'middle');
     if (S.ready > 0 && G.phase === 'play') R.text(g, 'FERTIG …', W / 2, H * 0.42, 50 * sc, '#fff', 'center', 'middle');
     const me = S.p.find(p => p.id === G.me);
-    if (me && !me.on && G.phase === 'play' && S.pause <= 0) R.text(g, 'AUS DEM BILD – warte auf den nächsten Lauf', W / 2, H * 0.18, 20 * sc, 'rgb(255,110,100)', 'center', 'middle');
+    if (me && !me.on && G.phase === 'play' && S.pause <= 0) R.text(g, 'AUS DEM BILD – warte auf den nächsten Lauf', W / 2, H * 0.18, 20 * sc, '#ff3355', 'center', 'middle');
     R.text(g, this.TRACKS[S.ti].name + ' · Ziel: ' + this.WIN + ' Läufe', W - 12, 10 + 50 * sc, 14 * sc, '#fff', 'right');
   },
 });

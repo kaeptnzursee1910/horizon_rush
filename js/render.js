@@ -157,7 +157,7 @@ HR.Render = {
     if (!race.demo && own.out && viewer !== own && race.state === 'racing') {
       const sc = U.clamp(Math.min(vw / 1000, vh / 640), 0.62, 1.3), more = race.cars.filter(c => !c.out && !c.gone).length > 1;
       g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(vw / 2 - 230 * sc, vh * 0.25 - 4 * sc, 460 * sc, 58 * sc);
-      this.text(g, 'AUSGESCHIEDEN', vw / 2, vh * 0.25, 22 * sc, 'rgb(255,110,100)', 'center');
+      this.text(g, 'AUSGESCHIEDEN', vw / 2, vh * 0.25, 22 * sc, '#ff3355', 'center');
       this.text(g, 'Du schaust ' + viewer.name + ' zu' + (more ? '  ·  ◀ ▶ wechseln' : ''), vw / 2, vh * 0.25 + 27 * sc, 18 * sc, '#fff', 'center');
     }
     if (R && R.flash > 0) { g.fillStyle = `rgba(255,255,255,${Math.min(0.7, R.flash)})`; g.fillRect(0, 0, vw, vh); }
@@ -168,15 +168,15 @@ HR.Render = {
     g.font = `bold ${size}px ${HR.FONT}`;
     const tw = g.measureText(name).width + 10;
     g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x - tw / 2, y - size - 5, tw, size + 6);
-    g.fillStyle = 'rgb(255,210,40)'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText(name, x, y - 3);
+    g.fillStyle = '#ffe23d'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText(name, x, y - 3);
   },
 
-  // Text mit schwarzem Schatten wie im Original
+  // Neon-Schrift: dunkle Kante, Leuchten ab mittlerer Größe
   text(g, s, x, y, size, color, align = 'left', base = 'top', italic = false) {
-    g.font = `${italic ? 'italic ' : ''}bold ${Math.round(size)}px ${HR.FONT}`;
+    g.font = `${italic ? 'italic ' : ''}700 ${Math.round(size)}px ${HR.FONT}`;
     g.textAlign = align; g.textBaseline = base;
-    const o = Math.max(1, Math.floor(size / 16));
-    g.fillStyle = '#000'; g.fillText(s, x + o, y + o);
+    g.lineJoin = 'round'; g.lineWidth = Math.max(2, size * 0.14); g.strokeStyle = 'rgba(7,6,15,.85)'; g.strokeText(s, x, y);
+    if (HR.ST.fx && size >= 20) { const A = g.globalAlpha; g.globalAlpha = A * 0.45; g.shadowColor = color; g.shadowBlur = size * 0.4; g.fillStyle = color; g.fillText(s, x, y); g.shadowBlur = 0; g.shadowColor = 'transparent'; g.globalAlpha = A; }
     g.fillStyle = color; g.fillText(s, x, y);
   },
 
@@ -185,7 +185,7 @@ HR.Render = {
     const sc = Math.min(vh / 540, vw / 700);
     const big = 48 * sc, mid = 26 * sc, small = 18 * sc;
     const pad = 14 * sc + 4;
-    const Y = 'rgb(255,210,40)', Wt = '#fff';
+    const Y = '#ffe23d', Wt = '#fff';
     const touch = HR.Input.touchMode;
     const R = race.rules, noLaps = R && R.noLaps;
     // oben links
@@ -240,7 +240,7 @@ HR.Render = {
     if (race.state === 'countdown') {
       const c = Math.ceil(race.count);
       if (c > 0) this.text(g, String(c), vw / 2, vh * 0.3, 120 * sc, Y, 'center', 'middle');
-    } else if (race.goT > 0) this.text(g, 'LOS!', vw / 2, vh * 0.3, 120 * sc, 'rgb(80,255,100)', 'center', 'middle');
+    } else if (race.goT > 0) this.text(g, 'LOS!', vw / 2, vh * 0.3, 120 * sc, '#b6ff2e', 'center', 'middle');
     if (p.msgT > 0) {
       this.text(g, p.msg, vw / 2, vh * 0.2, 56 * sc, Y, 'center', 'middle');
       if (p.msg2) this.text(g, p.msg2, vw / 2, vh * 0.2 + 50 * sc, mid, Wt, 'center', 'middle');
@@ -256,44 +256,44 @@ HR.Render = {
     for (let i = 0; i < 20; i++) {
       const f = i / 20;
       let c = 'rgb(50,50,55)';
-      if (f < rpm) c = f >= 0.8 ? 'rgb(230,40,40)' : f >= 0.55 ? 'rgb(255,210,40)' : 'rgb(60,220,90)';
+      if (f < rpm) c = f >= 0.8 ? 'rgb(230,40,40)' : f >= 0.55 ? '#ffe23d' : 'rgb(60,220,90)';
       g.fillStyle = c; g.fillRect(x + i * segW, y, segW - 2, h);
     }
   },
 
   touch(g) {
     if (!HR.Input.touchMode) return;
+    const ST = HR.ST;
     for (const b of HR.Input.buttons) {
       if (b.action === 'dpad') { this.dpad(g, b); continue; }
-      const on = HR.Input.pressed(b);
-      g.fillStyle = on ? 'rgba(255,210,40,.55)' : 'rgba(10,12,30,.35)';
-      g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 2;
-      g.beginPath(); g.arc(b.x, b.y, b.r, 0, 7); g.fill(); g.stroke();
-      g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.font = `bold ${Math.round(b.label.length > 2 ? b.r * 0.36 : b.r * 0.6)}px ${HR.FONT}`;
+      const on = HR.Input.pressed(b), col = on ? ST.YELLOW : ST.CYAN;
+      ST.oct(g, b.x, b.y, b.r);
+      g.fillStyle = on ? 'rgba(255,226,61,.28)' : 'rgba(12,10,28,.55)'; g.fill();
+      ST.glow(g, col, on ? 3 : 2);
+      ST.oct(g, b.x, b.y, b.r * 0.8); ST.thin(g, col, 1, 0.4);
+      g.fillStyle = on ? '#fff' : ST.TEXT; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = `700 ${Math.round(b.label.length > 2 ? b.r * 0.34 : b.r * 0.6)}px ${HR.FONT}`;
       g.fillText(b.label, b.x, b.y + 1);
     }
   },
 
-  // Steuerkreuz: vier Arme, gedrückte Richtungen leuchten
+  // Steuerkreuz: vier gefaste Arme, gedrückte Richtungen leuchten
   dpad(g, b) {
-    const on = HR.Input.dpadDirs(b), w = b.r * 0.62, L = b.r * 0.98;
+    const ST = HR.ST, on = HR.Input.dpadDirs(b), w = b.r * 0.62, L = b.r * 0.98;
     g.save(); g.translate(b.x, b.y);
-    g.fillStyle = 'rgba(10,12,30,.28)'; g.beginPath(); g.arc(0, 0, b.r * 1.05, 0, 7); g.fill();
+    ST.oct(g, 0, 0, b.r * 1.08); g.fillStyle = 'rgba(12,10,28,.4)'; g.fill(); ST.thin(g, ST.CYAN, 1.2, 0.35);
     const arms = [['gas', 0, -1], ['brake', 0, 1], ['left', -1, 0], ['right', 1, 0]];
     for (const [a, dx, dy] of arms) {
       const x = dx ? (dx > 0 ? w / 2 : -L) : -w / 2, y = dy ? (dy > 0 ? w / 2 : -L) : -w / 2;
-      const ww = dx ? L - w / 2 : w, hh = dy ? L - w / 2 : w;
-      g.fillStyle = on.has(a) ? 'rgba(255,210,40,.75)' : 'rgba(30,32,55,.6)';
-      g.beginPath(); g.roundRect(x, y, ww, hh, w * 0.25); g.fill();
-      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.stroke();
-      // Pfeil
+      const ww = dx ? L - w / 2 : w, hh = dy ? L - w / 2 : w, act = on.has(a), col = act ? ST.YELLOW : ST.CYAN;
+      ST.rrect(g, x, y, ww, hh, w * 0.3);
+      g.fillStyle = act ? 'rgba(255,226,61,.3)' : 'rgba(17,14,36,.7)'; g.fill(); ST.glow(g, col, act ? 2.5 : 1.6);
       const ax = dx * (L * 0.68), ay = dy * (L * 0.68), s = w * 0.24;
-      g.fillStyle = '#fff'; g.beginPath();
+      g.beginPath();
       g.moveTo(ax + dx * s, ay + dy * s); g.lineTo(ax - dx * s * 0.6 - dy * s, ay - dy * s * 0.6 - dx * s); g.lineTo(ax - dx * s * 0.6 + dy * s, ay - dy * s * 0.6 + dx * s);
-      g.closePath(); g.fill();
+      g.closePath(); g.fillStyle = act ? '#fff' : ST.rgb(ST.hex2rgb(ST.CYAN), 0.85); g.fill();
     }
-    g.fillStyle = 'rgba(30,32,55,.6)'; g.fillRect(-w / 2, -w / 2, w, w);
+    g.fillStyle = 'rgba(17,14,36,.85)'; g.fillRect(-w / 2, -w / 2, w, w);
     g.restore();
   },
 };

@@ -84,24 +84,26 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    const Gm = this.geo(), R = Gm.R;
+    const ST = HR.ST, Gm = this.geo(), R = Gm.R;
     const hex = (cx, cy, r) => { g.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.closePath(); };
-    // fallende Spieler unter den Platten
-    for (const p of S.p) if (!p.al && !p.gone && p.fall < 1) G.fig(g, p, p.x, p.y + p.fall * 140, 26 * (1 - p.fall * 0.7), { dead: true, alpha: 1 - p.fall, noMark: true });
+    // Tiefe unter den Platten: dunkler Schacht mit Sternen
+    g.fillStyle = 'rgba(155,92,255,.06)'; for (let k = 0; k < 70; k++) g.fillRect((k * 337) % 1600, (k * 211) % 1000, 3, 3);
+    for (const p of S.p) if (!p.al && !p.gone && p.fall < 1) G.fig(g, p, p.x, p.y + p.fall * 140, 26 * (1 - p.fall * 0.7), { dead: true, alpha: 1 - p.fall, noMark: true, noShadow: true });
     for (let i = 0; i < S.T.length; i++) {
       const v = S.T[i]; if (v < 0) continue;
       const [cx, cy] = this.center(i), k = v > 0 ? v / this.CRACK : 0;
       const sh = k > 0.6 ? Math.sin(S.time * 60 + i) * 3 * k : 0;
+      const col = ST.hex2rgb(k <= 0 ? ST.CYAN : k < 0.4 ? ST.YELLOW : k < 0.75 ? ST.ORANGE : ST.RED);
       // Seitenwand (Dicke) und Deckfläche
-      hex(cx + sh, cy + 14, R - 2); HR.ST.fill(g, k > 0 ? '#8a5a3c' : '#5d7a3a', 4);
-      hex(cx + sh, cy, R - 2);
-      const top = k > 0 ? U.mix([150, 200, 90], [210, 120, 70], k) : [150, 205, 95];
-      HR.ST.fill(g, U.rgb(((i * 7) % 5 === 0 && !k) ? U.shade(top, 0.93) : top), 4);
+      hex(cx + sh, cy + 14, R - 3); g.fillStyle = ST.BODY; g.fill(); ST.thin(g, ST.VIOLET, 2, 0.6);
+      hex(cx + sh, cy, R - 3); g.fillStyle = '#0d0b1e'; g.fill(); g.fillStyle = ST.rgb(col, k > 0 ? 0.12 + k * 0.15 : 0.07); g.fill();
+      ST.glow(g, col, 2.5, k > 0 ? 1 : 0.75);
+      hex(cx + sh, cy, R * 0.62); ST.thin(g, col, 1.5, 0.35);
       if (k > 0) {
-        g.strokeStyle = 'rgba(40,20,20,.7)'; g.lineWidth = 3; g.beginPath();
-        for (let c = 0; c < 2 + Math.floor(k * 4); c++) { const a = c * 2.1 + i; g.moveTo(cx + sh, cy); g.lineTo(cx + sh + Math.cos(a) * R * 0.75, cy + Math.sin(a) * R * 0.6); }
-        g.stroke();
-      } else { g.fillStyle = 'rgba(255,255,255,.12)'; hex(cx, cy - 4, R * 0.62); g.fill(); }
+        g.beginPath();
+        for (let c = 0; c < 2 + Math.floor(k * 4); c++) { const a = c * 2.1 + i; g.moveTo(cx + sh, cy); g.lineTo(cx + sh + Math.cos(a) * R * 0.45, cy + Math.sin(a) * R * 0.32 + 4); g.lineTo(cx + sh + Math.cos(a + 0.3) * R * 0.78, cy + Math.sin(a + 0.3) * R * 0.6); }
+        ST.glow(g, col, 1.5);
+      } else { g.fillStyle = ST.rgb(col, 0.5); g.fillRect(cx - 2, cy - 2, 4, 4); }
     }
     for (const p of S.p.filter(p => p.al && !p.gone).sort((a, b) => a.y - b.y)) G.fig(g, p, p.x, p.y - 18, 26, { look: [p.lx, p.ly] });
   },

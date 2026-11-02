@@ -80,39 +80,42 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    const gm = this.geo();
-    HR.ST.rrect(g, gm.x0 - 30, gm.y0 - 30 + 18, gm.W + 60, gm.W + 60, 30); HR.ST.fill(g, '#4b3f8a', 6);
-    HR.ST.rrect(g, gm.x0 - 30, gm.y0 - 30, gm.W + 60, gm.W + 60, 30); HR.ST.fill(g, '#6f63b8', 6);
+    const ST = HR.ST, gm = this.geo();
+    ST.rrect(g, gm.x0 - 30, gm.y0 - 30 + 18, gm.W + 60, gm.W + 60, 30); g.fillStyle = ST.BODY; g.fill(); ST.thin(g, ST.VIOLET, 2, 0.6);
+    ST.rrect(g, gm.x0 - 30, gm.y0 - 30, gm.W + 60, gm.W + 60, 30); g.fillStyle = '#0d0a20'; g.fill(); ST.glow(g, ST.VIOLET, 4);
+    ST.rrect(g, gm.x0 - 18, gm.y0 - 18, gm.W + 36, gm.W + 36, 22); ST.thin(g, ST.VIOLET, 1.5, 0.35);
     const me = S.p.find(p => p.id === G.me);
     for (let i = 0; i < 16; i++) {
-      const [x, y] = this.tileXY(i), c = this.COLS[i % 8], lit = S.cur === i;
-      const T = gm.T, up = lit ? -10 : 0;
-      HR.ST.rrect(g, x - T / 2, y - T / 2 + 10, T, T, 18); HR.ST.fill(g, U.rgb(U.shade(c, 0.55)), 5);
-      HR.ST.rrect(g, x - T / 2, y - T / 2 + up, T, T, 18); HR.ST.fill(g, U.rgb(lit ? U.mix(c, [255, 255, 255], 0.55) : U.shade(c, S.ph === 'show' ? 0.6 : 0.85)), 5);
-      if (lit) { g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.arc(x, y + up, T * 0.35, 0, 7); g.fill(); }
+      const [x, y] = this.tileXY(i), c = HR.PARTY_COLORS[[7, 2, 3, 1, 4, 5, 0, 6][i % 8]], lit = S.cur === i;
+      const T = gm.T, up = lit ? -10 : 0, dim = S.ph === 'show' && !lit;
+      ST.rrect(g, x - T / 2, y - T / 2 + 10, T, T, 18); g.fillStyle = ST.BODY; g.fill(); ST.thin(g, c, 2, 0.4);
+      ST.rrect(g, x - T / 2, y - T / 2 + up, T, T, 18);
+      g.fillStyle = '#0c0a1c'; g.fill();
+      if (lit) { ST.pool(g, x, y, T, c, 0.5); ST.rrect(g, x - T / 2, y - T / 2 + up, T, T, 18); g.fillStyle = ST.rgb(c, 0.55); g.fill(); ST.glow(g, ST.whiten(c, 0.3), 5); }
+      else { g.fillStyle = ST.rgb(c, dim ? 0.05 : 0.12); g.fill(); ST.glow(g, c, 3, dim ? 0.45 : 0.85); }
+      ST.rrect(g, x - T * 0.38, y - T * 0.38 + up, T * 0.76, T * 0.76, 12); ST.thin(g, c, 1.5, lit ? 0.8 : 0.3);
       // Symbol
-      g.fillStyle = 'rgba(37,31,58,.35)'; const s = T * 0.16;
+      const s = T * 0.16;
       g.beginPath();
       if (i < 8) g.arc(x, y + up, s, 0, 7); else { g.moveTo(x, y + up - s * 1.2); g.lineTo(x + s * 1.1, y + up + s * 0.8); g.lineTo(x - s * 1.1, y + up + s * 0.8); g.closePath(); }
-      g.fill();
-      // eigener Fehltritt
-      if (me && !me.al && me.ft === i) HR.ST.text(g, '✕', x, y, 90, '#ff4d5e');
+      if (lit) { g.fillStyle = '#ffffff'; g.fill(); } else ST.thin(g, c, 3, dim ? 0.35 : 0.7);
+      if (me && !me.al && me.ft === i) ST.text(g, '✕', x, y, 90, ST.RED);
     }
     for (const p of S.p.filter(p => !p.gone).sort((a, b) => a.y - b.y)) {
       if (!p.al) { if (p.fl < 1) G.fig(g, p, p.x, p.y - 12 + p.fl * 60, 26 * (1 - p.fl * 0.6), { dead: true, alpha: 1 - p.fl, noMark: true, noShadow: true }); continue; }
       G.fig(g, p, p.x, p.y - 14, 26, { look: [p.lx, p.ly] });
-      if (p.ok) HR.ST.text(g, '✓', p.x + 26, p.y - 46, 30, '#7cff8a');
+      if (p.ok) ST.text(g, '✓', p.x + 28, p.y - 46, 30, ST.LIME);
     }
     // Ansage
-    const sc = 1, top = 60;
-    if (S.ph === 'show') HR.ST.text(g, 'GUT AUFPASSEN!', 800, top, 44, '#ffd23c');
+    const top = 60;
+    if (S.ph === 'show') ST.text(g, 'GUT AUFPASSEN!', 800, top, 44, ST.YELLOW);
     else if (S.ph === 'go') {
       const left = S.p.find(p => p.id === G.me);
-      HR.ST.text(g, left && left.al && !left.ok ? 'STAMPFEN! ' + (left.pg + 1) + '. Feld von ' + S.n : 'LOS!', 800, top, 40, '#fff');
-      const w = 600 * U.clamp(S.tm / (S.lim || 1), 0, 1);
-      HR.ST.rrect(g, 500, top + 34, 600, 18, 9); HR.ST.fill(g, 'rgba(0,0,0,.4)', 3);
-      if (w > 4) { HR.ST.rrect(g, 500, top + 34, w, 18, 9); g.fillStyle = S.tm < 2 ? '#ff4d5e' : '#7cff8a'; g.fill(); }
-    } else if (S.rd) HR.ST.text(g, 'Runde ' + S.rd + ' geschafft', 800, top, 36, '#fff');
-    else HR.ST.text(g, 'Gleich geht es los …', 800, top, 36, '#fff');
+      ST.text(g, left && left.al && !left.ok ? 'STAMPFEN! ' + (left.pg + 1) + '. FELD VON ' + S.n : 'LOS!', 800, top, 40, ST.TEXT);
+      const f = U.clamp(S.tm / (S.lim || 1), 0, 1), col = S.tm < 2 ? ST.RED : ST.LIME;
+      g.fillStyle = ST.rgba(col, 0.15); g.fillRect(500, top + 38, 600, 8);
+      if (f > 0.01) { ST.line(g, 500, top + 42, 500 + 600 * f, top + 42); ST.glow(g, col, 6); }
+    } else if (S.rd) ST.text(g, 'RUNDE ' + S.rd + ' GESCHAFFT', 800, top, 36, ST.TEXT);
+    else ST.text(g, 'GLEICH GEHT ES LOS …', 800, top, 36, ST.TEXT);
   },
 });

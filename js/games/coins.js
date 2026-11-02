@@ -91,26 +91,37 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    const sky = g.createLinearGradient(0, 0, 0, 1000); sky.addColorStop(0, '#6ec0ff'); sky.addColorStop(1, '#d6efff');
+    const ST = HR.ST;
+    const sky = g.createLinearGradient(0, 0, 0, 1000); sky.addColorStop(0, '#07060f'); sky.addColorStop(0.75, '#160a2c'); sky.addColorStop(1, '#2a0b3a');
     g.fillStyle = sky; g.fillRect(0, 0, 1600, 1000);
-    for (let k = 0; k < 6; k++) { const x = ((k * 330 + S.time * 12) % 1900) - 150, y = 90 + (k % 3) * 70; g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.ellipse(x, y, 90, 26, 0, 0, 7); g.ellipse(x + 40, y - 18, 50, 26, 0, 0, 7); g.fill(); }
-    g.fillStyle = '#9ad08a'; g.beginPath(); g.moveTo(0, 820); for (let x = 0; x <= 1600; x += 80) g.lineTo(x, 780 + Math.sin(x * 0.006) * 50); g.lineTo(1600, 1000); g.lineTo(0, 1000); g.fill();
-    // Boden
-    g.beginPath(); g.rect(-20, this.GY, 1640, 140); HR.ST.fill(g, '#a8683a', 6);
-    g.beginPath(); g.rect(-20, this.GY, 1640, 26); HR.ST.fill(g, '#6cc04a', 5);
-    for (const [x, y, w] of this.PLAT) {
-      HR.ST.rrect(g, x, y, w, 40, 14); HR.ST.fill(g, '#a8683a', 5);
-      HR.ST.rrect(g, x - 6, y - 6, w + 12, 22, 11); HR.ST.fill(g, '#6cc04a', 5);
+    g.fillStyle = 'rgba(242,238,255,.55)'; for (let k = 0; k < 70; k++) g.fillRect((k * 263) % 1600, (k * 131) % 700, 2, 2);
+    // Skyline mit Fenstern
+    const r = U.rng(9); let x = -10;
+    while (x < 1600) {
+      const w = 60 + r.random() * 90, h = 120 + r.random() * 220;
+      g.beginPath(); g.rect(x, this.GY - h, w, h); g.fillStyle = '#0d0a1d'; g.fill(); ST.thin(g, ST.VIOLET, 1.5, 0.5);
+      for (let wy = this.GY - h + 14; wy < this.GY - 10; wy += 18) for (let wx = x + 8; wx < x + w - 10; wx += 16) if (r.random() < 0.2) { g.fillStyle = r.random() < 0.5 ? 'rgba(255,43,214,.55)' : 'rgba(24,231,255,.5)'; g.fillRect(wx, wy, 6, 4); }
+      x += w + 6 + r.random() * 20;
+    }
+    // Boden und Plattformen
+    g.fillStyle = '#0a0817'; g.fillRect(-20, this.GY, 1640, 140);
+    ST.floor(g, -20, this.GY + 6, 1640, 134, ST.LIME, null, 50);
+    ST.line(g, -20, this.GY, 1620, this.GY); ST.glow(g, ST.LIME, 4);
+    for (const [px, py, pw] of this.PLAT) {
+      ST.pool(g, px + pw / 2, py + 10, pw * 0.6, ST.LIME, 0.12);
+      ST.rrect(g, px, py, pw, 34, 10); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.LIME, 3);
+      ST.line(g, px + 10, py + 17, px + pw - 10, py + 17); ST.thin(g, ST.LIME, 1.5, 0.4);
+      g.fillStyle = ST.LIME; for (let q = px + 20; q < px + pw - 10; q += 40) g.fillRect(q, py + 26, 4, 4);
     }
     for (const it of S.it) {
       const fade = it.lt > 2.5 ? (Math.floor(S.time * 10) % 2 ? 0.3 : 1) : 1;
-      g.globalAlpha = fade;
-      if (it.k === 'c') HR.ST.coin(g, it.x, it.y, 15, S.time + it.i);
-      else if (it.k === 'g') HR.ST.gem(g, it.x, it.y, 19, '#ff6ad5');
-      else HR.ST.bomb(g, it.x, it.y, 20, S.time);
-      g.globalAlpha = 1;
+      const A = g.globalAlpha; g.globalAlpha = fade;
+      if (it.k === 'c') ST.coin(g, it.x, it.y, 15, S.time + it.i);
+      else if (it.k === 'g') ST.gem(g, it.x, it.y, 19, ST.MAGENTA);
+      else ST.bomb(g, it.x, it.y, 20, S.time);
+      g.globalAlpha = A;
     }
     for (const p of S.p) if (!p.gone) G.fig(g, p, p.x, p.y - 30, 28, { look: [p.f * 0.8, 0], stun: p.st, squash: p.og ? 0 : -0.08 });
-    for (const f of S.fx) HR.ST.burst(g, f[0], f[1], (S.time - f[2]) / 0.6, '#ff7a1a', 14, 110);
+    for (const f of S.fx) ST.burst(g, f[0], f[1], (S.time - f[2]) / 0.6, ST.ORANGE, 16, 110);
   },
 });

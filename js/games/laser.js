@@ -65,27 +65,36 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    const cx = 800, cy = 520, RA = this.RA;
-    // Plattform mit Rand und Ringen
-    g.beginPath(); g.ellipse(cx, cy + 26, RA, RA * 0.96, 0, 0, 7); HR.ST.fill(g, '#5b4aa8', 6);
-    g.beginPath(); g.arc(cx, cy, RA, 0, 7); HR.ST.fill(g, '#9fb6ff', 6);
-    for (let k = 1; k <= 3; k++) { g.strokeStyle = 'rgba(37,31,58,.15)'; g.lineWidth = 4; g.beginPath(); g.arc(cx, cy, RA * k / 4, 0, 7); g.stroke(); }
-    for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; g.fillStyle = k % 2 ? 'rgba(255,255,255,.18)' : 'rgba(37,31,58,.06)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, RA - 4, a, a + Math.PI / 6); g.fill(); }
+    const ST = HR.ST, cx = 800, cy = 520, RA = this.RA;
+    // Plattform mit Dicke, Raster, Ringen und Sektoren
+    ST.pool(g, cx, cy, RA * 1.4, ST.VIOLET, 0.12);
+    g.beginPath(); g.ellipse(cx, cy + 26, RA, RA * 0.96, 0, 0, 7); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.VIOLET, 2);
+    g.save(); g.beginPath(); g.arc(cx, cy, RA, 0, 7); g.clip();
+    ST.floor(g, cx - RA, cy - RA, RA * 2, RA * 2, ST.VIOLET, null, 70);
+    for (let k = 0; k < 12; k += 2) { const a = k * Math.PI / 6; g.fillStyle = 'rgba(155,92,255,.06)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, RA, a, a + Math.PI / 6); g.fill(); }
+    g.restore();
+    for (let k = 1; k <= 3; k++) { g.beginPath(); g.arc(cx, cy, RA * k / 4, 0, 7); ST.thin(g, ST.VIOLET, 2, 0.35); }
+    g.beginPath(); g.arc(cx, cy, RA, 0, 7); ST.glow(g, ST.CYAN, 5);
+    g.beginPath(); for (let k = 0; k < 48; k++) { const a = k * Math.PI / 24, r2 = k % 4 ? RA + 8 : RA + 16; g.moveTo(cx + Math.cos(a) * (RA + 4), cy + Math.sin(a) * (RA + 4)); g.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2); } ST.thin(g, ST.CYAN, 2, 0.5);
     // Laser
     for (const l of S.L) {
       const ex = cx + Math.cos(l.a) * RA, ey = cy + Math.sin(l.a) * RA;
       g.lineCap = 'round';
-      g.strokeStyle = 'rgba(255,60,90,.35)'; g.lineWidth = 34; g.beginPath(); g.moveTo(cx, cy); g.lineTo(ex, ey); g.stroke();
-      g.strokeStyle = '#ff3b5c'; g.lineWidth = 14; g.stroke();
-      g.strokeStyle = '#fff'; g.lineWidth = 5; g.stroke();
-      g.beginPath(); g.arc(ex, ey, 16, 0, 7); HR.ST.fill(g, '#ff3b5c', 4);
+      ST.line(g, cx, cy, ex, ey);
+      if (ST.fx) { g.strokeStyle = 'rgba(255,51,85,.22)'; g.lineWidth = 40; g.stroke(); }
+      g.strokeStyle = ST.RED; g.lineWidth = 14; g.stroke();
+      g.strokeStyle = '#ffd6de'; g.lineWidth = 5; g.stroke();
+      g.lineCap = 'butt';
+      ST.oct(g, ex, ey, 17, l.a); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.RED, 3);
     }
     // Kern
-    g.beginPath(); g.arc(cx, cy, this.CORE, 0, 7); HR.ST.fill(g, '#3a2f6b', 6);
-    g.beginPath(); g.arc(cx, cy, this.CORE * 0.55, 0, 7); HR.ST.fill(g, `hsl(${(S.time * 90) % 360},90%,60%)`, 4);
+    const hc = ST.hsl((S.time * 90) % 360, 1, 0.6);
+    ST.oct(g, cx, cy, this.CORE); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.VIOLET, 4);
+    ST.oct(g, cx, cy, this.CORE * 0.55, S.time); g.fillStyle = ST.rgb(hc, 0.3); g.fill(); ST.glow(g, hc, 3);
     for (const p of S.p.filter(p => !p.gone).sort((a, b) => a.y - b.y)) {
-      if (!p.al) { if (S.time - p.dt < 0.6) HR.ST.burst(g, p.x, p.y - 20, (S.time - p.dt) / 0.6, G.rgb(p), 12, 70); continue; }
-      HR.ST.shadow(g, p.x, p.y + 24, 22 * (1 - p.z * 0.4), 7);
+      if (!p.al) { if (S.time - p.dt < 0.6) ST.burst(g, p.x, p.y - 20, (S.time - p.dt) / 0.6, G.color(p), 14, 70); continue; }
+      ST.shadow(g, p.x, p.y + 24, 22 * (1 - p.z * 0.4), 7);
+      if (p.z > 0) { g.beginPath(); g.ellipse(p.x, p.y + 24, 26, 8, 0, 0, 7); ST.thin(g, G.color(p), 1.5, 0.5); }
       G.fig(g, p, p.x, p.y - 4 - p.z * 70, 25, { look: [p.lx, p.ly], squash: p.z > 0 ? -0.08 : 0, noShadow: true });
     }
   },

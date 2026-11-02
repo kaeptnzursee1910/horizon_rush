@@ -119,23 +119,26 @@ HR.AR.define({
   },
 
   draw(g, S, G, W, H) {
+    const ST = HR.ST;
     g.save();
     G.world(g);
     const CS = this.CS, X0 = this.X0, Y0 = this.Y0, MW = this.CW * CS, MH = this.CH * CS;
-    HR.ST.floor(g, X0, Y0, MW, MH, '#5a4a7a', '#524470', CS);
-    for (const w of S.walls) { g.fillStyle = '#2a2140'; g.fillRect(w[0], w[1] + 8, w[2], w[3]); HR.ST.rrect(g, w[0], w[1], w[2], w[3], 4); HR.ST.fill(g, '#9a86c8', 3); }
-    for (const gm of S.gems) HR.ST.gem(g, gm.x, gm.y - 6 + Math.sin(S.time * 4 + gm.i) * 4, 14, ['#4ad6ff', '#ff6ad5', '#7cff8a'][gm.i % 3]);
+    ST.floor(g, X0, Y0, MW, MH, ST.VIOLET, null, CS / 2);
+    for (const w of S.walls) { ST.rrect(g, w[0], w[1], w[2], w[3], 3); g.fillStyle = '#100c24'; g.fill(); ST.glow(g, ST.VIOLET, 2.5); }
+    g.fillStyle = '#e8d8ff';
+    for (const w of S.walls) { g.fillRect(w[0] - 2, w[1] - 2, 5, 5); g.fillRect(w[0] + w[2] - 3, w[1] + w[3] - 3, 5, 5); }
+    for (const gm of S.gems) ST.gem(g, gm.x, gm.y - 6 + Math.sin(S.time * 4 + gm.i) * 4, 14, [ST.GREEN, ST.CYAN, ST.MAGENTA][gm.i % 3]);
     for (const p of S.p.filter(p => !p.gone).sort((a, b) => a.y - b.y)) G.fig(g, p, p.x, p.y - 8, this.PR, { look: [p.lx, p.ly], alpha: p.iv > 0 && Math.floor(S.time * 10) % 2 ? 0.5 : 1 });
     const gh = S.gh, gb = Math.sin(S.time * 4) * 8;
-    for (const f of S.fx) HR.ST.burst(g, f[0], f[1], (S.time - f[2]) / 0.6, '#ff6ad5', 12, 60);
+    for (const f of S.fx) ST.burst(g, f[0], f[1], (S.time - f[2]) / 0.6, ST.GREEN, 12, 60);
     g.restore();
-    // Dunkelheit: nur um die eigene Figur (Zuschauer: um alle) ist es hell
+    // Dunkelheit: nur um das eigene Token (Zuschauer: um alle) ist es hell
     const me = S.p.find(p => p.id === G.me && !p.gone), v = G.view;
     const lights = G.show || !me ? S.p.filter(p => !p.gone) : [me];
     const dk = this._dk && this._dk.width === Math.ceil(W) && this._dk.height === Math.ceil(H) ? this._dk : (this._dk = U.canvas(Math.ceil(W), Math.ceil(H)));
     const d = dk.getContext('2d');
     d.globalCompositeOperation = 'source-over'; d.clearRect(0, 0, W, H);
-    d.fillStyle = G.show || !me ? 'rgba(6,4,18,.72)' : 'rgba(6,4,18,.97)'; d.fillRect(0, 0, W, H);
+    d.fillStyle = G.show || !me ? 'rgba(4,3,10,.8)' : 'rgba(4,3,10,.97)'; d.fillRect(0, 0, W, H);
     d.globalCompositeOperation = 'destination-out';
     for (const p of lights) {
       const x = v.ox + p.x * v.sc, y = v.oy + p.y * v.sc, r = 230 * v.sc;
@@ -144,15 +147,17 @@ HR.AR.define({
       d.fillStyle = gr; d.beginPath(); d.arc(x, y, r, 0, 7); d.fill();
     }
     g.drawImage(dk, 0, 0, W, H);
-    // der Geist leuchtet auch im Dunkeln
     g.save(); G.world(g);
-    g.globalAlpha = gh.st > 0 ? 0.45 : 0.92;
-    g.beginPath(); g.arc(gh.x, gh.y - 10 + gb, 34, Math.PI, 0); g.lineTo(gh.x + 34, gh.y + 24 + gb);
-    for (let k = 0; k < 4; k++) g.quadraticCurveTo(gh.x + 34 - k * 17 - 8.5, gh.y + 36 + gb, gh.x + 34 - (k + 1) * 17, gh.y + 24 + gb);
-    g.closePath(); HR.ST.fill(g, '#e8f4ff', 4);
-    g.fillStyle = HR.ST.INK; g.beginPath(); g.ellipse(gh.x - 12, gh.y - 12 + gb, 7, 10, 0, 0, 7); g.ellipse(gh.x + 12, gh.y - 12 + gb, 7, 10, 0, 0, 7); g.fill();
-    g.globalAlpha = 1;
-    if (me && !G.show) HR.ST.you(g, me.x, me.y - 40, S.time, '');
+    for (const p of lights) { g.beginPath(); g.arc(p.x, p.y, 225, 0, 7); ST.thin(g, G.color(p), 2, 0.3); }
+    // der Geist leuchtet auch im Dunkeln
+    const A = g.globalAlpha; g.globalAlpha = gh.st > 0 ? 0.45 : 1;
+    ST.pool(g, gh.x, gh.y, 90, ST.RED, 0.2);
+    g.beginPath(); g.moveTo(gh.x - 34, gh.y + 34 + gb); g.lineTo(gh.x - 34, gh.y - 8 + gb); g.lineTo(gh.x - 18, gh.y - 34 + gb); g.lineTo(gh.x + 18, gh.y - 34 + gb); g.lineTo(gh.x + 34, gh.y - 8 + gb); g.lineTo(gh.x + 34, gh.y + 34 + gb);
+    g.lineTo(gh.x + 17, gh.y + 22 + gb); g.lineTo(gh.x, gh.y + 34 + gb); g.lineTo(gh.x - 17, gh.y + 22 + gb); g.closePath();
+    g.fillStyle = 'rgba(255,51,85,.15)'; g.fill(); ST.glow(g, ST.RED, 3.5);
+    g.beginPath(); g.rect(gh.x - 17, gh.y - 14 + gb, 10, 10); g.rect(gh.x + 7, gh.y - 14 + gb, 10, 10); g.fillStyle = '#ffffff'; g.fill(); ST.glow(g, '#ffffff', 1.5);
+    g.globalAlpha = A;
+    if (me && !G.show) ST.you(g, me.x, me.y - 40, S.time, '');
     g.restore();
   },
 });

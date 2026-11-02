@@ -130,16 +130,16 @@ const PR = HR.PR = {
   endHud(g, R, race, p, vw, vh, sc) {
     const alive = PR.alive(race);
     const won = !p.out && alive.length === 1;
-    R.text(g, won ? 'GEWONNEN!' : 'ENDE', vw / 2, vh * 0.4, 64 * sc, won ? 'rgb(80,255,100)' : 'rgb(255,210,40)', 'center', 'middle');
+    R.text(g, won ? 'GEWONNEN!' : 'ENDE', vw / 2, vh * 0.4, 64 * sc, won ? '#b6ff2e' : '#ffe23d', 'center', 'middle');
     if (!won && alive.length === 1) R.text(g, alive[0].name + ' gewinnt', vw / 2, vh * 0.4 + 50 * sc, 22 * sc, '#fff', 'center', 'middle');
   },
   banner(g, R, race, txt, sub, color, vw, vh, sc) {
-    R.text(g, txt, vw / 2, vh * 0.13, 30 * sc, color || 'rgb(255,210,40)', 'center', 'middle');
+    R.text(g, txt, vw / 2, vh * 0.13, 30 * sc, color || '#ffe23d', 'center', 'middle');
     if (sub) R.text(g, sub, vw / 2, vh * 0.13 + 30 * sc, 18 * sc, '#fff', 'center', 'middle');
   },
   outHud(g, R, race, p, vw, vh, sc) {
     const w = PR.spectate(race);
-    R.text(g, 'AUSGESCHIEDEN', vw / 2, vh * 0.16, 34 * sc, 'rgb(255,110,100)', 'center', 'middle');
+    R.text(g, 'AUSGESCHIEDEN', vw / 2, vh * 0.16, 34 * sc, '#ff3355', 'center', 'middle');
     if (w) R.text(g, 'Du schaust ' + w.name + ' zu' + (PR.alive(race).length > 1 ? '  ·  ◀ ▶ wechseln' : ''), vw / 2, vh * 0.16 + 34 * sc, 18 * sc, '#fff', 'center', 'middle');
   },
   // kleines Blaulicht über einem Auto
@@ -198,11 +198,11 @@ HR.addGame(raceDef({
         if (race.state === 'done') { PR.endHud(g, R, race, p, vw, vh, sc); return; }
         if (p.out) { PR.outHud(g, R, race, p, vw, vh, sc); return; }
         const alive = race.order.filter(c => !c.out), pos = alive.indexOf(p) + 1;
-        R.text(g, 'POSITION', 14 * sc + 4, 14 * sc + 4, 18 * sc, 'rgb(255,210,40)');
+        R.text(g, 'POSITION', 14 * sc + 4, 14 * sc + 4, 18 * sc, '#ffe23d');
         R.text(g, `${pos}/${alive.length}`, 14 * sc + 4, 14 * sc + 4 + 20 * sc, 48 * sc, '#fff');
         if (race.state !== 'racing') return;
         const warn = pos === alive.length && alive.length > 1;
-        const col = warn ? (Math.floor(race.time * 4) % 2 ? 'rgb(255,80,70)' : '#fff') : 'rgb(255,210,40)';
+        const col = warn ? (Math.floor(race.time * 4) % 2 ? 'rgb(255,80,70)' : '#fff') : '#ffe23d';
         PR.banner(g, R, race, 'AUSSCHEIDEN IN ' + Math.ceil(this.left), warn ? 'DU BIST LETZTER – GIB GAS!' : `Noch ${alive.length} im Rennen`, col, vw, vh, sc);
       },
       ranking(race) { return PR.survivalRanking(race, this); },
@@ -256,7 +256,7 @@ HR.addGame(raceDef({
       },
       decorate(g, race, c, box) { if (c.id === this.cop) PR.siren(g, box, race.time); },
       hud(g, race, p, vw, vh, sc, R) {
-        const Y = 'rgb(255,210,40)', pad = 14 * sc + 4;
+        const Y = '#ffe23d', pad = 14 * sc + 4;
         R.text(g, 'POLIZEI-ZEIT', pad, pad, 18 * sc, Y);
         R.text(g, U.fmtTime(this.pt[p.id] || 0), pad, pad + 20 * sc, 34 * sc, '#fff');
         R.text(g, 'NOCH', vw - pad, pad, 18 * sc, Y, 'right');
@@ -270,7 +270,7 @@ HR.addGame(raceDef({
             best ? `${best.c.name}: ${PR.meters(best.d)} m ${best.d >= 0 ? 'vor' : 'hinter'} dir` : '', Math.floor(race.time * 6) % 2 ? 'rgb(90,140,255)' : 'rgb(255,80,70)', vw, vh, sc);
         } else {
           const d = PR.gap(race, p, cop);
-          PR.banner(g, R, race, 'POLIZEI: ' + cop.name, `${PR.meters(d)} m ${d >= 0 ? 'vor' : 'hinter'} dir`, Math.abs(d) < 3000 ? 'rgb(255,110,100)' : Y, vw, vh, sc);
+          PR.banner(g, R, race, 'POLIZEI: ' + cop.name, `${PR.meters(d)} m ${d >= 0 ? 'vor' : 'hinter'} dir`, Math.abs(d) < 3000 ? '#ff3355' : Y, vw, vh, sc);
         }
       },
       ranking(race) {
@@ -345,7 +345,7 @@ HR.addGame(raceDef({
       hud(g, race, p, vw, vh, sc, R) {
         if (race.state === 'done') { PR.endHud(g, R, race, p, vw, vh, sc); return; }
         if (p.out) { PR.outHud(g, R, race, p, vw, vh, sc); return; }
-        const alive = PR.alive(race).length, Y = 'rgb(255,210,40)';
+        const alive = PR.alive(race).length, Y = '#ffe23d';
         R.text(g, 'IM RENNEN', 14 * sc + 4, 14 * sc + 4, 18 * sc, Y);
         R.text(g, String(alive), 14 * sc + 4, 14 * sc + 4 + 20 * sc, 48 * sc, '#fff');
         if (race.state !== 'racing') return;
@@ -520,7 +520,7 @@ HR.addGame(raceDef({
         else R.text(g, 'EXTRA', vw / 2, y + s / 2, 13 * sc, 'rgba(255,255,255,.5)', 'center', 'middle');
         const fx = [];
         if (this.boostT > 0) fx.push('TURBO'); if (this.magnetT > 0) fx.push('MAGNET'); if (this.shieldT > 0) fx.push('SCHILD ' + Math.ceil(this.shieldT)); if (this.slowT > 0) fx.push('GEBREMST');
-        if (fx.length) R.text(g, fx.join('  ·  '), vw / 2, y + s + 6, 16 * sc, 'rgb(255,210,40)', 'center');
+        if (fx.length) R.text(g, fx.join('  ·  '), vw / 2, y + s + 6, 16 * sc, '#ffe23d', 'center');
       },
       ranking(race) {
         return race.results().filter(r => !race.cars.find(c => c.id === r.id).gone)

@@ -27,7 +27,8 @@ HR.POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
 HR.FIELD = 8;              // Autos im Starterfeld
 HR.MAX_ONLINE = 8;         // Spieler in einem Online-Rennen
 HR.STEP = 1 / 60;
-HR.FONT = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+HR.FONT = '"Chakra Petch", "Arial Narrow", Arial, sans-serif';
+HR.FONT_TEXT = 'Barlow, "Helvetica Neue", Arial, sans-serif';
 
 // ---------- Hilfsfunktionen ----------
 const U = HR.U = {

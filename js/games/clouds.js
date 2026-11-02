@@ -106,12 +106,17 @@ HR.AR.define({
     const ST = HR.ST;
     g.beginPath(); g.rect(0, 0, 1600, 1000); g.clip();
     const hgt = Math.min(1, S.cb / 9000);
-    const top = U.mix([110, 190, 255], [40, 30, 110], hgt), bot = U.mix([200, 235, 255], [120, 90, 190], hgt);
+    const top = U.mix([20, 12, 48], [7, 6, 15], hgt), bot = U.mix([52, 16, 70], [24, 10, 50], hgt);
     const grd = g.createLinearGradient(0, 0, 0, 1000); grd.addColorStop(0, U.rgb(top)); grd.addColorStop(1, U.rgb(bot));
     g.fillStyle = grd; g.fillRect(0, 0, 1600, 1000);
-    if (hgt > 0.3) {
-      g.fillStyle = `rgba(255,255,255,${(hgt - 0.3) * 0.9})`;
-      for (let k = 0; k < 60; k++) { const sx = (k * 263) % 1600, sy = ((k * 157 + S.cb * 0.1) % 1000); g.beginPath(); g.arc(sx, 1000 - sy, 2.5, 0, 7); g.fill(); }
+    // Sterne ziehen langsam mit
+    g.fillStyle = `rgba(242,238,255,${0.35 + hgt * 0.45})`;
+    for (let k = 0; k < 90; k++) { const sx = (k * 263) % 1600, sy = ((k * 157 + S.cb * 0.12) % 1000); const s = k % 7 === 0 ? 3 : 2; g.fillRect(sx, 1000 - sy, s, s); }
+    // Höhenlinien am Rand
+    g.font = `700 16px ${HR.FONT}`; g.textAlign = 'left'; g.textBaseline = 'bottom';
+    for (let m = Math.ceil(S.cb / 500) * 500; m < S.cb + 1000; m += 500) {
+      const y = 1000 - (m - S.cb);
+      ST.line(g, 0, y, 40, y); ST.thin(g, ST.CYAN, 2, 0.5); g.fillStyle = 'rgba(24,231,255,.6)'; g.fillText(Math.round(m / 10) + ' m', 46, y + 8);
     }
     const Y = h => 1000 - (h - S.cb);
     const r0 = Math.max(0, Math.floor((S.cb - 60) / this.ROW)), r1 = Math.ceil((S.cb + 1060) / this.ROW);
@@ -120,22 +125,23 @@ HR.AR.define({
         const y = Y(r * this.ROW);
         if (c.k === 'g') {
           if (S.time > 8) continue;
-          g.beginPath(); g.rect(-10, y, 1620, 1110 - y); ST.fill(g, '#a8683a', 6);
-          g.beginPath(); g.rect(-10, y, 1620, 24); ST.fill(g, '#6cc04a', 5);
+          g.fillStyle = ST.BODY; g.fillRect(-10, y, 1620, 1110 - y);
+          ST.floor(g, -10, y + 6, 1620, 1104 - y, ST.LIME, null, 60);
+          ST.line(g, -10, y, 1610, y); ST.glow(g, ST.LIME, 4);
           continue;
         }
-        const x = this.cx(c, S.time);
+        const x = this.cx(c, S.time), col = c.k === 's' ? ST.YELLOW : c.k === 'm' ? ST.CYAN : ST.ICE;
         for (const xx of [x - 1600, x, x + 1600]) {
           if (xx < -200 || xx > 1800) continue;
-          // Wolke: Umriss um alle Teile, dann gefüllt
-          g.beginPath();
-          g.ellipse(xx, y + 4, c.w / 2, 16, 0, 0, 7);
-          g.moveTo(xx - c.w * 0.2 + c.w * 0.22, y - 6); g.ellipse(xx - c.w * 0.2, y - 6, c.w * 0.22, 18, 0, 0, 7);
-          g.moveTo(xx + c.w * 0.18 + c.w * 0.25, y - 8); g.ellipse(xx + c.w * 0.18, y - 8, c.w * 0.25, 20, 0, 0, 7);
-          g.lineWidth = 10; g.strokeStyle = ST.INK; g.lineJoin = 'round'; g.stroke();
-          g.fillStyle = c.k === 's' ? '#ffd84a' : c.k === 'm' ? '#d6ecff' : '#ffffff'; g.fill();
-          g.fillStyle = 'rgba(120,150,200,.25)'; g.beginPath(); g.ellipse(xx, y + 10, c.w * 0.42, 6, 0, 0, 7); g.fill();
-          if (c.k === 's') { g.strokeStyle = '#a07000'; g.lineWidth = 4; g.beginPath(); for (let z = 0; z < 4; z++) { g.moveTo(xx - 14, y - 4 - z * 6); g.lineTo(xx + 14, y - 7 - z * 6); } g.stroke(); }
+          // Wolke als gefaste Plattform mit Wolkenbogen oben
+          const w = c.w;
+          ST.pool(g, xx, y + 4, w * 0.6, col, 0.12);
+          g.beginPath(); g.moveTo(xx - w / 2, y + 14); g.lineTo(xx - w / 2, y + 2); g.lineTo(xx - w * 0.36, y - 8);
+          g.lineTo(xx - w * 0.22, y - 16); g.lineTo(xx - w * 0.04, y - 10); g.lineTo(xx + w * 0.12, y - 20); g.lineTo(xx + w * 0.32, y - 12); g.lineTo(xx + w / 2, y + 2); g.lineTo(xx + w / 2, y + 14); g.closePath();
+          g.fillStyle = ST.BODY; g.fill(); g.fillStyle = ST.rgba(col, 0.14); g.fill(); ST.glow(g, col, 3);
+          ST.line(g, xx - w * 0.38, y + 6, xx + w * 0.38, y + 6); ST.thin(g, col, 1.5, 0.45);
+          if (c.k === 's') { g.beginPath(); for (let z = 0; z < 2; z++) { g.moveTo(xx - 14, y - 22 - z * 12); g.lineTo(xx, y - 34 - z * 12); g.lineTo(xx + 14, y - 22 - z * 12); } ST.glow(g, ST.YELLOW, 2.5); }
+          if (c.k === 'm') { for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(xx + sd * (w / 2 + 10), y - 2); g.lineTo(xx + sd * (w / 2 + 20), y + 4); g.lineTo(xx + sd * (w / 2 + 10), y + 10); ST.glow(g, ST.CYAN, 2, 0.7); } }
         }
       }
     }
@@ -144,12 +150,13 @@ HR.AR.define({
       const y = Y(p.h) - 24;
       for (const xx of [p.x - 1600, p.x, p.x + 1600]) {
         if (xx < -60 || xx > 1660) continue;
-        if (p.pf > 0) { g.strokeStyle = G.rgb(p, 0.7); g.lineWidth = 8; g.beginPath(); g.arc(xx, y, 70, 0, 7); g.stroke(); }
+        if (p.pf > 0) { ST.oct(g, xx, y, 64, S.time * 6); ST.glow(g, G.color(p), 3, 0.7); }
         G.fig(g, p, xx, y, 24, { look: [p.f, p.vh > 0 ? -0.6 : 0.4], squash: p.vh > 0 ? -0.08 : 0.04, noShadow: true });
       }
     }
     // Gefahrenzone unten
-    const gz = g.createLinearGradient(0, 930, 0, 1000); gz.addColorStop(0, 'rgba(255,77,94,0)'); gz.addColorStop(1, 'rgba(255,77,94,.55)');
-    g.fillStyle = gz; g.fillRect(0, 930, 1600, 70);
+    const gz = g.createLinearGradient(0, 920, 0, 1000); gz.addColorStop(0, 'rgba(255,51,85,0)'); gz.addColorStop(1, 'rgba(255,51,85,.4)');
+    g.fillStyle = gz; g.fillRect(0, 920, 1600, 80);
+    g.setLineDash([22, 16]); g.lineDashOffset = -S.time * 40; ST.line(g, 0, 990, 1600, 990); ST.glow(g, ST.RED, 3); g.setLineDash([]); g.lineDashOffset = 0;
   },
 });

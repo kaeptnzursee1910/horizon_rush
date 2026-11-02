@@ -76,26 +76,29 @@ HR.AR.define({
   draw(g, S, G) {
     G.world(g);
     const ST = HR.ST, R = S.R;
-    // Wasser
-    g.fillStyle = '#4fb6e8'; g.fillRect(-2000, -2000, 5600, 5000);
-    g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 5; g.lineCap = 'round';
-    for (let y = -40; y < 1040; y += 70) for (let x = ((y * 7) % 160) - 80; x < 1640; x += 160) {
-      const o = Math.sin(S.time * 2 + x * 0.01 + y) * 8;
-      g.beginPath(); g.moveTo(x + o, y); g.quadraticCurveTo(x + 20 + o, y - 10, x + 40 + o, y); g.stroke();
+    // Wasser: dunkel mit gestrichelten Wellenlinien
+    g.fillStyle = '#05070f'; g.fillRect(-2000, -2000, 5600, 5000);
+    for (let y = -60, k = 0; y < 1060; y += 34, k++) {
+      g.setLineDash([16 + (k * 7) % 22, 12 + (k * 5) % 16]); g.lineDashOffset = S.time * 18 * (k % 2 ? 1 : -1) + k * 13;
+      g.beginPath(); for (let x = -120; x <= 1720; x += 40) g.lineTo(x, y + Math.sin(x * 0.02 + k + S.time) * 4);
+      ST.thin(g, ST.CYAN, 2, 0.14 + (k % 3) * 0.06);
     }
-    // Eisscholle mit Kante
-    g.beginPath(); g.ellipse(800, 522, R, R * 0.98, 0, 0, 7); ST.fill(g, '#7fc0e0', 6);
-    const grd = g.createRadialGradient(740, 440, R * 0.1, 800, 500, R);
-    grd.addColorStop(0, '#ffffff'); grd.addColorStop(1, '#c9e9fa');
-    g.beginPath(); g.arc(800, 500, R, 0, 7); ST.fill(g, grd, 6);
-    g.strokeStyle = 'rgba(80,140,190,.4)'; g.lineWidth = 3;
-    for (let k = 0; k < 7; k++) { const a = k * 0.9; g.beginPath(); g.moveTo(800 + Math.cos(a) * R * 0.25, 500 + Math.sin(a) * R * 0.25); g.lineTo(800 + Math.cos(a + 0.15) * R * 0.6, 500 + Math.sin(a + 0.15) * R * 0.6); g.lineTo(800 + Math.cos(a + 0.05) * R * 0.92, 500 + Math.sin(a + 0.05) * R * 0.92); g.stroke(); }
-    if (R < 465 && Math.floor(S.time * 2) % 2) { g.strokeStyle = 'rgba(255,77,94,.7)'; g.lineWidth = 8; g.beginPath(); g.arc(800, 500, R - 6, 0, 7); g.stroke(); }
+    g.setLineDash([]); g.lineDashOffset = 0;
+    ST.pool(g, 800, 500, R * 1.5, ST.MAGENTA, 0.12);
+    // Plattform mit sichtbarer Dicke
+    g.beginPath(); g.ellipse(800, 522, R, R * 0.98, 0, 0, 7); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.VIOLET, 2);
+    g.save(); g.beginPath(); g.arc(800, 500, R, 0, 7); g.clip();
+    ST.floor(g, 800 - R, 500 - R, R * 2, R * 2, ST.MAGENTA, null, 80);
+    g.restore();
+    for (const k of [0.3, 0.62]) { g.beginPath(); g.arc(800, 500, R * k, 0, 7); ST.thin(g, ST.MAGENTA, 2, 0.35); }
+    if (R < 465) { g.setLineDash([16, 14]); g.lineDashOffset = -S.time * 30; g.beginPath(); g.arc(800, 500, R - 16, 0, 7); ST.glow(g, ST.YELLOW, 3, Math.floor(S.time * 2) % 2 ? 0.9 : 0.4); g.setLineDash([]); g.lineDashOffset = 0; }
+    g.beginPath(); g.arc(800, 500, R, 0, 7); ST.glow(g, ST.MAGENTA, 6);
     for (const p of S.p.filter(p => !p.gone && (p.al || p.f < 1)).sort((a, b) => a.y - b.y)) {
       const sc = p.al ? 1 : 1 - p.f * 0.7;
-      if (p.al && p.dash > 0) { g.strokeStyle = G.rgb(p, 0.7); g.lineWidth = 8; g.beginPath(); g.arc(p.x, p.y, 46, 0, 7); g.stroke(); }
+      if (p.al && p.dash > 0) { ST.oct(g, p.x, p.y, 48, S.time * 4); ST.glow(g, G.color(p), 3, 0.7); }
+      if (!p.al && p.f < 0.6) ST.burst(g, p.x, p.y, p.f / 0.6, ST.CYAN, 10, 50);
       G.fig(g, p, p.x, p.y + (p.al ? 0 : p.f * 40), 30 * sc, { look: [Math.cos(p.a), Math.sin(p.a)], dead: !p.al, alpha: p.al ? 1 : 1 - p.f, squash: p.dash > 0 ? -0.08 : 0 });
-      if (p.al && p.id === G.me && p.cd <= 0) ST.text(g, 'STOSS bereit', p.x, p.y + 52, 18, '#ffd23c');
+      if (p.al && p.id === G.me && p.cd <= 0) ST.text(g, 'STOSS BEREIT', p.x, p.y + 56, 18, ST.YELLOW);
     }
   },
 });

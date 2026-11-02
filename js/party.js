@@ -3,8 +3,9 @@
 'use strict';
 
 HR.PARTY_PREFIX = 'horizonparty-v1-';
-HR.PARTY_COLORS = [[235, 60, 55], [255, 205, 40], [60, 125, 245], [60, 195, 95], [250, 135, 35], [165, 80, 230], [45, 215, 225], [250, 115, 185]];
-HR.PARTY_COLOR_NAMES = ['Rot', 'Gelb', 'Blau', 'Grün', 'Orange', 'Lila', 'Türkis', 'Pink'];
+// Neonfarben; jede Farbe hat ein eigenes Symbol (HR.ST.SYMS), damit Spieler auch ohne Farbsehen unterscheidbar sind
+HR.PARTY_COLORS = [[255, 51, 85], [255, 226, 61], [24, 231, 255], [182, 255, 46], [255, 122, 26], [155, 92, 255], [232, 244, 255], [255, 43, 214]];
+HR.PARTY_COLOR_NAMES = ['Rot', 'Gelb', 'Cyan', 'Limette', 'Orange', 'Violett', 'Eisweiß', 'Magenta'];
 
 // Spiele melden sich hier an (partyrace.js und games/*.js)
 HR.GAMES = {};
