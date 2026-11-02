@@ -67,7 +67,7 @@ const ST = HR.ST = {
       g.globalAlpha = A * al * 0.35; g.lineWidth = w * 1.9; g.stroke();
     }
     g.globalAlpha = A * al; g.lineWidth = w; g.stroke();
-    g.strokeStyle = U.rgb(ST.whiten(c, 0.55)); g.lineWidth = Math.max(1, w * 0.38); g.stroke();
+    g.strokeStyle = U.rgb(ST.whiten(c, ST.fx ? 0.55 : 0.3)); g.lineWidth = Math.max(1, w * (ST.fx ? 0.38 : 0.25)); g.stroke();
     g.globalAlpha = A;
   },
   // feine Innenlinie
@@ -223,6 +223,26 @@ const ST = HR.ST = {
     else if (kind === 'kreuz') { g.moveTo(x - s * 0.5, y - s * 0.5); g.lineTo(x + s * 0.5, y + s * 0.5); g.moveTo(x + s * 0.5, y - s * 0.5); g.lineTo(x - s * 0.5, y + s * 0.5); g.stroke(); }
     else if (kind === 'plus') { g.moveTo(x - s * 0.62, y); g.lineTo(x + s * 0.62, y); g.moveTo(x, y - s * 0.62); g.lineTo(x, y + s * 0.62); g.stroke(); }
     else { g.ellipse(x, y, s * 0.7, s * 0.38, 0, 0, 7); g.stroke(); g.beginPath(); g.arc(x, y, s * 0.2, 0, 7); g.fill(); }
+  },
+
+  // Token als kleines SVG für Menüs und Lobby (Achteck + Symbol)
+  tokenSVG(col, size) {
+    const c = typeof col === 'string' ? ST.parse(col) : col, rgb = `rgb(${c[0]},${c[1]},${c[2]})`, lt = U.rgb(ST.whiten(c, 0.3));
+    const pts = (arr, k) => arr.map(([x, y]) => (x * k).toFixed(2) + ',' + (y * k).toFixed(2)).join(' ');
+    const ring = n => { const a = []; for (let i = 0; i < n; i++) { const t = Math.PI / n + i * 2 * Math.PI / n; a.push([Math.cos(t), Math.sin(t)]); } return a; };
+    const kind = ST.symFor(c);
+    let sym;
+    if (kind === 'kreis') sym = `<circle r="2.8" fill="${lt}"/>`;
+    else if (kind === 'dreieck') sym = `<polygon points="${pts([[0, -0.72], [0.66, 0.5], [-0.66, 0.5]], 5)}" fill="${lt}"/>`;
+    else if (kind === 'quadrat') sym = `<rect x="-2.5" y="-2.5" width="5" height="5" fill="${lt}"/>`;
+    else if (kind === 'raute') sym = `<polygon points="${pts([[0, -0.78], [0.6, 0], [0, 0.78], [-0.6, 0]], 5)}" fill="${lt}"/>`;
+    else if (kind === 'sechseck') sym = `<polygon points="${pts(ring(6).map(([x, y]) => [y, x]), 3.3)}" fill="${lt}"/>`;
+    else if (kind === 'stern') { const a = []; for (let k = 0; k < 10; k++) { const t = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 0.33 : 0.78; a.push([Math.cos(t) * r, Math.sin(t) * r]); } sym = `<polygon points="${pts(a, 5)}" fill="${lt}"/>`; }
+    else if (kind === 'plus') sym = `<path d="M-3.1 0H3.1M0 -3.1V3.1" stroke="${lt}" stroke-width="1.7"/>`;
+    else if (kind === 'blitz') sym = `<polygon points="${pts([[0.12, -0.8], [-0.5, 0.1], [-0.02, 0.1], [-0.16, 0.8], [0.5, -0.12], [0.02, -0.12]], 5)}" fill="${lt}"/>`;
+    else sym = `<circle r="1.6" fill="${lt}"/>`;
+    const s = size || 22;
+    return `<svg class="tok" width="${s}" height="${s}" viewBox="-12 -12 24 24" aria-hidden="true" style="filter:drop-shadow(0 0 3px ${rgb})"><polygon points="${pts(ring(8), 10)}" fill="rgba(${c[0]},${c[1]},${c[2]},.16)" stroke="${rgb}" stroke-width="1.8"/>${sym}</svg>`;
   },
 
   // Der Spieler als Token. o: {look:[x,y], t, stun, dead, hat:'crown'|'cowboy'|'beanie', squash, alpha, noShadow, still, sym}
