@@ -11,6 +11,21 @@ HR.Net = {
   myId: null, onMsg: null, onDrop: null, nextId: 1,
 
   KEY_STORE: 'hr_online_key',
+  MODE_STORE: 'hr_conn_mode',
+  // Verbindungsweg: 'direct' = nur direkt (spart Server-Verkehr), 'auto' = direkt mit Server als Ausweichweg,
+  // 'relay' = immer über den Verbindungsserver (TURN)
+  MODES: { direct: 'Direkt (P2P)', auto: 'Automatisch', relay: 'Über Server' },
+  getMode() {
+    try { const m = localStorage.getItem(this.MODE_STORE); return this.MODES[m] ? m : 'auto'; } catch (_) { return 'auto'; }
+  },
+  setMode(m) {
+    try { if (this.MODES[m]) localStorage.setItem(this.MODE_STORE, m); } catch (_) { }
+  },
+  // Ist der gewählte Weg möglich?
+  modeProblem() {
+    if (this.getMode() === 'relay' && !this.getKey()) return 'Für „Über Server“ werden Zugangsdaten für den Verbindungsserver benötigt (Verbindungseinstellungen).';
+    return null;
+  },
   getKey() {
     try { return JSON.parse(localStorage.getItem(this.KEY_STORE) || 'null'); } catch (_) { return null; }
   },
@@ -19,9 +34,10 @@ HR.Net = {
   },
 
   iceServers() {
-    const ice = [{ urls: 'stun:stun.relay.metered.ca:80' }, { urls: 'stun:stun.l.google.com:19302' }];
+    const mode = this.getMode();
+    const ice = mode === 'relay' ? [] : [{ urls: 'stun:stun.relay.metered.ca:80' }, { urls: 'stun:stun.l.google.com:19302' }];
     const k = this.getKey();
-    if (k) {
+    if (k && mode !== 'direct') {
       for (const u of ['turn:global.relay.metered.ca:80', 'turn:global.relay.metered.ca:80?transport=tcp',
         'turn:global.relay.metered.ca:443', 'turns:global.relay.metered.ca:443?transport=tcp']) {
         ice.push({ urls: u, username: k.user, credential: k.pass });
@@ -33,7 +49,8 @@ HR.Net = {
   available() { return typeof window.Peer === 'function'; },
 
   makePeer(id) {
-    const opts = Object.assign({ debug: 0, config: { iceServers: this.iceServers() } }, window.HR_PEER_SERVER || {});
+    const relay = this.getMode() === 'relay';
+    const opts = Object.assign({ debug: 0, config: { iceServers: this.iceServers(), iceTransportPolicy: relay ? 'relay' : 'all' } }, window.HR_PEER_SERVER || {});
     return id ? new Peer(id, opts) : new Peer(opts);
   },
 
@@ -113,6 +130,32 @@ HR.Net = {
       // Code noch nicht gefunden: kurz warten und es noch einmal versuchen (der Gastgeber meldet sich evtl. gerade neu an)
       if (!done && e.type === 'peer-unavailable' && attempt < 1) { done = true; this.close(); setTimeout(() => this.join(code, cb, prefix, attempt + 1), 2000); return; }
       if (!done) fail(this.errText(e)); else if (e.type === 'peer-unavailable' || e.type === 'network') { if (this.onDrop) this.onDrop(0); } });
+  },
+
+  // tatsächlich genutzter Weg einer Verbindung: 'direct' oder 'relay' (null = noch unbekannt)
+  async connType(conn) {
+    const pc = conn && conn.peerConnection;
+    if (!pc || !pc.getStats) return null;
+    try {
+      const st = await pc.getStats();
+      let pair = null;
+      st.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId) pair = st.get(r.selectedCandidatePairId); });
+      if (!pair) st.forEach(r => { if (r.type === 'candidate-pair' && r.nominated && r.state === 'succeeded') pair = r; });
+      if (!pair) return null;
+      const l = st.get(pair.localCandidateId), rm = st.get(pair.remoteCandidateId);
+      return (l && l.candidateType === 'relay') || (rm && rm.candidateType === 'relay') ? 'relay' : 'direct';
+    } catch (_) { return null; }
+  },
+
+  // Gastgeber: Weg jeder Verbindung in die Spielerliste eintragen; true, wenn sich etwas geändert hat
+  async measureVia(players) {
+    let changed = false;
+    for (const [id, conn] of this.conns) {
+      const t = await this.connType(conn);
+      const p = players && players.find(x => x.id === id);
+      if (p && t && p.via !== t) { p.via = t; changed = true; }
+    }
+    return changed;
   },
 
   watchIce(conn, onDead) {

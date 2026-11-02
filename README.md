@@ -53,5 +53,12 @@ Im Party-Modus rechnet der Gastgeber die Arena-Spiele, die anderen Geräte schic
 ## Verbindung
 Die Geräte verbinden sich per WebRTC direkt miteinander. In Netzwerken, die direkte Verbindungen
 blockieren (etwa Firmen- oder Hochschul-WLANs), läuft die Verbindung über einen Verbindungsserver.
-Die Zugangsdaten dafür trägt man unter *Einstellungen → Verbindungsserver* ein. Sie stehen nicht im Code
+Die Zugangsdaten dafür trägt man unter *Einstellungen → Verbindung* ein. Sie stehen nicht im Code
 und werden nur im Browser des jeweiligen Geräts gespeichert.
+
+Unter *Einstellungen → Verbindung* (oder *Verbindungseinstellungen* beim Eröffnen/Beitreten) wählt man den **Verbindungsweg**:
+- **Direkt (P2P)** – nur direkte Verbindungen; der Spielverkehr läuft nie über den Verbindungsserver und spart dessen Kontingent. Klappt nicht in Netzen, die direkte Verbindungen sperren.
+- **Automatisch** – direkt, wenn möglich, sonst über den Verbindungsserver (Standard).
+- **Über Server** – der gesamte Verkehr läuft über den Verbindungsserver (braucht Zugangsdaten).
+
+Der Gastgeber gibt seine Wahl im Einladungslink (`&via=…`) an die Gäste weiter. In der Lobby steht bei jedem Mitspieler, welcher Weg tatsächlich genutzt wird (⇄ Direkt / ☁ Server).

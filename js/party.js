@@ -27,6 +27,7 @@ const Party = HR.Party = {
 
   // ---------- Eröffnen und beitreten ----------
   create() {
+    if (HR.Net.modeProblem()) { UI.error(HR.Net.modeProblem(), () => UI.party()); return; }
     UI.busy('Party wird eröffnet …');
     HR.Net.onMsg = (m, from) => this.msg(m, from);
     HR.Net.onDrop = id => this.drop(id);
@@ -43,6 +44,13 @@ const Party = HR.Party = {
       Game.party = this;
       this.sys('Party eröffnet. Code: ' + code);
       this.show();
+      // Verbindungsweg der Mitspieler ermitteln und in der Spielerliste anzeigen
+      clearInterval(this._viaT);
+      this._viaT = setInterval(async () => {
+        const P = this.P;
+        if (!P || !P.host || P.solo) { clearInterval(this._viaT); return; }
+        if (await HR.Net.measureVia(P.players)) this.changed();
+      }, 3000);
     }, HR.PARTY_PREFIX);
   },
 
@@ -85,6 +93,7 @@ const Party = HR.Party = {
   },
 
   join(code) {
+    if (HR.Net.modeProblem()) { UI.error(HR.Net.modeProblem(), () => UI.party(code)); return; }
     UI.busy('Verbinde mit Party ' + code + ' …');
     HR.Net.onMsg = (m, from) => this.msg(m, from);
     HR.Net.onDrop = id => this.drop(id);
@@ -100,6 +109,7 @@ const Party = HR.Party = {
 
   // alles zurücksetzen und die normalen Online-Rennen wieder anmelden
   reset() {
+    clearInterval(this._viaT);
     this.stopGame();
     HR.Net.close();
     this.P = null; this.chat = []; this.screen = null;
@@ -440,7 +450,7 @@ const PUI = HR.PUI = {
     const P = Party.P, ul = document.getElementById('pplayers'); if (!ul) return;
     const phase = P.phase;
     ul.innerHTML = P.players.map(p => {
-      let right = p.ai ? '<small>Computer</small>' : p.id === 0 && !P.solo ? '<small>Gastgeber</small>' : '';
+      let right = p.ai ? '<small>Computer</small>' : p.id === 0 && !P.solo ? '<small>Gastgeber</small>' : phase === 'lobby' ? UI.viaTag(p) : '';
       if (phase === 'intro') right = P.ready.includes(p.id) ? '<small class="ok">✓ bereit</small>' : '<small class="wait">liest …</small>';
       if (phase === 'round' || phase === 'final') right = `<small>${P.scores[p.id] || 0} Pkt.</small>`;
       const me = p.id === P.myId;
@@ -590,7 +600,7 @@ Object.assign(UI.acts, {
     const P = Party.P; if (!P || !P.code) return;
     // die Zugangsdaten des Verbindungsservers reisen im Teil nach # mit: der wird nie an einen Server geschickt
     const k = HR.Net.getKey();
-    const url = location.origin + location.pathname + '?party=' + P.code + (k && k.user && k.pass ? '#k=' + btoa(unescape(encodeURIComponent(JSON.stringify([k.user, k.pass])))).replace(/=+$/, '') : '');
+    const url = location.origin + location.pathname + '?party=' + P.code + '&via=' + HR.Net.getMode() + (k && k.user && k.pass ? '#k=' + btoa(unescape(encodeURIComponent(JSON.stringify([k.user, k.pass])))).replace(/=+$/, '') : '');
     const text = 'Komm in meine Horizon-Rush-Party! Code ' + P.code;
     if (navigator.share) { navigator.share({ title: 'Horizon Rush', text, url }).catch(() => {}); return; }
     const done = () => UI.toast('Link kopiert: ' + url);
@@ -627,7 +637,7 @@ UI.party = function (invite) {
       <label class="field"><span>Code einer Party</span><input id="jcode" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" value="${invite || ''}"></label>
       <button data-act="pjoin" ${invite ? 'class="hot" autofocus' : ''}>Beitreten</button>
     </div>
-    <p class="note"><button class="link" data-act="keyform">Verbindungseinstellungen</button></p>
+    <p class="note"><button class="link" data-act="keyform">Verbindungseinstellungen</button> (Weg: ${HR.Net.MODES[HR.Net.getMode()]})</p>
     <p class="error" id="err" hidden></p></div>`, () => this.main());
   this.el.querySelector('#jcode').addEventListener('keydown', e => { if (e.key === 'Enter') UI.acts.pjoin(); });
   this.el.querySelector('#pname').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });

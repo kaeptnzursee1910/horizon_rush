@@ -67,7 +67,10 @@ const Game = HR.Game = {
     this.resize();
     this.startDemo();
     // Einladungslink ?party=1234: direkt zum Beitreten
-    const inv = (new URLSearchParams(location.search).get('party') || '').replace(/\D/g, '').slice(0, 4);
+    const qs = new URLSearchParams(location.search);
+    const inv = (qs.get('party') || '').replace(/\D/g, '').slice(0, 4);
+    // Verbindungsweg des Gastgebers aus dem Einladungslink übernehmen
+    if (inv.length === 4 && HR.Net.MODES[qs.get('via')]) HR.Net.setMode(qs.get('via'));
     const km = /[#&]k=([A-Za-z0-9+/]+)/.exec(location.hash);
     if (km) { try { const [u, p] = JSON.parse(decodeURIComponent(escape(atob(km[1])))); if (u && p) HR.Net.setKey(String(u), String(p)); } catch (_) { } }
     if (inv.length === 4 || km) history.replaceState(null, '', location.pathname);
@@ -270,6 +273,7 @@ const Game = HR.Game = {
   myPick() { const s = this.settings; const paints = HR.paintsFor(s.car); return { car: s.car, color: paints[s.paint % paints.length] }; },
 
   onlineHost() {
+    if (HR.Net.modeProblem()) { UI.error(HR.Net.modeProblem(), () => UI.online()); return; }
     UI.busy('Rennen wird erstellt …');
     HR.Net.host((err, code) => {
       if (err) { UI.error(err, () => UI.online()); return; }
@@ -278,10 +282,18 @@ const Game = HR.Game = {
       this.online = { host: true, code, state: 'lobby', track: 0, laps: 3, diff: this.diff,
         players: [{ id: 0, name: this.settings.name, car: p.car, color: p.color }] };
       UI.lobby();
+      // Verbindungsweg der Mitspieler ermitteln und in der Lobby anzeigen
+      clearInterval(this._viaT);
+      this._viaT = setInterval(async () => {
+        const o = this.online;
+        if (!o || !o.host) { clearInterval(this._viaT); return; }
+        if (o.state === 'lobby' && await HR.Net.measureVia(o.players)) this.lobbyChanged();
+      }, 3000);
     });
   },
 
   onlineJoin(code) {
+    if (HR.Net.modeProblem()) { UI.error(HR.Net.modeProblem(), () => UI.online()); return; }
     UI.busy('Verbinde mit Rennen ' + code + ' …');
     HR.Net.join(code, (err, id) => {
       if (err) { UI.error(err, () => UI.online()); return; }
@@ -660,7 +672,7 @@ const UI = HR.UI = {
       <nav class="list settings">
         <button data-act="sound" autofocus>Ton: <b>${s.sound ? 'an' : 'aus'}</b></button>
         <button data-act="cycleDiff">Computergegner: <b>${HR.DIFFS[Game.diff][0]}</b></button>
-        <button data-act="keyform">Verbindungsserver: <b>${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>
+        <button data-act="keyform">Verbindung: <b>${HR.Net.MODES[HR.Net.getMode()]}</b> · Server <b>${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>
         <button data-act="fullscreen">Vollbild</button>
       </nav></div>`, () => this.main());
   },
@@ -677,7 +689,7 @@ const UI = HR.UI = {
         <label class="field"><span>Code eines Rennens</span><input id="jcode" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off"></label>
         <button data-act="join">Beitreten</button>
       </div>
-      <p class="note"><button class="link" data-act="keyform">Verbindungseinstellungen</button></p>
+      <p class="note"><button class="link" data-act="keyform">Verbindungseinstellungen</button> (Weg: ${HR.Net.MODES[HR.Net.getMode()]})</p>
       <p class="error" id="err" hidden></p></div>`, () => this.main());
     this.el.querySelector('#jcode').addEventListener('keydown', e => { if (e.key === 'Enter') this.acts.join(); });
     this.el.querySelector('#pname').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
@@ -685,7 +697,17 @@ const UI = HR.UI = {
 
   keyform() {
     const k = HR.Net.getKey() || {};
-    this.show(`<div class="panel narrow"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Verbindungsserver</h2></header>
+    const mode = HR.Net.getMode();
+    const modeNote = {
+      direct: 'Die Geräte verbinden sich direkt miteinander. Der Spielverkehr läuft nie über den Verbindungsserver und spart dessen Kontingent. In Netzen, die direkte Verbindungen sperren, klappt das nicht.',
+      auto: 'Direkt, wenn möglich. Nur wenn das Netz es verhindert, läuft die Verbindung über den Verbindungsserver' + (k.user ? '.' : ' (dafür unten Zugangsdaten eintragen).'),
+      relay: 'Der gesamte Verkehr läuft über den Verbindungsserver. Funktioniert auch in gesperrten Netzen, verbraucht aber Server-Kontingent.' + (k.user ? '' : ' Dafür unten Zugangsdaten eintragen!'),
+    }[mode];
+    this.show(`<div class="panel narrow"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Verbindung</h2></header>
+      <h3>Verbindungsweg</h3>
+      <div class="seg">${Object.entries(HR.Net.MODES).map(([m, label]) => `<button class="${m === mode ? 'on' : ''}" data-act="cmode" data-arg="${m}">${label}</button>`).join('')}</div>
+      <p class="note">${modeNote} Als Gastgeber gibst du diese Wahl im Einladungslink an deine Mitspieler weiter.</p>
+      <h3>Verbindungsserver</h3>
       <p class="note">In manchen Netzwerken, etwa in Firmen- oder Hochschul-WLANs, können sich Geräte nicht direkt verbinden. Dann läuft die Verbindung über einen Verbindungsserver. Die Zugangsdaten werden nur auf diesem Gerät gespeichert.</p>
       <label class="field"><span>Benutzername</span><input id="kuser" value="${this.esc(k.user || '')}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
       <label class="field"><span>Passwort</span><input id="kpass" type="password" value="${this.esc(k.pass || '')}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
@@ -697,7 +719,7 @@ const UI = HR.UI = {
     const myId = o.host ? 0 : o.myId;
     const me = o.players.find(p => p.id === myId);
     const myCar = me ? me.car : Game.settings.car;
-    const plist = o.players.map(p => `<li class="${p.id === myId ? 'me' : ''}">${this.swatch(p.color)}<b>${this.esc(p.name)}</b><span>${HR.CARS[p.car].name}</span>${p.id === 0 ? '<small>Gastgeber</small>' : ''}</li>`).join('');
+    const plist = o.players.map(p => `<li class="${p.id === myId ? 'me' : ''}">${this.swatch(p.color)}<b>${this.esc(p.name)}</b><span>${HR.CARS[p.car].name}</span>${p.id === 0 ? '<small>Gastgeber</small>' : UI.viaTag(p)}</li>`).join('');
     const free = Math.max(0, HR.FIELD - o.players.length);
     const carBtns = HR.CARS.map((c, i) => `<button class="chip ${i === myCar ? 'on' : ''}" data-act="lobbyCar" data-arg="${i}">${c.name}</button>`).join('');
     const hostCtl = o.host ? `
@@ -715,6 +737,13 @@ const UI = HR.UI = {
       </div>
       <h3>Dein Auto</h3><div class="chips">${carBtns}</div>
       ${hostCtl}</div>`, () => this.acts.quit());
+  },
+
+  // Anzeige des tatsächlich genutzten Verbindungswegs eines Mitspielers
+  viaTag(p) {
+    if (!p || !p.via) return '';
+    return p.via === 'relay' ? '<small class="via relay" title="Verbindung über den Verbindungsserver">☁ Server</small>'
+      : '<small class="via" title="Direkte Verbindung (P2P)">⇄ Direkt</small>';
   },
 
   busy(msg) { this.show(`<div class="panel narrow"><h2>${msg}</h2><div class="spinner"></div><nav class="list"><button data-act="quit">Abbrechen</button></nav></div>`, () => this.acts.quit()); },
@@ -769,6 +798,7 @@ const UI = HR.UI = {
       HR.Net.setKey(u, p); UI.toast(u && p ? 'Zugangsdaten gespeichert' : 'Zugangsdaten gelöscht');
       UI._keyBack ? UI._keyBack() : UI.online();
     },
+    cmode(m) { HR.Net.setMode(m); UI.keyform(); const b = UI.el.querySelector(`[data-act="cmode"][data-arg="${m}"]`); if (b) b.focus(); },
     keydel() { HR.Net.setKey(null); UI.toast('Zugangsdaten gelöscht'); UI._keyBack ? UI._keyBack() : UI.online(); },
     readName() { const n = UI.el.querySelector('#pname'); if (n) { Game.settings.name = n.value.trim().slice(0, 16) || Game.settings.name; Game.save(); } },
     host() { UI.acts.readName(); Game.onlineHost(); },
