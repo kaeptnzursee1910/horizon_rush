@@ -1,3 +1,8 @@
+/* Schriften lokal mitgeliefert (SIL Open Font License), damit das Spiel offline läuft */
+@font-face { font-family: 'Chakra Petch'; font-weight: 500; font-display: swap; src: url(fonts/chakra-petch-500.woff2) format('woff2'); }
+@font-face { font-family: 'Chakra Petch'; font-weight: 700; font-display: swap; src: url(fonts/chakra-petch-700.woff2) format('woff2'); }
+@font-face { font-family: 'Barlow'; font-weight: 500; font-display: swap; src: url(fonts/barlow-500.woff2) format('woff2'); }
+@font-face { font-family: 'Barlow'; font-weight: 600; font-display: swap; src: url(fonts/barlow-600.woff2) format('woff2'); }
 /* Horizon Rush – Menüs im Stil des Originals: Nachtblau → Pflaume, Gelb, Orange */
 :root {
   --night: rgb(15, 20, 45);

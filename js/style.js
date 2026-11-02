@@ -12,7 +12,7 @@ const ST = HR.ST = {
   INK_RGB: [11, 9, 24],
   LW: 5,
   fx: true,                   // Lichtwirkung an/aus
-  SYMS: ['kreuz', 'raute', 'dreieck', 'quadrat', 'sechseck', 'stern', 'plus', 'kreis'],
+  SYMS: ['blitz', 'raute', 'dreieck', 'quadrat', 'sechseck', 'stern', 'plus', 'kreis'],
 
   rgb: (c, a) => a == null ? U.rgb(c) : `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`,
   dark: c => U.shade(c, 0.55),
@@ -219,6 +219,7 @@ const ST = HR.ST = {
     else if (kind === 'raute') P([[0, -0.78], [0.6, 0], [0, 0.78], [-0.6, 0]]);
     else if (kind === 'sechseck') { const p = []; for (let k = 0; k < 6; k++) p.push([Math.cos(k * Math.PI / 3) * 0.66, Math.sin(k * Math.PI / 3) * 0.66]); P(p); }
     else if (kind === 'stern') { const p = []; for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 0.33 : 0.78; p.push([Math.cos(a) * r, Math.sin(a) * r]); } P(p); }
+    else if (kind === 'blitz') P([[0.12, -0.8], [-0.5, 0.1], [-0.02, 0.1], [-0.16, 0.8], [0.5, -0.12], [0.02, -0.12]]);
     else if (kind === 'kreuz') { g.moveTo(x - s * 0.5, y - s * 0.5); g.lineTo(x + s * 0.5, y + s * 0.5); g.moveTo(x + s * 0.5, y - s * 0.5); g.lineTo(x - s * 0.5, y + s * 0.5); g.stroke(); }
     else if (kind === 'plus') { g.moveTo(x - s * 0.62, y); g.lineTo(x + s * 0.62, y); g.moveTo(x, y - s * 0.62); g.lineTo(x, y + s * 0.62); g.stroke(); }
     else { g.ellipse(x, y, s * 0.7, s * 0.38, 0, 0, 7); g.stroke(); g.beginPath(); g.arc(x, y, s * 0.2, 0, 7); g.fill(); }
