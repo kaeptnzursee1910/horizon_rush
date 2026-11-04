@@ -419,7 +419,7 @@ const Party = HR.Party = {
 // Party-Bildschirme
 // ======================================================================
 const PUI = HR.PUI = {
-  dot(p) { return `<span class="pdot">${HR.ST.tokenSVG(Party.color(p), 22)}</span>`; },
+  dot(p) { return `<span class="pdot" style="background:${U.rgb(Party.color(p))}"></span>`; },
 
   chatBox() {
     return `<section class="pchat"><h3>Chat</h3><div id="pchatlog" class="chatlog" aria-live="polite"></div>
@@ -455,7 +455,7 @@ const PUI = HR.PUI = {
       if (phase === 'intro') right = P.ready.includes(p.id) ? '<small class="ok">✓ bereit</small>' : '<small class="wait">liest …</small>';
       if (phase === 'round' || phase === 'final') right = `<small>${P.scores[p.id] || 0} Pkt.</small>`;
       const me = p.id === P.myId;
-      const dot = me && phase === 'lobby' ? `<button class="pdot btn" data-act="pcolor" title="Farbe und Symbol wechseln" aria-label="Farbe und Symbol wechseln">${HR.ST.tokenSVG(Party.color(p), 26)}</button>` : this.dot(p);
+      const dot = me && phase === 'lobby' ? `<button class="pdot btn" data-act="pcolor" title="Farbe wechseln" aria-label="Farbe wechseln" style="background:${U.rgb(Party.color(p))}"></button>` : this.dot(p);
       return `<li class="${me ? 'me' : ''}">${dot}<b>${UI.esc(p.name)}</b>${right}</li>`;
     }).join('');
     const c = document.getElementById('pcount'); if (c) c.textContent = phase === 'lobby' && !P.solo ? `(${P.players.length}/${P.max})` : `(${P.players.length})`;
