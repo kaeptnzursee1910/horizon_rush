@@ -82,24 +82,25 @@ HR.AR.define({
   draw(g, S, G) {
     G.world(g);
     const ST = HR.ST;
-    ST.floor(g, 0, 0, 1600, 1000, ST.CYAN, null, 100);
-    ST.frame(g, 3, 3, 1594, 994, ST.CYAN, 6, 100);
-    // Leuchtspuren, das jüngste Stück hell
+    ST.floor(g, 0, 0, 1600, 1000, '#cbbcff', '#bdabf6', 100);
+    g.beginPath(); g.rect(3, 3, 1594, 994); g.lineWidth = 10; g.strokeStyle = ST.INK; g.stroke();
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    // Spuren als dicke Bänder mit Umriss
     for (const p of S.p) {
       if (p.gone) continue;
-      const pts = p.v.concat([[p.x, p.y]]), c = G.color(p);
-      g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) g.lineTo(pts[k][0], pts[k][1]);
-      ST.glow(g, c, 7, p.al ? 0.9 : 0.3);
-      if (p.al) {
-        const [dx, dy] = this.DIRS[p.d], a = pts[pts.length - 2] || pts[0], L = Math.min(80, Math.hypot(p.x - a[0], p.y - a[1]));
-        ST.line(g, p.x - dx * L, p.y - dy * L, p.x, p.y); ST.glow(g, ST.whiten(c, 0.45), 8);
-      }
+      const pts = p.v.concat([[p.x, p.y]]);
+      const path = () => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) g.lineTo(pts[k][0], pts[k][1]); };
+      g.globalAlpha = p.al ? 1 : 0.45;
+      path(); g.strokeStyle = ST.INK; g.lineWidth = 22; g.stroke();
+      path(); g.strokeStyle = G.rgb(p); g.lineWidth = 12; g.stroke();
+      path(); g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 3; g.stroke();
+      g.globalAlpha = 1;
     }
     for (const p of S.p) {
       if (p.gone) continue;
       const [dx, dy] = this.DIRS[p.d];
-      if (!p.al) ST.burst(g, p.x, p.y, Math.min(1, (S.time - p.dt) / 0.8), G.color(p), 16, 70);
-      G.fig(g, p, p.x, p.y, 17, { look: [dx, dy], dead: !p.al, alpha: p.al ? 1 : 0.6, still: true, noShadow: true });
+      if (!p.al) { ST.burst(g, p.x, p.y, Math.min(1, (S.time - p.dt) / 0.6), G.rgb(p), 10, 60); }
+      G.fig(g, p, p.x, p.y - 6, 18, { look: [dx, dy], dead: !p.al, alpha: p.al ? 1 : 0.6 });
     }
   },
 });
