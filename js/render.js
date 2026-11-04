@@ -53,8 +53,6 @@ HR.Render = {
     const camY = playerY + HR.CAMH, camX = viewer.x * HR.ROADW;
     let maxy = vh, x = 0, dx = -base.curve * basePct;
     const colors = tr.colors;
-    // Neon-Linien (Fahrbahnkanten, Bodenraster) werden gesammelt und je Nebelstufe in einem Zug gezeichnet
-    const nz = tr.cfg.neon, EL = [[], [], []], GL = [[], [], []], GRID = [2.3, 3.5, 5.2, 7.8, 11.5];
 
     for (let i = 0; i < dd; i++) {
       const idx = baseI + i, seg = segs[idx % n];
@@ -100,23 +98,7 @@ HR.Render = {
           this.poly(g, lane, [[lx1 - l1, y1], [lx1 + l1, y1], [lx2 + l2, y2], [lx2 - l2, y2]]);
         }
       }
-      if (nz) {
-        const b = i < dd * 0.22 ? 0 : i < dd * 0.5 ? 1 : 2, E = EL[b], Gd = GL[b];
-        E.push(X1 - W1, y1, X2 - W2, y2, X1 + W1, y1, X2 + W2, y2);
-        for (const o of GRID) for (const sd of [-1, 1]) {
-          if (seg.sea && Math.sign(seg.sea) === sd) continue;
-          const a1 = X1 + sd * o * W1, a2 = X2 + sd * o * W2;
-          if ((a1 < -50 && a2 < -50) || (a1 > vw + 50 && a2 > vw + 50)) continue;
-          Gd.push(a1, y1, a2, y2);
-        }
-        if (seg.index % 4 === 0) {
-          if (!(seg.sea < 0)) Gd.push(0, y1, X1 - W1 - r1, y1);
-          if (!(seg.sea > 0)) Gd.push(X1 + W1 + r1, y1, vw, y1);
-        }
-      }
     }
-
-    if (nz) this.neonLines(g, EL, GL, nz, vh);
 
     // Autos nach Segment sortieren
     const buckets = new Map();
@@ -165,7 +147,7 @@ HR.Render = {
         const a = Math.min(0.5, viewer.speed / HR.MAXSPEED);
         for (let q = 0; q < 8; q++) {
           const side = q % 2 ? 1 : -1, t = Math.random();
-          g.fillStyle = `rgba(${(tr.cfg.neon || {}).edge || [190, 170, 130]},${a * (1 - t)})`;
+          g.fillStyle = `rgba(190,170,130,${a * (1 - t)})`;
           g.beginPath(); g.arc(half + side * dw * (0.36 + t * 0.25), yRoad - dh * 0.1 - t * dh * 0.5, dw * (0.05 + t * 0.12), 0, 7); g.fill();
         }
       }
@@ -174,7 +156,7 @@ HR.Render = {
     const own = race.cars[view.car];
     if (!race.demo && own.out && viewer !== own && race.state === 'racing') {
       const sc = U.clamp(Math.min(vw / 1000, vh / 640), 0.62, 1.3), more = race.cars.filter(c => !c.out && !c.gone).length > 1;
-      HR.ST.rrect(g, vw / 2 - 230 * sc, vh * 0.25 - 6 * sc, 460 * sc, 62 * sc, 12 * sc); g.fillStyle = 'rgba(12,10,28,.8)'; g.fill(); HR.ST.glow(g, HR.ST.RED, 2);
+      g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(vw / 2 - 230 * sc, vh * 0.25 - 4 * sc, 460 * sc, 58 * sc);
       this.text(g, 'AUSGESCHIEDEN', vw / 2, vh * 0.25, 22 * sc, '#ff3355', 'center');
       this.text(g, 'Du schaust ' + viewer.name + ' zu' + (more ? '  ·  ◀ ▶ wechseln' : ''), vw / 2, vh * 0.25 + 27 * sc, 18 * sc, '#fff', 'center');
     }
@@ -182,31 +164,10 @@ HR.Render = {
     g.restore();
   },
 
-  // gefaste Neon-Tafel hinter Anzeigen
-  panel(g, x, y, w, h, col, sc) {
-    const ST = HR.ST; ST.rrect(g, x, y, w, h, 10 * (sc || 1)); g.fillStyle = 'rgba(12,10,28,.72)'; g.fill(); ST.glow(g, col, Math.max(1.5, 2 * (sc || 1)));
-  },
-
-  neonLines(g, EL, GL, nz, vh) {
-    const path = L => { g.beginPath(); for (let k = 0; k < L.length; k += 4) { g.moveTo(L[k], L[k + 1]); g.lineTo(L[k + 2], L[k + 3]); } };
-    const sc = Math.max(0.6, vh / 540), A = [1, 0.6, 0.28], Wd = [2.6, 1.8, 1.1];
-    g.lineCap = 'butt';
-    for (let b = 2; b >= 0; b--) {
-      if (GL[b].length) { path(GL[b]); g.strokeStyle = U.rgb(nz.grid); g.globalAlpha = 0.32 * A[b]; g.lineWidth = Wd[b] * 0.6 * sc; g.stroke(); }
-      if (EL[b].length) {
-        path(EL[b]); g.strokeStyle = U.rgb(nz.edge);
-        if (HR.ST.fx) { g.globalAlpha = 0.18 * A[b]; g.lineWidth = Wd[b] * 3.5 * sc; g.stroke(); }
-        g.globalAlpha = A[b]; g.lineWidth = Wd[b] * sc; g.stroke();
-        g.strokeStyle = U.rgb(U.mix(nz.edge, [255, 255, 255], 0.6)); g.lineWidth = Math.max(1, Wd[b] * 0.4 * sc); g.stroke();
-      }
-    }
-    g.globalAlpha = 1;
-  },
-
   tag(g, name, x, y, size) {
-    g.font = `700 ${size}px ${HR.FONT}`;
-    const tw = g.measureText(name).width + 12;
-    HR.ST.rrect(g, x - tw / 2, y - size - 5, tw, size + 6, 5); g.fillStyle = 'rgba(12,10,28,.8)'; g.fill(); HR.ST.thin(g, HR.ST.YELLOW, 1.2, 0.8);
+    g.font = `bold ${size}px ${HR.FONT}`;
+    const tw = g.measureText(name).width + 10;
+    g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x - tw / 2, y - size - 5, tw, size + 6);
     g.fillStyle = '#ffe23d'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText(name, x, y - 3);
   },
 
@@ -220,80 +181,71 @@ HR.Render = {
   },
 
   hud(g, game, view, p, vw, vh) {
-    const race = game.race, ST = HR.ST;
+    const race = game.race;
     const sc = Math.min(vh / 540, vw / 700);
-    const big = 44 * sc, mid = 24 * sc, small = 13 * sc;
+    const big = 48 * sc, mid = 26 * sc, small = 18 * sc;
     const pad = 14 * sc + 4;
-    const Y = ST.YELLOW, Wt = ST.TEXT, D = '#cfc9ec';
+    const Y = '#ffe23d', Wt = '#fff';
     const touch = HR.Input.touchMode;
     const R = race.rules, noLaps = R && R.noLaps;
-    const panel = (x, y, w, h, col) => { ST.rrect(g, x, y, w, h, 10 * sc); g.fillStyle = 'rgba(12,10,28,.72)'; g.fill(); ST.glow(g, col, Math.max(1.5, 2 * sc)); };
-    // oben links: Platz und Runde
-    if (!noLaps) {
-      const hasPos = race.mode !== 'trial';
-      panel(pad - 8 * sc, pad - 7 * sc, (hasPos ? 196 : 96) * sc, small * 1.1 + big + 10 * sc, ST.MAGENTA);
-      let x = pad + 4 * sc;
-      if (hasPos) {
-        this.text(g, 'PLATZ', x, pad, small, D);
-        this.text(g, String(p.place), x, pad + small * 1.1, big, ST.MAGENTA);
-        g.font = `700 ${Math.round(big)}px ${HR.FONT}`; const w1 = g.measureText(String(p.place)).width;
-        this.text(g, '/' + race.cars.length, x + w1 + 3 * sc, pad + small * 1.1 + big * 0.42, mid * 0.8, D);
-        x += 100 * sc;
-      }
-      const lap = Math.min(race.laps, Math.max(1, p.lapsDone + 1));
-      this.text(g, 'RUNDE', x, pad, small, D);
-      this.text(g, `${lap}/${race.laps}`, x, pad + small * 1.1 + (big - mid) * 0.4, mid, Wt);
+    // oben links
+    let y = pad;
+    if (race.mode !== 'trial' && !noLaps) {
+      this.text(g, 'POSITION', pad, y, small, Y); y += small * 1.1;
+      this.text(g, `${p.place}/${race.cars.length}`, pad, y, big, Wt); y += big * 1.05;
     }
-    // oben rechts: Zeiten
-    const rx = vw - pad;
     if (!noLaps) {
-      const lines = race.party ? 2 : 3, tx = rx - 6 * sc;
-      panel(rx - 206 * sc, pad - 7 * sc, 212 * sc, small * 1.15 + mid * 1.15 + 6 + small * 1.25 * lines + 10 * sc, ST.CYAN);
-      let y = pad;
-      this.text(g, 'ZEIT', tx, y, small, D, 'right'); y += small * 1.15;
-      this.text(g, U.fmtTime(p.finished ? p.finishTime : race.time), tx, y, mid, ST.CYAN, 'right'); y += mid * 1.15 + 6;
-      const cur = p.finished || race.state === 'countdown' ? null : race.time - p.lapStart;
-      this.text(g, `RUNDE  ${U.fmtTime(p.lapsDone >= 0 ? cur : (race.state === 'countdown' ? null : race.time))}`, tx, y, small, Wt, 'right'); y += small * 1.25;
-      this.text(g, `BESTE   ${U.fmtTime(p.bestLap)}`, tx, y, small, Wt, 'right'); y += small * 1.25;
-      if (!race.party) this.text(g, `REKORD  ${U.fmtTime(game.records.lap[race.track.cfg.name])}`, tx, y, small, D, 'right');
+      this.text(g, 'RUNDE', pad, y, small, Y); y += small * 1.1;
+      const lap = Math.min(race.laps, Math.max(1, p.lapsDone + 1));
+      this.text(g, `${lap}/${race.laps}`, pad, y, mid, Wt);
+    }
+    // oben rechts
+    const rx = vw - pad; y = pad;
+    if (noLaps) { /* Zeiten zeigt das Partyspiel selbst */ } else {
+    this.text(g, 'ZEIT', rx, y, small, Y, 'right'); y += small * 1.1;
+    this.text(g, U.fmtTime(p.finished ? p.finishTime : race.time), rx, y, mid, Wt, 'right'); y += mid * 1.15 + 4;
+    const cur = p.finished || race.state === 'countdown' ? null : race.time - p.lapStart;
+    this.text(g, `RUNDE  ${U.fmtTime(p.lapsDone >= 0 ? cur : (race.state === 'countdown' ? null : race.time))}`, rx, y, small, Wt, 'right'); y += small * 1.2;
+    this.text(g, `BESTE   ${U.fmtTime(p.bestLap)}`, rx, y, small, Wt, 'right'); y += small * 1.2;
+    if (!race.party) this.text(g, `REKORD  ${U.fmtTime(game.records.lap[race.track.cfg.name])}`, rx, y, small, 'rgb(200,200,200)', 'right');
     }
 
     // Tacho, Gang, Drehzahl (Touch: in der Mitte unten, zwischen den Tasten)
     const kmh = Math.round(p.speed * HR.KMH);
-    const barW = 200 * sc, segW = barW / 20, barH = Math.max(4, 8 * sc);
+    const barW = 200 * sc, segW = barW / 20, barH = Math.max(4, 10 * sc);
     const sx = touch ? vw / 2 + barW / 2 : rx;
     const by = vh - pad;
-    panel(sx - barW - 10 * sc, by - barH - big - 14 * sc, barW + 18 * sc, barH + big + 22 * sc, ST.CYAN);
     this.drawRev(g, sx - barW, by - barH, barW, barH, segW, p.rpm);
-    this.text(g, 'KM/H', sx, by - barH - 8 * sc, small, D, 'right', 'bottom');
-    this.text(g, String(kmh).padStart(3, ' '), sx - 44 * sc, by - barH - 4 * sc, big, Wt, 'right', 'bottom');
-    this.text(g, 'G' + p.gear, sx - barW, by - barH - 6 * sc, mid, Y, 'left', 'bottom');
+    this.text(g, 'km/h', sx, by - barH - 6, small, Y, 'right', 'bottom');
+    this.text(g, String(kmh).padStart(3, ' '), sx - 60 * sc, by - barH - 2, big, Wt, 'right', 'bottom');
+    this.text(g, 'G' + p.gear, sx - barW, by - barH - big - 4, mid, Y, 'left', 'bottom');
 
     // Streckenfortschritt (nicht im Zeitfahren)
     if (race.mode !== 'trial') {
       const pw = 220 * sc;
       const px = touch ? vw / 2 - pw / 2 : pad, py = touch ? pad + small * (view.label ? 3.2 : 2) + 12 * sc : vh - pad - 6 * sc;
-      this.text(g, 'STRECKE', px, py - 10 * sc, small, D, 'left', 'bottom');
-      g.fillStyle = 'rgba(24,231,255,.15)'; g.fillRect(px, py - 2 * sc, pw, 4 * sc);
-      const L = race.track.length;
-      ST.line(g, px, py, px + race.mod(p.dist) / L * pw, py); ST.glow(g, ST.CYAN, 2 * sc);
-      for (const c of race.cars) {
-        if (c === p || c.out) continue;
-        ST.oct(g, px + race.mod(c.dist) / L * pw, py, 5 * sc); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.neonRGB(c.color), 1.5);
+      {
+        this.text(g, 'STRECKE', px, py - 10 * sc, small, Y, 'left', 'bottom');
+        g.fillStyle = '#000'; g.fillRect(px, py - 3 * sc, pw, 6 * sc);
+        const L = race.track.length;
+        for (const c of race.cars) {
+          if (c === p || c.out) continue;
+          g.fillStyle = U.rgb(c.color); g.beginPath(); g.arc(px + race.mod(c.dist) / L * pw, py, 5 * sc, 0, 7); g.fill();
+        }
+        g.fillStyle = '#fff'; g.beginPath(); g.arc(px + race.mod(p.dist) / L * pw, py, 7 * sc, 0, 7); g.fill();
       }
-      ST.oct(g, px + race.mod(p.dist) / L * pw, py, 7 * sc); g.fillStyle = '#ffffff'; g.fill(); ST.glow(g, ST.YELLOW, 2);
     }
 
     // Meldungen
     if (race.state === 'countdown') {
       const c = Math.ceil(race.count);
-      if (c > 0) { ST.oct(g, vw / 2, vh * 0.3, 74 * sc); g.fillStyle = 'rgba(12,10,28,.7)'; g.fill(); ST.glow(g, ST.MAGENTA, 4 * sc); this.text(g, String(c), vw / 2, vh * 0.3 + 4 * sc, 100 * sc, Wt, 'center', 'middle'); }
-    } else if (race.goT > 0) this.text(g, 'LOS!', vw / 2, vh * 0.3, 120 * sc, ST.LIME, 'center', 'middle');
+      if (c > 0) this.text(g, String(c), vw / 2, vh * 0.3, 120 * sc, Y, 'center', 'middle');
+    } else if (race.goT > 0) this.text(g, 'LOS!', vw / 2, vh * 0.3, 120 * sc, '#b6ff2e', 'center', 'middle');
     if (p.msgT > 0) {
-      this.text(g, p.msg, vw / 2, vh * 0.2, 52 * sc, Y, 'center', 'middle');
-      if (p.msg2) this.text(g, p.msg2, vw / 2, vh * 0.2 + 48 * sc, mid, Wt, 'center', 'middle');
+      this.text(g, p.msg, vw / 2, vh * 0.2, 56 * sc, Y, 'center', 'middle');
+      if (p.msg2) this.text(g, p.msg2, vw / 2, vh * 0.2 + 50 * sc, mid, Wt, 'center', 'middle');
     }
-    if (view.label) this.text(g, view.label, vw / 2, pad, small * 1.3, Y, 'center');
+    if (view.label) this.text(g, view.label, vw / 2, pad, small, Y, 'center');
     if (R && R.hud) R.hud(g, race, p, vw, vh, sc, this);
     if (race.state === 'done' && race.doneT > 0.8 && view.first && !game.online && !game.party) {
       this.text(g, touch ? 'Tippe: Ergebnis' : 'Enter: Ergebnis', vw / 2, vh * 0.42, mid, Wt, 'center', 'middle');
@@ -302,9 +254,10 @@ HR.Render = {
 
   drawRev(g, x, y, w, h, segW, rpm) {
     for (let i = 0; i < 20; i++) {
-      const f = i / 20, on = f < rpm;
-      g.fillStyle = on ? (f >= 0.8 ? '#ff3355' : f >= 0.55 ? '#ffe23d' : '#b6ff2e') : 'rgba(155,150,200,.16)';
-      g.fillRect(x + i * segW, y, segW - 2, h);
+      const f = i / 20;
+      let c = 'rgb(50,50,55)';
+      if (f < rpm) c = f >= 0.8 ? 'rgb(230,40,40)' : f >= 0.55 ? '#ffe23d' : 'rgb(60,220,90)';
+      g.fillStyle = c; g.fillRect(x + i * segW, y, segW - 2, h);
     }
   },
 

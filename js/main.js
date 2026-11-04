@@ -52,8 +52,6 @@ const Game = HR.Game = {
     this.canvas = document.getElementById('game');
     this.g = this.canvas.getContext('2d');
     this.sprites = HR.makeSprites();
-    // Schilder mit Schrift neu zeichnen, sobald die Neon-Schrift geladen ist
-    if (document.fonts && document.fonts.load) Promise.all([document.fonts.load(`700 30px ${HR.FONT}`), document.fonts.load(`500 16px ${HR.FONT}`), document.fonts.load(`500 16px ${HR.FONT_TEXT}`)]).then(() => { this.sprites = HR.makeSprites(); HR._pspr = null; }).catch(() => {});
     HR.Input.init(this.canvas);
     HR.Input.onPause = () => this.togglePause();
     HR.Input.onKey = e => this.globalKey(e);
