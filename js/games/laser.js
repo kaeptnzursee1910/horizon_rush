@@ -7,7 +7,7 @@ HR.AR.define({
   goal: 'Nicht vom Laser getroffen werden. Wer zuletzt übrig ist, gewinnt.',
   touch: 'Steuerkreuz laufen, rechts SPRUNG', keys: 'Pfeiltasten laufen, Leertaste springen',
   btns: [['act', 'SPRUNG']],
-  duration: 120, RA: 430, CORE: 70, JUMP: 0.62, wrap: { a: Math.PI * 2 }, lerpKeys: ['z'], bgTop: '#1d2a5c', bgBot: '#0b0f24',
+  duration: 120, RA: 430, CORE: 70, JUMP: 0.62, wrap: { a: Math.PI * 2 }, lerpKeys: ['z'],
 
   init(players, rnd) {
     const n = players.length;
@@ -67,8 +67,8 @@ HR.AR.define({
     G.world(g);
     const cx = 800, cy = 520, RA = this.RA;
     // Plattform mit Rand und Ringen
-    g.beginPath(); g.ellipse(cx, cy + 26, RA, RA * 0.96, 0, 0, 7); HR.ST.fill(g, '#5b4aa8', 6);
-    g.beginPath(); g.arc(cx, cy, RA, 0, 7); HR.ST.fill(g, '#9fb6ff', 6);
+    g.beginPath(); g.ellipse(cx, cy + 26, RA, RA * 0.96, 0, 0, 7); HR.ST.fill(g, '#4a4a50', 4);
+    g.beginPath(); g.arc(cx, cy, RA, 0, 7); HR.ST.fill(g, '#76767c', 4);
     for (let k = 1; k <= 3; k++) { g.strokeStyle = 'rgba(37,31,58,.15)'; g.lineWidth = 4; g.beginPath(); g.arc(cx, cy, RA * k / 4, 0, 7); g.stroke(); }
     for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; g.fillStyle = k % 2 ? 'rgba(255,255,255,.18)' : 'rgba(37,31,58,.06)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, RA - 4, a, a + Math.PI / 6); g.fill(); }
     // Laser
@@ -81,7 +81,7 @@ HR.AR.define({
       g.beginPath(); g.arc(ex, ey, 16, 0, 7); HR.ST.fill(g, '#ff3b5c', 4);
     }
     // Kern
-    g.beginPath(); g.arc(cx, cy, this.CORE, 0, 7); HR.ST.fill(g, '#3a2f6b', 6);
+    g.beginPath(); g.arc(cx, cy, this.CORE, 0, 7); HR.ST.fill(g, '#2a2a30', 4);
     g.beginPath(); g.arc(cx, cy, this.CORE * 0.55, 0, 7); HR.ST.fill(g, `hsl(${(S.time * 90) % 360},90%,60%)`, 4);
     for (const p of S.p.filter(p => !p.gone).sort((a, b) => a.y - b.y)) {
       if (!p.al) { if (S.time - p.dt < 0.6) HR.ST.burst(g, p.x, p.y - 20, (S.time - p.dt) / 0.6, G.rgb(p), 12, 70); continue; }

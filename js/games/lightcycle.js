@@ -83,7 +83,6 @@ HR.AR.define({
     G.world(g);
     const ST = HR.ST;
     ST.floor(g, 0, 0, 1600, 1000, '#cbbcff', '#bdabf6', 100);
-    g.beginPath(); g.rect(3, 3, 1594, 994); g.lineWidth = 10; g.strokeStyle = ST.INK; g.stroke();
     g.lineCap = 'round'; g.lineJoin = 'round';
     // Spuren als dicke Bänder mit Umriss
     for (const p of S.p) {
@@ -91,16 +90,17 @@ HR.AR.define({
       const pts = p.v.concat([[p.x, p.y]]);
       const path = () => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) g.lineTo(pts[k][0], pts[k][1]); };
       g.globalAlpha = p.al ? 1 : 0.45;
-      path(); g.strokeStyle = ST.INK; g.lineWidth = 22; g.stroke();
+      path(); g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 18; g.stroke();
       path(); g.strokeStyle = G.rgb(p); g.lineWidth = 12; g.stroke();
-      path(); g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 3; g.stroke();
+      path(); g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 2; g.setLineDash([10, 12]); g.stroke(); g.setLineDash([]);
       g.globalAlpha = 1;
     }
     for (const p of S.p) {
       if (p.gone) continue;
       const [dx, dy] = this.DIRS[p.d];
       if (!p.al) { ST.burst(g, p.x, p.y, Math.min(1, (S.time - p.dt) / 0.6), G.rgb(p), 10, 60); }
-      G.fig(g, p, p.x, p.y - 6, 18, { look: [dx, dy], dead: !p.al, alpha: p.al ? 1 : 0.6 });
+      ST.car(g, p.x, p.y, Math.atan2(dy, dx), G.color(p), 46, { dead: !p.al, alpha: p.al ? 1 : 0.6 });
+      if (p.id === G.me && p.al) ST.you(g, p.x, p.y - 30, S.time, 'DU');
     }
   },
 });

@@ -7,7 +7,7 @@ HR.AR.define({
   goal: 'Am längsten fehlerfrei bleiben. Wer zuletzt übrig ist, gewinnt.',
   touch: 'Steuerkreuz laufen, rechts STAMPFEN', keys: 'Pfeiltasten laufen, Leertaste stampfen',
   btns: [['act', 'STAMPFEN']],
-  duration: 180, TS: 170, GAP: 16, SHOW: 0.75, bgTop: '#2e2a5a', bgBot: '#110e24',
+  duration: 180, TS: 170, GAP: 16, SHOW: 0.75,
   COLS: [[255, 99, 99], [255, 190, 60], [120, 210, 90], [80, 170, 255], [190, 110, 240], [255, 130, 200], [70, 210, 200], [250, 235, 90]],
 
   geo() { const T = this.TS, G = this.GAP, W = 4 * T + 3 * G; return { x0: 800 - W / 2, y0: 520 - W / 2, T, G, W }; },
@@ -81,8 +81,8 @@ HR.AR.define({
   draw(g, S, G) {
     G.world(g);
     const gm = this.geo();
-    HR.ST.rrect(g, gm.x0 - 30, gm.y0 - 30 + 18, gm.W + 60, gm.W + 60, 30); HR.ST.fill(g, '#4b3f8a', 6);
-    HR.ST.rrect(g, gm.x0 - 30, gm.y0 - 30, gm.W + 60, gm.W + 60, 30); HR.ST.fill(g, '#6f63b8', 6);
+    HR.ST.rrect(g, gm.x0 - 30, gm.y0 - 30 + 18, gm.W + 60, gm.W + 60, 30); HR.ST.fill(g, '#2e2e34', 4);
+    HR.ST.rrect(g, gm.x0 - 30, gm.y0 - 30, gm.W + 60, gm.W + 60, 30); HR.ST.fill(g, '#4c4c54', 4);
     const me = S.p.find(p => p.id === G.me);
     for (let i = 0; i < 16; i++) {
       const [x, y] = this.tileXY(i), c = this.COLS[i % 8], lit = S.cur === i;

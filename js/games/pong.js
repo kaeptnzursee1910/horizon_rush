@@ -109,8 +109,8 @@ HR.AR.define({
     G.world(g);
     g.translate(800, 500); g.rotate(rot);
     // Spielfeld: Achteck mit Rand und Karo
-    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0] * 1.06, s.B[1] * 1.06 + 16)); g.closePath(); ST.fill(g, '#5b4aa8', 6);
-    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0] * 1.06, s.B[1] * 1.06)); g.closePath(); ST.fill(g, '#7a66d0', 6);
+    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0] * 1.06, s.B[1] * 1.06 + 16)); g.closePath(); ST.fill(g, '#8a1c1c', 4);
+    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0] * 1.06, s.B[1] * 1.06)); g.closePath(); ST.fill(g, '#cd2d2d', 4);
     g.save(); g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0], s.B[1])); g.closePath(); g.clip();
     ST.floor(g, -600, -600, 1200, 1200, '#bfe4ff', '#acd8fa', 80); g.restore();
     g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0], s.B[1])); g.closePath(); g.lineWidth = 5; g.strokeStyle = ST.INK; g.stroke();

@@ -7,7 +7,7 @@ HR.AR.define({
   goal: 'Nicht in den Abgrund fallen. Wer zuletzt noch steht, gewinnt.',
   touch: 'Steuerkreuz laufen', keys: 'Pfeiltasten oder WASD laufen',
   btns: [],
-  duration: 120, R: 54, COLS: 15, ROWS: 10, CRACK: 1.2, POINT: 0.45, bgTop: '#3a2f6b', bgBot: '#120d26',
+  duration: 120, R: 54, COLS: 15, ROWS: 10, CRACK: 1.2, POINT: 0.45,
 
   geo() {
     const R = this.R, w = Math.sqrt(3) * R, h = 1.5 * R;

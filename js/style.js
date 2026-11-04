@@ -1,11 +1,13 @@
-// Horizon Rush – gemeinsamer Grafikstil der Party-Spiele:
-// kräftige Farben, dunkle Umrisse, weiche Schatten und runde Party-Figuren mit Augen
+// Horizon Rush – gemeinsamer Grafikstil der Party-Spiele im Look des Rennspiels:
+// Asphalt, Rasen mit Mähstreifen, rot-weiße Randsteine, Reifenstapel und Rennfahrer mit Helm
 'use strict';
 
 const ST = HR.ST = {
-  INK: '#251f3a',             // Umrisse
-  INK_RGB: [37, 31, 58],
-  LW: 5,                      // Umrissbreite in Weltpixeln
+  INK: '#1c1c22',             // Umrisse (dezent, wie im Rennspiel)
+  INK_RGB: [28, 28, 34],
+  LW: 3,                      // Umrissbreite in Weltpixeln
+  ASPHALT: '#6f6f75', ASPHALT2: '#66666c', GRASS: '#6ebe50', GRASS2: '#60ac46',
+  SKY: ['#2878dc', '#afd7fa'], KERB: ['#f0f0f0', '#cd2d2d'],
 
   rgb: (c, a) => a == null ? U.rgb(c) : `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`,
   dark: c => U.shade(c, 0.68),
@@ -14,65 +16,154 @@ const ST = HR.ST = {
   // Fläche mit Umriss
   fill(g, fill, lw) { g.fillStyle = fill; g.fill(); g.lineWidth = lw || ST.LW; g.strokeStyle = ST.INK; g.lineJoin = 'round'; g.stroke(); },
 
-  shadow(g, x, y, rx, ry, a) { g.fillStyle = `rgba(20,10,40,${a == null ? 0.22 : a})`; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); },
+  shadow(g, x, y, rx, ry, a) { g.fillStyle = `rgba(0,0,0,${a == null ? 0.25 : a})`; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); },
 
   rrect(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); },
 
-  // Spielfeld-Untergrund mit Karomuster
+  hex2rgb(h) { const v = parseInt(h.slice(1), 16); return [v >> 16, (v >> 8) & 255, v & 255]; },
+  // grobe Einordnung einer Farbe: 'green' | 'sky' | 'dark' | 'other'
+  kind(h) {
+    if (typeof h !== 'string' || h[0] !== '#' || h.length < 7) return 'other';
+    const [r, gg, b] = ST.hex2rgb(h), l = 0.3 * r + 0.59 * gg + 0.11 * b;
+    if (l < 45) return 'dark';
+    if (gg > r + 15 && gg > b + 5) return 'green';
+    if (b > r + 40 && b >= gg) return 'sky';
+    return 'other';
+  },
+
+  // feines Rauschen (Asphaltkörnung, Grashalme) – fest verteilt, damit nichts flimmert
+  grain(g, x, y, w, h, col, n, sz) {
+    g.fillStyle = col; let s = 1234567;
+    const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < n; i++) g.fillRect(x + r() * w, y + r() * h, sz, sz);
+  },
+
+  // Rasen mit Mähstreifen
+  grass(g, x, y, w, h, band) {
+    band = band || 60;
+    for (let i = 0; i * band < h; i++) { g.fillStyle = i % 2 ? ST.GRASS2 : ST.GRASS; g.fillRect(x, y + i * band, w, Math.min(band, h - i * band)); }
+    ST.grain(g, x, y, w, h, 'rgba(30,80,20,.22)', Math.min(1500, (w * h) / 900), 3);
+  },
+
+  // rot-weißer Randstein um ein Rechteck
+  kerb(g, x, y, w, h, t, seg) {
+    t = t || 12; seg = seg || 40;
+    const side = (x0, y0, len, horiz) => {
+      for (let i = 0; i * seg < len; i++) {
+        g.fillStyle = ST.KERB[i % 2]; const l = Math.min(seg, len - i * seg);
+        if (horiz) g.fillRect(x0 + i * seg, y0, l, t); else g.fillRect(x0, y0 + i * seg, t, l);
+      }
+    };
+    side(x - t, y - t, w + 2 * t, true); side(x - t, y + h, w + 2 * t, true);
+    side(x - t, y, h, false); side(x + w, y, h, false);
+  },
+
+  // Spielfeld-Untergrund: Rasen (grüne Spiele) oder Asphalt mit Markierungen, Randsteine außen
   floor(g, x, y, w, h, c1, c2, cell) {
-    g.fillStyle = c1; g.fillRect(x, y, w, h);
-    g.fillStyle = c2; cell = cell || 100;
-    for (let i = 0; i * cell < w; i++) for (let j = 0; j * cell < h; j++) if ((i + j) % 2) g.fillRect(x + i * cell, y + j * cell, Math.min(cell, w - i * cell), Math.min(cell, h - j * cell));
+    cell = cell || 100;
+    if (ST.kind(c1) === 'green') ST.grass(g, x, y, w, h, cell);
+    else {
+      g.fillStyle = ST.ASPHALT; g.fillRect(x, y, w, h);
+      ST.grain(g, x, y, w, h, 'rgba(255,255,255,.07)', Math.min(2500, (w * h) / 500), 2);
+      ST.grain(g, x + 3, y + 5, w - 6, h - 6, 'rgba(0,0,0,.10)', Math.min(2500, (w * h) / 500), 2);
+      g.strokeStyle = 'rgba(255,255,255,.13)'; g.lineWidth = 3; g.setLineDash([24, 18]); g.beginPath();
+      for (let i = 1; i * cell < w; i++) { g.moveTo(x + i * cell, y); g.lineTo(x + i * cell, y + h); }
+      for (let j = 1; j * cell < h; j++) { g.moveTo(x, y + j * cell); g.lineTo(x + w, y + j * cell); }
+      g.stroke(); g.setLineDash([]);
+    }
+    ST.kerb(g, x, y, w, h, 12, 40);
   },
 
-  // Hintergrund außerhalb des Spielfelds (ganze Leinwand)
+  // Reifenstapel
+  tyre(g, x, y, r) {
+    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.arc(x + r * 0.25, y + r * 0.3, r, 0, 7); g.fill();
+    g.fillStyle = '#1c1c20'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+    g.strokeStyle = '#4a4a52'; g.lineWidth = Math.max(1, r * 0.14); g.beginPath(); g.arc(x, y, r * 0.72, 0, 7); g.stroke();
+    g.fillStyle = '#34343a'; g.beginPath(); g.arc(x, y, r * 0.42, 0, 7); g.fill();
+  },
+
+  // Hintergrund außerhalb des Spielfelds: Himmel (helle blaue Spiele), Nacht (dunkle) oder Rasen mit Reifenwand
   backdrop(g, W, H, top, bot) {
-    const gr = g.createLinearGradient(0, 0, 0, H);
-    gr.addColorStop(0, top || '#2b2350'); gr.addColorStop(1, bot || '#15112a');
-    g.fillStyle = gr; g.fillRect(0, 0, W, H);
-    g.fillStyle = 'rgba(255,255,255,.04)';
-    for (let i = 0; i < 18; i++) { g.beginPath(); g.arc((i * 337) % W, (i * 191) % H, 30 + (i % 4) * 22, 0, 7); g.fill(); }
+    const k = top ? ST.kind(top) : 'other';
+    if (k === 'dark') {
+      const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, top); gr.addColorStop(1, bot || '#050505');
+      g.fillStyle = gr; g.fillRect(0, 0, W, H); return;
+    }
+    if (k === 'sky') {
+      const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, ST.SKY[0]); gr.addColorStop(1, ST.SKY[1]);
+      g.fillStyle = gr; g.fillRect(0, 0, W, H); return;
+    }
+    ST.grass(g, 0, 0, W, H, 70);
+    const r = 15;
+    for (let x = r; x < W; x += r * 2.1) { ST.tyre(g, x, r + 4, r); ST.tyre(g, x, H - r - 4, r); }
   },
 
-  // Die Party-Figur. o: {look:[x,y], t, stun, dead, hat:'crown'|'cowboy'|'beanie', squash, alpha}
+  // Die Party-Figur: Rennfahrer mit Helm, von schräg oben.
+  // o: {look:[x,y], t, stun, dead, hat:'crown'|'cowboy'|'beanie', squash, alpha}
   char(g, x, y, r, col, o) {
     o = o || {};
     const t = o.t || 0, sq = o.squash || 0;
-    const bob = o.still ? 0 : Math.sin(t * 9 + x * 0.05) * r * 0.04;
+    const bob = o.still ? 0 : Math.sin(t * 9 + x * 0.05) * r * 0.03;
+    const lw = Math.max(1.5, r * 0.08);
     g.save();
     if (o.alpha != null) g.globalAlpha = o.alpha;
-    if (!o.noShadow) ST.shadow(g, x, y + r * 0.92, r * 0.85, r * 0.26);
+    if (!o.noShadow) ST.shadow(g, x, y + r * 0.92, r * 0.85, r * 0.24);
     g.translate(x, y + bob);
     g.scale(1 + sq, 1 - sq);
-    // Füße
-    g.fillStyle = ST.rgb(ST.dark(col));
-    for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * r * 0.42, r * 0.82, r * 0.3, r * 0.17, 0, 0, 7); g.fill(); g.lineWidth = r * 0.09; g.strokeStyle = ST.INK; g.stroke(); }
-    // Körper mit Licht von oben links
-    const gr = g.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.1, 0, 0, r * 1.05);
-    gr.addColorStop(0, ST.rgb(ST.light(col))); gr.addColorStop(0.55, ST.rgb(col)); gr.addColorStop(1, ST.rgb(ST.dark(col)));
-    g.beginPath(); g.ellipse(0, 0, r, r * 0.94, 0, 0, 7);
-    ST.fill(g, gr, Math.max(2, r * 0.13));
-    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-r * 0.38, -r * 0.5, r * 0.22, r * 0.13, -0.6, 0, 7); g.fill();
-    // Augen
-    const lk = o.look || [0, 0.25], ex = lk[0] * r * 0.22, ey = lk[1] * r * 0.16;
-    for (const s of [-1, 1]) {
-      const cx = s * r * 0.3 + ex * 0.6, cy = -r * 0.12 + ey * 0.5;
-      g.fillStyle = '#fff'; g.beginPath(); g.ellipse(cx, cy, r * 0.21, r * 0.27, 0, 0, 7); g.fill();
-      g.lineWidth = Math.max(1.5, r * 0.07); g.strokeStyle = ST.INK; g.stroke();
-      if (o.dead || o.stun) {
-        g.strokeStyle = ST.INK; g.lineWidth = Math.max(1.5, r * 0.08); g.beginPath();
-        if (o.dead) { g.moveTo(cx - r * 0.1, cy - r * 0.1); g.lineTo(cx + r * 0.1, cy + r * 0.1); g.moveTo(cx + r * 0.1, cy - r * 0.1); g.lineTo(cx - r * 0.1, cy + r * 0.1); }
-        else g.arc(cx, cy, r * 0.09, t * 12, t * 12 + 4.5);
-        g.stroke();
-      } else {
-        g.fillStyle = ST.INK; g.beginPath(); g.arc(cx + ex * 0.5, cy + ey * 0.7, r * 0.11, 0, 7); g.fill();
-        g.fillStyle = '#fff'; g.beginPath(); g.arc(cx + ex * 0.5 - r * 0.04, cy + ey * 0.7 - r * 0.05, r * 0.035, 0, 7); g.fill();
+    // Schuhe
+    g.fillStyle = '#1c1c22';
+    for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * r * 0.36, r * 0.86, r * 0.24, r * 0.13, 0, 0, 7); g.fill(); }
+    // Rennanzug (Schultern)
+    const dk = ST.rgb(ST.dark(col));
+    g.beginPath(); g.ellipse(0, r * 0.5, r * 0.82, r * 0.42, 0, 0, 7); ST.fill(g, dk, lw);
+    g.fillStyle = '#f2f2f2'; g.fillRect(-r * 0.1, r * 0.12, r * 0.2, r * 0.78);
+    // Helm mit Glanz
+    const gr = g.createRadialGradient(-r * 0.3, -r * 0.5, r * 0.08, 0, -r * 0.1, r * 0.85);
+    gr.addColorStop(0, ST.rgb(ST.light(col))); gr.addColorStop(0.5, ST.rgb(col)); gr.addColorStop(1, dk);
+    g.beginPath(); g.arc(0, -r * 0.12, r * 0.74, 0, 7); ST.fill(g, gr, lw);
+    // Helmstreifen
+    g.save(); g.beginPath(); g.arc(0, -r * 0.12, r * 0.74, 0, 7); g.clip();
+    g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(-r * 0.09, -r * 0.9, r * 0.18, r * 0.5);
+    g.restore();
+    // Visier, zeigt die Blickrichtung
+    const lk = o.look || [0, 0.25], vx = U.clamp(lk[0], -1, 1) * r * 0.2, vy = U.clamp(lk[1], -1, 1) * r * 0.1;
+    g.beginPath(); g.roundRect(-r * 0.5 + vx, -r * 0.2 + vy, r * 1.0, r * 0.34, r * 0.17);
+    ST.fill(g, o.dead ? '#55555c' : '#2b3550', lw * 0.8);
+    g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(-r * 0.36 + vx, -r * 0.14 + vy, r * 0.26, r * 0.07);
+    if (o.dead) {
+      g.strokeStyle = '#fff'; g.lineWidth = lw; g.beginPath();
+      g.moveTo(-r * 0.2 + vx, -r * 0.18 + vy); g.lineTo(r * 0.05 + vx, r * 0.1 + vy); g.moveTo(r * 0.2 + vx, -r * 0.18 + vy); g.lineTo(-r * 0.02 + vx, r * 0.1 + vy); g.stroke();
+    }
+    if (o.stun && !o.dead) {
+      for (let i = 0; i < 3; i++) {
+        const a = t * 6 + i * 2.1, sx = Math.cos(a) * r * 0.6, sy = -r * 1.0 + Math.sin(a) * r * 0.18;
+        g.fillStyle = '#ffd23c'; g.beginPath();
+        for (let k = 0; k < 10; k++) { const aa = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.07 : r * 0.16; g.lineTo(sx + Math.cos(aa) * rr, sy + Math.sin(aa) * rr); }
+        g.closePath(); g.fill();
       }
     }
-    // Wangen
-    g.fillStyle = 'rgba(255,120,140,.45)';
-    for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * r * 0.55, r * 0.22, r * 0.12, r * 0.07, 0, 0, 7); g.fill(); }
-    if (o.hat) ST.hat(g, o.hat, r, t);
+    if (o.hat) { g.translate(0, r * 0.12); ST.hat(g, o.hat, r * 0.85, t); }
+    g.restore();
+  },
+
+  // Sportwagen von oben (Nase in Richtung ang). L = Länge; o: {alpha, brake, dead}
+  car(g, x, y, ang, col, L, o) {
+    o = o || {};
+    const w = L * 0.52, h = L, r = L * 0.14;
+    g.save(); g.translate(x, y); g.rotate(ang + Math.PI / 2);
+    if (o.alpha != null) g.globalAlpha = o.alpha;
+    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.roundRect(-w / 2 + L * 0.06, -h / 2 + L * 0.08, w, h, r); g.fill();
+    g.fillStyle = '#141418';
+    for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) g.fillRect(a * w / 2 - L * 0.045, b * h * 0.3 - L * 0.1, L * 0.09, L * 0.2);
+    const c = o.dead ? [90, 90, 96] : col, gr = g.createLinearGradient(-w / 2, 0, w / 2, 0);
+    gr.addColorStop(0, ST.rgb(ST.dark(c))); gr.addColorStop(0.5, ST.rgb(c)); gr.addColorStop(1, ST.rgb(ST.dark(c)));
+    g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, r); ST.fill(g, gr, Math.max(1.5, L * 0.025));
+    g.fillStyle = '#2b3550';
+    g.beginPath(); g.moveTo(-w * 0.4, -h * 0.2); g.lineTo(w * 0.4, -h * 0.2); g.lineTo(w * 0.33, -h * 0.04); g.lineTo(-w * 0.33, -h * 0.04); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(-w * 0.36, h * 0.26); g.lineTo(w * 0.36, h * 0.26); g.lineTo(w * 0.4, h * 0.37); g.lineTo(-w * 0.4, h * 0.37); g.closePath(); g.fill();
+    g.fillStyle = ST.rgb(ST.light(c)); g.fillRect(-w * 0.08, -h * 0.48, w * 0.16, h * 0.96);
+    g.fillStyle = '#fff6c8'; g.fillRect(-w * 0.42, -h * 0.5, w * 0.22, h * 0.04); g.fillRect(w * 0.2, -h * 0.5, w * 0.22, h * 0.04);
+    g.fillStyle = o.brake ? '#ff4030' : '#b01818'; g.fillRect(-w * 0.42, h * 0.46, w * 0.22, h * 0.04); g.fillRect(w * 0.2, h * 0.46, w * 0.22, h * 0.04);
     g.restore();
   },
 
@@ -101,10 +192,12 @@ const ST = HR.ST = {
     if (label) ST.text(g, label, x, yy - 20, 22, '#fff', 'center', 'bottom');
   },
 
-  // Schrift mit dunklem Rand
+  // Schrift wie im Rennspiel: fett, kursiv, mit Schatten
   text(g, txt, x, y, size, color, align, base) {
-    g.font = `900 ${size}px ${HR.FONT}`; g.textAlign = align || 'center'; g.textBaseline = base || 'middle';
-    g.lineJoin = 'round'; g.lineWidth = Math.max(3, size * 0.2); g.strokeStyle = ST.INK; g.strokeText(txt, x, y);
+    g.font = `italic 900 ${size}px ${HR.FONT}`; g.textAlign = align || 'center'; g.textBaseline = base || 'middle';
+    const d = Math.max(2, size * 0.07);
+    g.fillStyle = 'rgba(0,0,0,.65)'; g.fillText(txt, x + d, y + d);
+    g.lineJoin = 'round'; g.lineWidth = Math.max(2, size * 0.08); g.strokeStyle = 'rgba(0,0,0,.55)'; g.strokeText(txt, x, y);
     g.fillStyle = color || '#fff'; g.fillText(txt, x, y);
   },
 

@@ -236,7 +236,7 @@ HR.ArenaGame = class {
     // Spielerliste oben links
     const rows = S.p.filter(p => !p.gone);
     const fs = Math.round(13 * sc), lh = fs * 1.45, w = 190 * sc;
-    g.fillStyle = 'rgba(37,31,58,.78)'; g.beginPath(); g.roundRect(6, 6, w + 8, rows.length * lh + 10, 10 * sc); g.fill();
+    g.fillStyle = 'rgba(15,20,45,.82)'; g.beginPath(); g.roundRect(6, 6, w + 8, rows.length * lh + 10, 6 * sc); g.fill();
     g.strokeStyle = 'rgba(255,255,255,.25)'; g.lineWidth = 2; g.stroke();
     rows.forEach((p, i) => {
       const y = 10 + i * lh, st = this.def.status ? this.def.status(S, p, this) : '';

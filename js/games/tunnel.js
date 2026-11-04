@@ -77,7 +77,7 @@ HR.AR.define({
     const K = this.K, sw = Math.PI * 2 / K;
     // Röhre: helle Segmente mit Umriss, nach hinten dunkler
     const bg = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.8);
-    bg.addColorStop(0, '#120d26'); bg.addColorStop(0.25, '#3a2f6b'); bg.addColorStop(1, '#8a6ad8');
+    bg.addColorStop(0, '#0c0c10'); bg.addColorStop(0.25, '#2a2a30'); bg.addColorStop(1, '#75757d');
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
     for (let k = 0; k < K; k++) {
       if (k % 2) continue;
@@ -100,7 +100,7 @@ HR.AR.define({
         if (!r.b[k]) continue;
         const a0 = k * sw + rot, a1 = a0 + sw;
         g.beginPath(); g.arc(cx, cy, ro, a0, a1); g.arc(cx, cy, ri, a1, a0, true); g.closePath();
-        ST.fill(g, `hsl(${hue},80%,${48 + 14 * fog}%)`, Math.max(1.5, 5 * fog));
+        ST.fill(g, `hsl(${hue},38%,${40 + 14 * fog}%)`, Math.max(1.5, 5 * fog));
         g.fillStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.arc(cx, cy, ro - Math.max(1, (ro - ri) * 0.12), a0 + 0.04, a1 - 0.04); g.arc(cx, cy, ro - (ro - ri) * 0.3, a1 - 0.04, a0 + 0.04, true); g.closePath(); g.fill();
       }
       g.globalAlpha = 1;

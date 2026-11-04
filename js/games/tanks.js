@@ -119,7 +119,6 @@ HR.AR.define({
     G.world(g);
     const ST = HR.ST;
     ST.floor(g, 0, 0, 1600, 1000, '#8fd06a', '#84c35f', 100);
-    g.beginPath(); g.rect(3, 3, 1594, 994); g.lineWidth = 10; g.strokeStyle = ST.INK; g.stroke();
     // Mauern als Holzkisten-Blöcke
     for (const w of S.walls) {
       g.fillStyle = 'rgba(20,10,40,.2)'; g.fillRect(w[0] + 8, w[1] + 10, w[2], w[3]);
