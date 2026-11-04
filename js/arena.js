@@ -273,8 +273,11 @@ HR.ArenaGame = class {
 
 // ---------- Helfer für die Spiele ----------
 const AR = HR.AR = {
+  // das Spiel selbst wird eingetragen (keine Kopie), damit der Neon-Stil seine Zeichenfunktionen nachträglich einsetzen kann
   define(def) {
-    HR.addGame(Object.assign({ kind: 'arena', create: ctx => new HR.ArenaGame(def, ctx) }, def));
+    if (!def.kind) def.kind = 'arena';
+    if (!def.create) def.create = ctx => new HR.ArenaGame(def, ctx);
+    HR.addGame(def);
   },
   need: S => (S.p.length > 1 ? 1 : 0),
   aliveCount: S => S.p.filter(p => p.al && !p.gone).length,

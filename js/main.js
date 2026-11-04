@@ -8,13 +8,14 @@ const Game = HR.Game = {
   diff: 1,
 
   // ---------- Einstellungen und Bestzeiten ----------
-  settings: { diff: 1, sound: true, split: 'auto', name: '', car: 0, paint: 0, laps: 3 },
+  settings: { diff: 1, sound: true, fx: true, split: 'auto', name: '', car: 0, paint: 0, laps: 3 },
   records: { lap: {}, race: {} },
   load() {
     try { Object.assign(this.settings, JSON.parse(localStorage.getItem('hr_settings') || '{}')); } catch (_) { }
     try { const r = JSON.parse(localStorage.getItem('hr_records') || 'null'); if (r && r.lap && r.race) this.records = r; } catch (_) { }
     if (!this.settings.name) this.settings.name = 'Fahrer ' + Math.floor(10 + Math.random() * 90);
     this.diff = this.settings.diff;
+    if (HR.THEME === 'neon') HR.ST.fx = this.settings.fx !== false;
   },
   save() {
     this.settings.diff = this.diff;
@@ -52,6 +53,8 @@ const Game = HR.Game = {
     this.canvas = document.getElementById('game');
     this.g = this.canvas.getContext('2d');
     this.sprites = HR.makeSprites();
+    // Neon: Schilder mit Schrift neu zeichnen, sobald die Neon-Schrift geladen ist
+    if (HR.THEME === 'neon' && document.fonts && document.fonts.load) Promise.all([document.fonts.load(`700 30px ${HR.FONT}`), document.fonts.load(`500 16px ${HR.FONT}`), document.fonts.load(`500 16px ${HR.FONT_TEXT}`)]).then(() => { this.sprites = HR.makeSprites(); HR._pspr = null; }).catch(() => {});
     HR.Input.init(this.canvas);
     HR.Input.onPause = () => this.togglePause();
     HR.Input.onKey = e => this.globalKey(e);
@@ -488,14 +491,15 @@ const UI = HR.UI = {
   },
 
   esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); },
-  swatch(c) { return `<span class="sw" style="background:${U.rgb(c)}"></span>`; },
+  swatch(c) { return HR.THEME === 'neon' ? `<span class="sw" style="background:${HR.ST.neon(c)};box-shadow:0 0 6px ${HR.ST.neon(c)}"></span>` : `<span class="sw" style="background:${U.rgb(c)}"></span>`; },
+  paintCss(c) { return HR.THEME === 'neon' ? HR.ST.neon(c) : U.rgb(c); },
 
   // ---------- Hauptmenü ----------
   main() {
     Game.champ = null;
     this.show(`
       <div class="panel main">
-        <h1 class="logo">HORIZON RUSH</h1>
+        <h1 class="logo">${HR.THEME === 'neon' ? '<span>HORIZON</span> <span>RUSH</span>' : 'HORIZON RUSH'}</h1>
         <p class="tag">Das Party-Spiel für bis zu 8 Spieler</p>
         <nav class="list bigmenu">
           <button data-act="party" class="big hot" autofocus><b>Multiplayer</b><span>Party mit Freunden · ${HR.GAME_ORDER.length} Minispiele</span></button>
@@ -528,7 +532,7 @@ const UI = HR.UI = {
             <span>Handling</span>${bar(ct.handling)}<b></b>
           </div>
           <p class="lbl">Lackierung</p>
-          <div class="paints">${paints.map((p, i) => `<button class="paint ${i === paint ? 'on' : ''}" data-act="paint" data-arg="${i}" style="background:${U.rgb(p)}" aria-label="Farbe ${i + 1}"></button>`).join('')}</div>
+          <div class="paints">${paints.map((p, i) => `<button class="paint ${i === paint ? 'on' : ''}" data-act="paint" data-arg="${i}" style="background:${this.paintCss(p)}" aria-label="Farbe ${i + 1}"></button>`).join('')}</div>
         </div>
         <nav class="list row"><button data-act="carOk" autofocus>Auswählen</button></nav>
         <p class="hint">${HR.Input.touchMode ? '' : '◄► Auto  ·  ↑↓ Farbe  ·  Enter bestätigen  ·  Esc zurück'}</p>
@@ -672,7 +676,11 @@ const UI = HR.UI = {
       <nav class="list settings">
         <button data-act="sound" autofocus>Ton: <b>${s.sound ? 'an' : 'aus'}</b></button>
         <button data-act="cycleDiff">Computergegner: <b>${HR.DIFFS[Game.diff][0]}</b></button>
-        <button data-act="keyform">Verbindung: <b>${HR.Net.MODES[HR.Net.getMode()]}</b> · Server <b>${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>
+        <button data-act="theme">Grafikstil: <b>${HR.THEMES[HR.THEME]}</b></button>
+        ${HR.THEME === 'neon' ? `<button data-act="fx">Leuchteffekte: <b>${s.fx !== false ? 'an' : 'aus (schneller)'}</b></button>` : ''}
+        ${HR.THEME === 'neon'
+          ? `<button data-act="keyform"><span>Verbindung:</span><b>${HR.Net.MODES[HR.Net.getMode()]} · Server ${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>`
+          : `<button data-act="keyform">Verbindung: <b>${HR.Net.MODES[HR.Net.getMode()]}</b> · Server <b>${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>`}
         <button data-act="fullscreen">Vollbild</button>
       </nav></div>`, () => this.main());
   },
@@ -784,6 +792,13 @@ const UI = HR.UI = {
     sound(_, b) {
       const s = Game.settings; s.sound = !s.sound; HR.Audio.setMuted(!s.sound); Game.save();
       if (UI.el.querySelector('.settings')) UI.settings(); else if (b) b.textContent = s.sound ? 'Ton aus' : 'Ton an';
+    },
+    fx() { const s = Game.settings; s.fx = s.fx === false; HR.ST.fx = s.fx; Game.save(); UI.settings(); },
+    // Stil wechseln: wird gespeichert und die Seite neu geladen (nur im Hauptmenü erreichbar)
+    theme() {
+      const next = HR.THEME === 'neon' ? 'classic' : 'neon';
+      try { localStorage.setItem('hr_theme', next); } catch (_) { }
+      location.reload();
     },
     records() { UI.records(); },
     settings() { UI.settings(); },

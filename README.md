@@ -50,6 +50,14 @@ Reines HTML, CSS und JavaScript ohne Build-Schritt. `index.html` lädt die Datei
 (Hintergrund des Startbildschirms: alle Minispiele im Wechsel, gespielt vom Computer).
 Im Party-Modus rechnet der Gastgeber die Arena-Spiele, die anderen Geräte schicken nur ihre Tasten.
 
+**Grafikstil:** Unter Einstellungen → Grafikstil wählt jedes Gerät „Original“ (Tageslicht-Rennlook) oder „Neon“.
+Original ist der Grundstand. Neon liegt als Aufsatz in `js/neon/` und `style-neon.css`: `neon/style.js` und
+`neon/render.js` ersetzen die Zeichenwerkzeuge, die `*-patch.js`-Dateien setzen nur die Zeichenfunktionen von
+Strecken, Autos, Menüs und Minispielen ein. Spiellogik und Netzwerk sind gemeinsam, daher spielen Geräte mit
+verschiedenen Stilen problemlos zusammen. Wer neue Spiellogik baut, ändert nur die Grunddateien; wer neue
+Zeichnungen baut, sollte für Neon in `js/neon/games-patch.js` eine eigene `draw`-Funktion ergänzen (sonst nutzt
+Neon die Original-Zeichnung).
+
 ## Verbindung
 Die Geräte verbinden sich per WebRTC direkt miteinander. In Netzwerken, die direkte Verbindungen
 blockieren (etwa Firmen- oder Hochschul-WLANs), läuft die Verbindung über einen Verbindungsserver.

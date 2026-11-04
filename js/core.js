@@ -28,6 +28,9 @@ HR.FIELD = 8;              // Autos im Starterfeld
 HR.MAX_ONLINE = 8;         // Spieler in einem Online-Rennen
 HR.STEP = 1 / 60;
 HR.FONT = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+// Grafikstil: 'classic' (Original-Look) oder 'neon'; wird in index.html vor dem Laden der Skripte gewählt
+HR.THEMES = { classic: 'Original', neon: 'Neon' };
+HR.THEME = window.HR_THEME === 'neon' ? 'neon' : 'classic';
 
 // ---------- Hilfsfunktionen ----------
 const U = HR.U = {
