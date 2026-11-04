@@ -75,49 +75,49 @@ HR.AR.define({
     const cx = W / 2, cy = H * 0.46, Rp = Math.min(W, H) * 0.46, F = 40;
     const R = d => Rp * F / (F + d);
     const K = this.K, sw = Math.PI * 2 / K;
-    // Röhre: dunkel, in der Tiefe schwarz, Längslinien und Tiefenringe
+    // Röhre: helle Segmente mit Umriss, nach hinten dunkler
     const bg = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.8);
-    bg.addColorStop(0, '#000000'); bg.addColorStop(0.3, '#0d0920'); bg.addColorStop(1, '#2a1250');
+    bg.addColorStop(0, '#0c0c10'); bg.addColorStop(0.25, '#2a2a30'); bg.addColorStop(1, '#75757d');
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    g.beginPath();
-    for (let k = 0; k < K; k++) { const a = k * sw + rot; g.moveTo(cx + Math.cos(a) * R(400), cy + Math.sin(a) * R(400)); g.lineTo(cx + Math.cos(a) * Math.max(W, H), cy + Math.sin(a) * Math.max(W, H)); }
-    ST.thin(g, ST.VIOLET, 1.5, 0.35);
-    const off = S.z % 13;
-    for (let d = 13 - off; d < 420; d += 13) {
-      g.beginPath(); g.arc(cx, cy, R(d), 0, 7);
-      ST.thin(g, Math.round((S.z + d) / 13) % 4 === 0 ? ST.MAGENTA : ST.CYAN, 2, 0.6 * Math.exp(-d / 160));
+    for (let k = 0; k < K; k++) {
+      if (k % 2) continue;
+      const a0 = k * sw + rot, a1 = a0 + sw;
+      g.fillStyle = 'rgba(255,255,255,.07)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, Math.max(W, H), a0, a1); g.closePath(); g.fill();
     }
+    g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 3;
+    const off = S.z % 13;
+    for (let d = 13 - off; d < 420; d += 13) { g.globalAlpha = Math.exp(-d / 160); g.beginPath(); g.arc(cx, cy, R(d), 0, 7); g.stroke(); }
+    g.globalAlpha = 1;
     // Hindernisringe von hinten nach vorn
     const j0 = Math.max(0, Math.floor((S.z - this.Z0) / this.GAP) + 1);
     for (let j = j0 + 16; j >= j0; j--) {
       const d = this.ringZ(j) - S.z;
       if (d <= -2 || d > 430) continue;
       const r = this.ring(S, j), ro = R(Math.max(0, d)), ri = ro * 0.62, fog = Math.exp(-d / 170);
-      const col = ST.hsl(r.hue || 200, 1, 0.6);
-      const A = g.globalAlpha; g.globalAlpha = 0.2 + 0.8 * fog;
+      const hue = r.hue || 200;
+      g.globalAlpha = 0.25 + 0.75 * fog;
       for (let k = 0; k < K; k++) {
         if (!r.b[k]) continue;
         const a0 = k * sw + rot, a1 = a0 + sw;
         g.beginPath(); g.arc(cx, cy, ro, a0, a1); g.arc(cx, cy, ri, a1, a0, true); g.closePath();
-        g.fillStyle = ST.BODY; g.fill(); g.fillStyle = ST.rgb(col, 0.22); g.fill();
-        ST.glow(g, col, Math.max(1.2, 4 * fog));
-        g.beginPath(); g.arc(cx, cy, ro - (ro - ri) * 0.3, a0 + 0.05, a1 - 0.05); ST.thin(g, col, Math.max(1, 2 * fog), 0.6);
+        ST.fill(g, `hsl(${hue},38%,${40 + 14 * fog}%)`, Math.max(1.5, 5 * fog));
+        g.fillStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.arc(cx, cy, ro - Math.max(1, (ro - ri) * 0.12), a0 + 0.04, a1 - 0.04); g.arc(cx, cy, ro - (ro - ri) * 0.3, a1 - 0.04, a0 + 0.04, true); g.closePath(); g.fill();
       }
-      g.globalAlpha = A;
+      g.globalAlpha = 1;
     }
-    // Mitspieler am Rand, eigenes Token unten
+    // Mitspieler am Rand, eigene Figur unten
     const rp = Rp * 0.82, s = Rp * 0.075;
     for (const p of S.p) {
       if (p.gone || !p.al || p === view) continue;
       const a = p.a + rot, x = cx + Math.cos(a) * rp, y = cy + Math.sin(a) * rp;
-      ST.char(g, x, y, s * 0.9, G.color(p), { look: [-Math.cos(a), -Math.sin(a)], t: S.time, noShadow: true, alpha: 0.85 });
+      g.globalAlpha = 0.85; ST.char(g, x, y, s * 0.9, G.color(p), { look: [-Math.cos(a), -Math.sin(a)], t: S.time, noShadow: true }); g.globalAlpha = 1;
     }
     if (view.al) {
       const x = cx, y = cy + rp;
       ST.char(g, x, y, s * 1.3, G.color(view), { look: [0, -1], t: S.time });
-      if (view === me && !G.show) ST.you(g, x, y - s * 2.2, S.time, 'DU');
-      else ST.text(g, 'Du schaust ' + G.name(view.id) + ' zu', x, y - s * 2.4, Math.max(14, s * 0.8), ST.TEXT);
+      if (view === me && !G.show) ST.you(g, x, y - s * 1.8, S.time, 'DU');
+      else ST.text(g, 'Du schaust ' + G.name(view.id) + ' zu', x, y - s * 2.2, Math.max(14, s * 0.8), '#fff');
     }
-    ST.text(g, Math.floor(S.z / 10) + ' M', W / 2, H - 24, 22, ST.CYAN);
+    ST.text(g, Math.floor(S.z / 10) + ' m', W / 2, H - 24, 22, '#fff');
   },
 });

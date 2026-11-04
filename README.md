@@ -37,18 +37,7 @@ Minispiele:
   Laser-Sprung, Kistenregen, Kronenjagd, Schneeballschlacht, Gedächtnis-Felder, Ampel-Lauf,
   Schatzgräber, Schnellzieher, Ballonpumpen, Im Dunkeln, Münzsturm
 
-## Grafikstil (Neon)
-Alle 24 Minispiele und die Menüs teilen einen Neon-Look: dunkler Grund, leuchtende Konturen und klare,
-gefaste Kanten. Die Rennen bleiben Pseudo-3D (Nachthimmel mit Streifensonne, Leuchtkanten an der Fahrbahn,
-Bodenraster), die Arena-Spiele sind 2D von oben.
-- **Spieler-Token:** Achteck in der Spielerfarbe mit eigenem Symbol (Blitz, Raute, Dreieck, Quadrat,
-  Sechseck, Stern, Plus, Kreis), dazu eine Richtungsspitze. So sind Spieler auch ohne Farbsehen unterscheidbar.
-- **Drei Detailstufen:** Grundform (Leuchtkontur), Innenzeichnung (feine Linien), Lichtwirkung
-  (Lichtflecken, Scanlines, Randabdunklung). Die Lichtwirkung lässt sich unter
-  *Einstellungen → Leuchteffekte* abschalten, falls ein älteres Gerät ruckelt.
-- **Schriften:** Chakra Petch (Titel, Zahlen) und Barlow (Fließtext), beide unter der SIL Open Font License
-  im Ordner `fonts/` mitgeliefert, damit das Spiel offline läuft.
-- Das gemeinsame Zeichenwerkzeug steckt in `js/style.js` (`HR.ST`).
+Alle Arena-Spiele teilen einen Grafikstil (runde Party-Figuren, kräftige Farben, dunkle Umrisse).
 
 Mit Tastatur: Pfeiltasten oder WASD, Leertaste oder Enter für die Hauptaktion, Shift oder Q für die zweite Aktion.
 
@@ -57,9 +46,17 @@ Reines HTML, CSS und JavaScript ohne Build-Schritt. `index.html` lädt die Datei
 `core.js` (Strecken, Autos, Grafiken), `race.js` (Fahrphysik, KI), `render.js` (Pseudo-3D),
 `audio.js` (Sound), `input.js` (Touch/Tastatur), `net.js` (Online), `main.js` (Menüs, Ablauf),
 `party.js` (Party-Lobby, Chat, Runden, Punkte), `partyrace.js` (Fahrspiele),
-`arena.js` (Grundgerüst der 2D-Spiele), `style.js` (gemeinsamer Neon-Grafikstil), `games/*.js` (die Arena-Spiele) und `showcase.js`
+`arena.js` (Grundgerüst der 2D-Spiele), `style.js` (gemeinsamer Grafikstil), `games/*.js` (die Arena-Spiele) und `showcase.js`
 (Hintergrund des Startbildschirms: alle Minispiele im Wechsel, gespielt vom Computer).
 Im Party-Modus rechnet der Gastgeber die Arena-Spiele, die anderen Geräte schicken nur ihre Tasten.
+
+**Grafikstil:** Unter Einstellungen → Grafikstil wählt jedes Gerät „Original“ (Tageslicht-Rennlook) oder „Neon“.
+Original ist der Grundstand. Neon liegt als Aufsatz in `js/neon/` und `style-neon.css`: `neon/style.js` und
+`neon/render.js` ersetzen die Zeichenwerkzeuge, die `*-patch.js`-Dateien setzen nur die Zeichenfunktionen von
+Strecken, Autos, Menüs und Minispielen ein. Spiellogik und Netzwerk sind gemeinsam, daher spielen Geräte mit
+verschiedenen Stilen problemlos zusammen. Wer neue Spiellogik baut, ändert nur die Grunddateien; wer neue
+Zeichnungen baut, sollte für Neon in `js/neon/games-patch.js` eine eigene `draw`-Funktion ergänzen (sonst nutzt
+Neon die Original-Zeichnung).
 
 ## Verbindung
 Die Geräte verbinden sich per WebRTC direkt miteinander. In Netzwerken, die direkte Verbindungen

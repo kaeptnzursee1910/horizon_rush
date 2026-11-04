@@ -1,27 +1,16 @@
-/* Schriften lokal mitgeliefert (SIL Open Font License), damit das Spiel offline läuft */
-@font-face { font-family: 'Chakra Petch'; font-weight: 500; font-display: swap; src: url(fonts/chakra-petch-500.woff2) format('woff2'); }
-@font-face { font-family: 'Chakra Petch'; font-weight: 700; font-display: swap; src: url(fonts/chakra-petch-700.woff2) format('woff2'); }
-@font-face { font-family: 'Barlow'; font-weight: 500; font-display: swap; src: url(fonts/barlow-500.woff2) format('woff2'); }
-@font-face { font-family: 'Barlow'; font-weight: 600; font-display: swap; src: url(fonts/barlow-600.woff2) format('woff2'); }
-/* Horizon Rush – Menüs im Neon-Stil: dunkler Grund, leuchtende Konturen, klare Kanten */
+/* Horizon Rush – Menüs im Stil des Originals: Nachtblau → Pflaume, Gelb, Orange */
 :root {
-  --night: #07060f;
-  --plum: #170b2c;
-  --panel: rgba(12, 10, 28, .93);
-  --gold: #18e7ff;            /* Auswahl / Fokus */
-  --yellow: #ffe23d;
-  --orange: #ff2bd6;
-  --magenta: #ff2bd6;
-  --cyan: #18e7ff;
-  --lime: #b6ff2e;
-  --violet: #9b5cff;
-  --text: #f2eeff;
-  --dim: #a7a0d2;
-  --line: rgba(155, 92, 255, .35);
-  --ok: #b6ff2e;
-  --bad: #ff3355;
-  --font: Barlow, "Helvetica Neue", Arial, sans-serif;
-  --display: "Chakra Petch", "Arial Narrow", Arial, sans-serif;
+  --night: rgb(15, 20, 45);
+  --plum: rgb(70, 25, 60);
+  --gold: rgb(255, 200, 30);
+  --yellow: rgb(255, 210, 40);
+  --orange: rgb(200, 120, 0);
+  --text: #f4f1ea;
+  --dim: rgba(244, 241, 234, .66);
+  --line: rgba(255, 255, 255, .14);
+  --ok: rgb(80, 255, 100);
+  --bad: rgb(255, 110, 100);
+  --font: Arial, "Helvetica Neue", Helvetica, sans-serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -62,10 +51,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   font-size: 22px; font-weight: bold; text-shadow: 1px 1px 0 #000; transition: background .08s; }
 .main .list button { font-size: 26px; padding: 7px 16px; background: transparent; }
 .list.row button { min-width: 160px; }
-.list button:hover, .join button:hover { background: rgba(255, 43, 214, 0.14); }
-.list button:focus-visible, .join button:focus-visible, .main .list button:focus { outline: none; background: rgba(255, 43, 214, 0.21); border-color: var(--gold); }
-.list button:focus { outline: none; background: rgba(255, 43, 214, 0.21); }
-.list button.hot { background: rgba(255, 43, 214, 0.26); }
+.list button:hover, .join button:hover { background: rgba(200, 120, 0, .45); }
+.list button:focus-visible, .join button:focus-visible, .main .list button:focus { outline: none; background: rgba(200, 120, 0, .67); border-color: var(--gold); }
+.list button:focus { outline: none; background: rgba(200, 120, 0, .67); }
+.list button.hot { background: rgba(200, 120, 0, .8); }
 .settings button { text-align: left; font-size: 19px; display: flex; justify-content: space-between; gap: 12px; }
 .settings b { color: var(--yellow); }
 .backbtn { background: none; border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; font-size: 15px; color: var(--dim); white-space: nowrap; }
@@ -79,7 +68,7 @@ button.link { background: none; border: 0; padding: 0; color: var(--yellow); tex
 @keyframes bob { 50% { transform: translateY(-3px); } }
 .arrow { background: rgba(0, 0, 0, .3); border: 2px solid var(--line); border-radius: 50%; width: 52px; height: 52px; font-size: 22px; flex: none; }
 .arrow.small { width: 40px; height: 40px; font-size: 16px; }
-.arrow:hover, .arrow:focus-visible { border-color: var(--gold); outline: none; background: rgba(255, 43, 214, 0.16); }
+.arrow:hover, .arrow:focus-visible { border-color: var(--gold); outline: none; background: rgba(200, 120, 0, .5); }
 .carinfo { max-width: 560px; margin: 4px auto 0; }
 .carinfo h3 { font-size: 28px; font-style: italic; color: var(--gold); margin: 0 0 4px; }
 .carinfo p { margin: 0 0 10px; line-height: 1.4; }
@@ -99,7 +88,7 @@ button.link { background: none; border: 0; padding: 0; color: var(--yellow); tex
 .card strong { font-size: 20px; font-style: italic; color: var(--gold); }
 .card .desc { font-size: 14px; line-height: 1.35; color: var(--text); }
 .card .meta { font-size: 12.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
-.card.on, .card:focus-visible, .card:hover { border-color: var(--gold); background: rgba(255, 43, 214, 0.11); outline: none; }
+.card.on, .card:focus-visible, .card:hover { border-color: var(--gold); background: rgba(200, 120, 0, .35); outline: none; }
 .card.t0 { box-shadow: inset 0 4px 0 rgb(40, 120, 220); }
 .card.t1 { box-shadow: inset 0 4px 0 rgb(220, 232, 246); }
 .card.t2 { box-shadow: inset 0 4px 0 rgb(250, 155, 85); }
@@ -140,7 +129,7 @@ table.res { width: 100%; border-collapse: collapse; font-size: 16px; font-varian
 .players li.me { outline: 1px solid var(--gold); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .chip { background: rgba(0, 0, 0, .3); border: 2px solid var(--line); border-radius: 20px; padding: 7px 14px; font-weight: bold; }
-.chip.on { border-color: var(--gold); background: rgba(255, 43, 214, 0.18); }
+.chip.on { border-color: var(--gold); background: rgba(200, 120, 0, .55); }
 .chip:focus-visible { outline: 2px solid var(--gold); }
 .trackinfo { font-size: 17px; }
 .spinner { width: 42px; height: 42px; margin: 20px auto; border: 4px solid var(--line); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
@@ -189,14 +178,14 @@ body.portrait #rotate { display: flex; }
 .pstep button:disabled { opacity: .35; cursor: default; }
 .seg { display: inline-flex; border: 2px solid var(--line); border-radius: 22px; overflow: hidden; }
 .seg button { background: rgba(0, 0, 0, .3); border: 0; padding: 7px 16px; font-weight: bold; font-size: 16px; }
-.seg button.on { background: rgba(255, 43, 214, 0.24); }
+.seg button.on { background: rgba(200, 120, 0, .75); }
 .seg button:disabled { cursor: default; }
 .seg button:disabled:not(.on) { opacity: .5; }
 .seg button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .games { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
 .gchip { text-align: left; background: rgba(0, 0, 0, .3); border: 2px solid var(--line); border-radius: 6px; padding: 7px 10px; font-size: 14px; font-weight: bold; display: flex; gap: 8px; align-items: center; }
 .gchip i { font-style: normal; color: var(--dim); min-width: 28px; font-size: 12px; }
-.gchip.on { border-color: var(--gold); background: rgba(255, 43, 214, 0.13); }
+.gchip.on { border-color: var(--gold); background: rgba(200, 120, 0, .4); }
 .gchip.on i { color: var(--yellow); }
 .gchip.auto { border-color: var(--line); background: rgba(255, 255, 255, .06); }
 .gchip:disabled { cursor: default; color: var(--text); }
@@ -209,7 +198,7 @@ body.portrait #rotate { display: flex; }
 .chatform { display: flex; gap: 6px; margin-top: 6px; }
 .chatform input { flex: 1; min-width: 0; font: inherit; font-size: 16px; color: var(--text); background: rgba(0, 0, 0, .35); border: 2px solid var(--line); border-radius: 4px; padding: 7px 10px; -webkit-user-select: text; user-select: text; }
 .chatform input:focus { outline: none; border-color: var(--gold); }
-.chatform button { background: rgba(255, 43, 214, 0.19); border: 0; border-radius: 4px; padding: 0 12px; font-weight: bold; }
+.chatform button { background: rgba(200, 120, 0, .6); border: 0; border-radius: 4px; padding: 0 12px; font-weight: bold; }
 .intro .preview { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 34vh; object-fit: cover; border-radius: 10px; border: 2px solid var(--line); background: #15112a; margin: 0 0 12px; }
 .intro .gcode { color: var(--dim); font-weight: bold; margin: 0 0 6px; }
 .intro .gdesc { font-size: 17px; line-height: 1.5; margin: 0; }
@@ -238,17 +227,17 @@ body.portrait #rotate { display: flex; }
 .gcard strong { color: var(--gold); font-size: 16px; font-style: italic; }
 .gcard span { font-size: 13px; color: var(--text); }
 .gcard small { font-size: 12px; color: var(--yellow); }
-.gcard:not(:disabled):hover, .gcard:focus-visible { border-color: var(--gold); background: rgba(255, 43, 214, 0.13); outline: none; }
+.gcard:not(:disabled):hover, .gcard:focus-visible { border-color: var(--gold); background: rgba(200, 120, 0, .4); outline: none; }
 .gcard:disabled { cursor: default; color: var(--text); }
 /* Hauptmenü */
 .bigmenu { gap: 12px; margin-top: 6px; }
 .main .bigmenu button.big { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 18px; border: 2px solid var(--line); background: rgba(0, 0, 0, .35); border-radius: 8px; }
 .main .bigmenu button.big b { font-size: 32px; font-style: italic; letter-spacing: .01em; }
 .main .bigmenu button.big span { font-size: 15px; font-weight: normal; color: var(--dim); }
-.main .bigmenu button.big.hot { background: rgba(255, 43, 214, 0.24); border-color: var(--gold); }
+.main .bigmenu button.big.hot { background: rgba(200, 120, 0, .75); border-color: var(--gold); }
 .main .bigmenu button.big.hot span { color: var(--text); }
-.main .bigmenu button.big:focus, .main .bigmenu button.big:hover { border-color: var(--gold); background: rgba(255, 43, 214, 0.19); }
-.main .bigmenu button.big.hot:focus, .main .bigmenu button.big.hot:hover { background: rgba(255, 43, 214, 0.32); }
+.main .bigmenu button.big:focus, .main .bigmenu button.big:hover { border-color: var(--gold); background: rgba(200, 120, 0, .6); }
+.main .bigmenu button.big.hot:focus, .main .bigmenu button.big.hot:hover { background: rgba(220, 140, 0, .9); }
 .minor { margin-top: 14px; }
 .minor button { background: none; border: 1px solid var(--line); border-radius: 20px; padding: 7px 18px; color: var(--dim); font-size: 15px; font-weight: bold; }
 .minor button:hover, .minor button:focus-visible { color: var(--text); border-color: var(--gold); outline: none; }
@@ -256,127 +245,3 @@ body.portrait #rotate { display: flex; }
 /* Verbindungsweg je Mitspieler */
 small.via { margin-left: 6px; padding: 2px 7px; border-radius: 8px; background: rgba(60, 200, 255, .22); color: #bfefff; white-space: nowrap; }
 small.via.relay { background: rgba(255, 200, 60, .25); color: #ffe6a6; }
-
-/* ================================================================
-   Neon-Look (überschreibt die Grundregeln oben)
-   ================================================================ */
-html, body { background: var(--night); }
-#menu { background: radial-gradient(ellipse at 50% 40%, rgba(7, 6, 15, .62), rgba(7, 6, 15, .86)); }
-#menu::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: -1;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .12) 0 1px, transparent 1px 3px); }
-h1, h2, h3, .logo, .tag, button, .codepill, .codebox b, .champ, .pstep, .laps, table.res, .card strong, .gcard strong, .carinfo h3 { font-family: var(--display); }
-h2 { font-style: normal; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text); text-shadow: 0 0 14px rgba(24, 231, 255, .35); }
-h3 { font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; color: var(--dim); }
-.note, .hint, .sub { font-family: var(--font); }
-.hint { text-shadow: none; letter-spacing: .04em; }
-
-/* Tafeln: dunkle Fläche, feine Kontur, leuchtende Eckwinkel */
-.panel { border-radius: 3px; border: 1px solid var(--line);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 0 30px rgba(155, 92, 255, .16), inset 0 0 60px rgba(155, 92, 255, .05);
-  background:
-    linear-gradient(var(--cyan), var(--cyan)) top 6px left 6px / 18px 2px no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) top 6px left 6px / 2px 18px no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) top 6px right 6px / 18px 2px no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) top 6px right 6px / 2px 18px no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) bottom 6px left 6px / 18px 2px no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) bottom 6px left 6px / 2px 18px no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) bottom 6px right 6px / 18px 2px no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) bottom 6px right 6px / 2px 18px no-repeat,
-    linear-gradient(180deg, rgba(17, 14, 36, .95), rgba(10, 8, 24, .95)); }
-.panel.main { background: none; border: 0; box-shadow: none; }
-
-/* Logo: Doppelkontur in Cyan und Magenta */
-.logo { font-style: normal; font-weight: 700; letter-spacing: .04em; line-height: .95; color: var(--night); text-shadow: none; display: flex; flex-direction: column; align-items: center; }
-.logo span { -webkit-text-stroke: 2px var(--cyan); paint-order: stroke fill; filter: drop-shadow(0 0 10px rgba(24, 231, 255, .8)) drop-shadow(0 0 26px rgba(24, 231, 255, .45)); }
-.logo span + span { -webkit-text-stroke-color: var(--magenta); filter: drop-shadow(0 0 10px rgba(255, 43, 214, .85)) drop-shadow(0 0 26px rgba(255, 43, 214, .45)); }
-.tag { color: var(--yellow); text-transform: uppercase; letter-spacing: .14em; font-size: 15px; text-shadow: 0 0 10px rgba(255, 226, 61, .6);
-  display: flex; align-items: center; justify-content: center; gap: 12px; }
-.tag::before, .tag::after { content: ''; flex: none; height: 2px; width: min(70px, 8vw); background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
-.tag { white-space: nowrap; }
-
-/* Knöpfe: Kontur in Neon, Fokus leuchtet */
-.list button, .join button { border-radius: 3px; border: 2px solid rgba(24, 231, 255, .35); background: rgba(12, 10, 28, .7); text-transform: uppercase; letter-spacing: .05em; text-shadow: none; font-weight: 700; }
-.list button:hover, .join button:hover { background: rgba(24, 231, 255, .1); border-color: var(--cyan); }
-.list button:focus-visible, .join button:focus-visible, .main .list button:focus, .list button:focus { outline: none; background: rgba(24, 231, 255, .12); border-color: var(--cyan);
-  box-shadow: 0 0 14px rgba(24, 231, 255, .55), inset 0 0 12px rgba(24, 231, 255, .2); }
-.list button.hot { background: rgba(255, 43, 214, .16); border-color: var(--magenta); box-shadow: 0 0 14px rgba(255, 43, 214, .5), inset 0 0 12px rgba(255, 43, 214, .18); }
-.list button.hot:focus, .list button.hot:hover { background: rgba(255, 43, 214, .26); border-color: #ff7be6; box-shadow: 0 0 22px rgba(255, 43, 214, .8), inset 0 0 14px rgba(255, 43, 214, .25); }
-.settings button { text-transform: none; letter-spacing: .02em; flex-wrap: wrap; }
-.settings button > * { min-width: 0; }
-.settings b { text-align: right; white-space: normal; }
-.panel.narrow { width: min(520px, 100%); }
-.backbtn { border-radius: 3px; border-color: rgba(155, 92, 255, .5); font-family: var(--display); text-transform: uppercase; letter-spacing: .05em; }
-.backbtn:focus-visible, .backbtn:hover { border-color: var(--cyan); box-shadow: 0 0 10px rgba(24, 231, 255, .45); }
-button.link { color: var(--cyan); }
-
-/* Hauptmenü */
-.main .bigmenu { gap: 14px; }
-.main .bigmenu button.big { border-radius: 3px; background: rgba(9, 7, 22, .86); border: 2px solid rgba(24, 231, 255, .55); position: relative; }
-.main .bigmenu button.big b { font-style: normal; font-weight: 700; letter-spacing: .05em; color: var(--cyan); text-shadow: 0 0 12px rgba(24, 231, 255, .6); }
-.main .bigmenu button.big span { font-family: var(--font); letter-spacing: .02em; text-transform: none; color: #cfc9ec; }
-.main .bigmenu button.big.hot { background: rgba(9, 7, 22, .86); border-color: var(--magenta); box-shadow: 0 0 18px rgba(255, 43, 214, .45), inset 0 0 18px rgba(255, 43, 214, .14); }
-.main .bigmenu button.big.hot b { color: #fff; text-shadow: 0 0 14px rgba(255, 43, 214, .9); }
-.main .bigmenu button.big:focus, .main .bigmenu button.big:hover { background: rgba(24, 231, 255, .1); border-color: var(--cyan); box-shadow: 0 0 22px rgba(24, 231, 255, .6), inset 0 0 18px rgba(24, 231, 255, .18); }
-.main .bigmenu button.big.hot:focus, .main .bigmenu button.big.hot:hover { background: rgba(255, 43, 214, .16); border-color: #ff7be6; box-shadow: 0 0 26px rgba(255, 43, 214, .85), inset 0 0 18px rgba(255, 43, 214, .25); }
-.main .bigmenu button.big:focus::before, .main .bigmenu button.big:focus::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; border: 9px solid transparent; transform: translateY(-50%); filter: drop-shadow(0 0 6px currentColor); }
-.main .bigmenu button.big:focus::before { left: -24px; border-left-color: currentColor; color: var(--magenta); }
-.main .bigmenu button.big:focus::after { right: -24px; border-right-color: currentColor; color: var(--magenta); }
-.minor button { border-radius: 3px; border-color: rgba(155, 92, 255, .5); text-transform: uppercase; letter-spacing: .06em; background: rgba(9, 7, 22, .8); }
-.minor button:hover, .minor button:focus-visible { border-color: var(--cyan); box-shadow: 0 0 12px rgba(24, 231, 255, .5); }
-
-/* Karten, Chips, Felder */
-.card, .gcard, .gchip, .chip, .ctrl div, .players li, .chatlog, .field input, .chatform input, .codebox, .arrow, .paint, .seg { border-radius: 3px; }
-.card, .gcard, .gchip { background: rgba(12, 10, 28, .7); }
-.card strong, .gcard strong, .carinfo h3 { font-style: normal; color: var(--cyan); letter-spacing: .03em; text-transform: uppercase; }
-.card.on, .card:focus-visible, .card:hover, .gcard:not(:disabled):hover, .gcard:focus-visible, .gchip:not(:disabled):hover, .gchip:focus-visible { border-color: var(--cyan); background: rgba(24, 231, 255, .08); box-shadow: 0 0 14px rgba(24, 231, 255, .4); }
-.card.t0 { box-shadow: inset 0 3px 0 var(--magenta); }
-.card.t1 { box-shadow: inset 0 3px 0 var(--cyan); }
-.card.t2 { box-shadow: inset 0 3px 0 #ff7a1a; }
-.gchip.on, .chip.on { border-color: var(--magenta); background: rgba(255, 43, 214, .14); box-shadow: 0 0 10px rgba(255, 43, 214, .4); }
-.gcard small { color: var(--yellow); }
-.field input, .chatform input { background: rgba(7, 6, 15, .8); border-color: rgba(155, 92, 255, .45); }
-.field input:focus, .chatform input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(24, 231, 255, .4); }
-.chatform button { border-radius: 3px; background: rgba(24, 231, 255, .14); border: 2px solid var(--cyan); color: var(--cyan); font-family: var(--display); text-transform: uppercase; }
-.chatlog { background: rgba(7, 6, 15, .7); }
-.players li { background: rgba(17, 14, 36, .8); border: 1px solid rgba(155, 92, 255, .2); }
-.players li.me { outline: none; border-color: var(--magenta); box-shadow: 0 0 10px rgba(255, 43, 214, .35); }
-.players li b { font-family: var(--display); text-transform: uppercase; letter-spacing: .04em; font-size: 15px; }
-.pdot { display: inline-flex; width: auto; height: auto; border: 0; border-radius: 0; background: none !important; margin-right: 4px; vertical-align: middle; }
-.pdot.btn { border: 0; padding: 0; background: none; cursor: pointer; }
-.pdot.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-.tok { display: block; }
-.codepill, .codebox { border-color: var(--magenta); box-shadow: 0 0 14px rgba(255, 43, 214, .45); border-radius: 3px; background: rgba(7, 6, 15, .8); }
-.codepill b, .codebox b { color: var(--magenta); text-shadow: 0 0 12px rgba(255, 43, 214, .7); }
-.pstep b, .laps b { color: var(--cyan); text-shadow: 0 0 10px rgba(24, 231, 255, .6); }
-.seg { border-color: rgba(24, 231, 255, .45); }
-.seg button { background: rgba(7, 6, 15, .7); font-family: var(--display); text-transform: uppercase; letter-spacing: .04em; }
-.seg button.on { background: rgba(24, 231, 255, .18); color: #fff; box-shadow: inset 0 0 12px rgba(24, 231, 255, .35); }
-.arrow { background: rgba(12, 10, 28, .8); border-color: rgba(24, 231, 255, .5); color: var(--cyan); }
-.arrow:hover, .arrow:focus-visible { background: rgba(24, 231, 255, .14); border-color: var(--cyan); box-shadow: 0 0 12px rgba(24, 231, 255, .5); }
-.bar { background: rgba(155, 150, 200, .15); border-radius: 0; height: 8px; }
-.bar i { background: linear-gradient(90deg, var(--cyan), var(--magenta)); box-shadow: 0 0 8px rgba(24, 231, 255, .6); }
-.paint.on { border-color: #fff; box-shadow: 0 0 0 3px var(--magenta), 0 0 14px var(--magenta); }
-.res th { color: var(--dim); font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; }
-.res tr.me td { color: var(--yellow); }
-.res tr.best td { color: var(--lime); }
-.sw { border-radius: 0; transform: rotate(45deg) scale(.8); }
-.champ { color: var(--yellow); text-shadow: 0 0 14px rgba(255, 226, 61, .6); }
-.spinner { border-radius: 0; border-color: rgba(155, 92, 255, .3); border-top-color: var(--cyan); box-shadow: 0 0 12px rgba(24, 231, 255, .4); }
-#toast { border-radius: 3px; background: rgba(12, 10, 28, .92); border-color: var(--cyan); box-shadow: 0 0 16px rgba(24, 231, 255, .45); font-family: var(--display); letter-spacing: .03em; }
-#rotate { background: radial-gradient(ellipse at 50% 60%, #170b2c, var(--night)); }
-#rotate b { font-style: normal; color: var(--cyan); font-family: var(--display); text-transform: uppercase; text-shadow: 0 0 14px rgba(24, 231, 255, .6); }
-.intro .preview { border-radius: 3px; border-color: rgba(24, 231, 255, .45); box-shadow: 0 0 16px rgba(24, 231, 255, .25); background: var(--night); }
-.intro .gcode { color: var(--magenta); font-family: var(--display); letter-spacing: .1em; }
-.ctrl b { color: var(--cyan); font-family: var(--display); text-transform: uppercase; letter-spacing: .04em; }
-.ctrl div.cur { border-color: var(--cyan); box-shadow: 0 0 10px rgba(24, 231, 255, .35); }
-.pod .block { font-style: normal; border-radius: 0; color: var(--night); font-family: var(--display); }
-.pod.p1 .block { background: linear-gradient(rgba(255, 226, 61, .9), rgba(255, 122, 26, .6)); box-shadow: 0 0 22px rgba(255, 226, 61, .55); }
-.pod.p2 .block { background: linear-gradient(rgba(24, 231, 255, .85), rgba(24, 231, 255, .35)); box-shadow: 0 0 18px rgba(24, 231, 255, .45); }
-.pod.p3 .block { background: linear-gradient(rgba(255, 43, 214, .85), rgba(255, 43, 214, .35)); box-shadow: 0 0 18px rgba(255, 43, 214, .45); }
-.pod .pname { font-family: var(--display); text-transform: uppercase; }
-small.via { border-radius: 2px; background: rgba(24, 231, 255, .14); color: #a8f6ff; border: 1px solid rgba(24, 231, 255, .4); }
-small.via.relay { background: rgba(255, 226, 61, .14); color: #fff3a8; border-color: rgba(255, 226, 61, .45); }
-@media (max-width: 720px), (max-height: 520px) {
-  .main .bigmenu button.big b { font-size: 24px; }
-  .logo { font-size: clamp(36px, 8vw, 64px); }
-}

@@ -50,40 +50,30 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    const ST = HR.ST, n = S.p.length, top = this.laneY(S, 0) - Math.min(100, 640 / n) / 2 - 20, bot = this.laneY(S, n - 1) + Math.min(100, 640 / n) / 2 + 20;
-    // Laufbahn
-    ST.floor(g, 90, top, 1420, bot - top, ST.ORANGE, null, 70);
-    ST.frame(g, 70, top - 20, 1460, bot - top + 40, ST.ORANGE, 4);
-    g.setLineDash([24, 16]);
-    for (let i = 1; i < n; i++) { const y = (this.laneY(S, i - 1) + this.laneY(S, i)) / 2; ST.line(g, 100, y, 1500, y); ST.thin(g, ST.ICE, 2, 0.35); }
-    g.setLineDash([]);
-    ST.line(g, this.X0, top, this.X0, bot); ST.glow(g, ST.ICE, 3);
-    for (let y = top, k = 0; y < bot; y += 20, k++) for (let c = 0; c < 2; c++) { g.fillStyle = (k + c) % 2 ? '#f2eeff' : '#0b0918'; g.fillRect(this.X1 + c * 20, y, 20, Math.min(20, bot - y)); }
-    ST.line(g, this.X1 - 2, top, this.X1 - 2, bot); ST.glow(g, ST.LIME, 3);
+    const n = S.p.length, top = this.laneY(S, 0) - Math.min(100, 640 / n) / 2 - 20, bot = this.laneY(S, n - 1) + Math.min(100, 640 / n) / 2 + 20;
+    // Wiese und Bahn
+    HR.ST.rrect(g, 40, top - 30, 1520, bot - top + 60, 30); HR.ST.fill(g, '#8fd06a', 6);
+    HR.ST.rrect(g, 90, top, 1420, bot - top, 16); HR.ST.fill(g, '#e8935a', 5);
+    for (let i = 1; i < n; i++) { const y = (this.laneY(S, i - 1) + this.laneY(S, i)) / 2; g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 4; g.setLineDash([24, 16]); g.beginPath(); g.moveTo(100, y); g.lineTo(1500, y); g.stroke(); g.setLineDash([]); }
+    g.fillStyle = '#fff'; g.fillRect(this.X0 - 4, top, 8, bot - top);
+    for (let y = top, k = 0; y < bot; y += 20, k++) for (let c = 0; c < 2; c++) { g.fillStyle = (k + c) % 2 ? '#fff' : HR.ST.INK; g.fillRect(this.X1 + c * 20, y, 20, Math.min(20, bot - y)); }
     // Ampel oben in der Mitte
     const ax = 800, ay = top - 150;
-    ST.line(g, ax, ay + 60, ax, top - 22); ST.thin(g, ST.DIM, 6, 0.8);
-    ST.rrect(g, ax - 150, ay - 50, 300, 110, 30); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, [170, 162, 220], 3);
-    const lamp = (k, x, col) => {
-      const on = S.L === k;
-      if (on) ST.pool(g, x, ay + 5, 130, col, 0.45);
-      ST.oct(g, x, ay + 5, 38);
-      if (on) ST.solid(g, col, 0.9); else { g.fillStyle = ST.rgba(col, 0.08); g.fill(); ST.thin(g, col, 2, 0.4); }
-      if (on) { ST.oct(g, x, ay + 5, 24); ST.thin(g, '#ffffff', 2, 0.6); }
-    };
-    lamp('r', ax - 95, ST.RED); lamp('y', ax, ST.YELLOW); lamp('g', ax + 95, ST.LIME);
+    g.fillStyle = '#555'; g.fillRect(ax - 8, ay + 60, 16, 90);
+    HR.ST.rrect(g, ax - 150, ay - 50, 300, 110, 30); HR.ST.fill(g, '#3a3550', 6);
+    const lamp = (k, x, col) => { g.beginPath(); g.arc(x, ay + 5, 38, 0, 7); HR.ST.fill(g, S.L === k ? col : 'rgba(255,255,255,.08)', 4); if (S.L === k) { g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.arc(x - 10, ay - 6, 12, 0, 7); g.fill(); } };
+    lamp('r', ax - 95, '#ff4d5e'); lamp('y', ax, '#ffd23c'); lamp('g', ax + 95, '#5be37a');
     // Wächter am Ziel: dreht sich bei Rot um
     const wx = 1520, wy = (top + bot) / 2, watching = S.L === 'r';
-    if (watching) { g.beginPath(); g.moveTo(wx - 40, wy); g.lineTo(wx - 520, wy - 260); g.lineTo(wx - 520, wy + 260); g.closePath(); g.fillStyle = 'rgba(255,51,85,.07)'; g.fill(); }
-    ST.char(g, wx, wy, 60, watching ? [255, 51, 85] : [170, 162, 220], { look: watching ? [-1, 0] : [1, -0.6], t: S.time, still: true, sym: 'auge' });
-    if (watching) ST.text(g, '!', wx, wy - 100, 60, ST.RED);
+    HR.ST.char(g, wx, wy, 60, [120, 120, 140], { look: watching ? [-1, 0] : [1, -0.6], t: S.time, still: true });
+    if (watching) HR.ST.text(g, '!', wx, wy - 100, 60, '#ff4d5e');
     S.p.forEach((p, i) => {
       if (p.gone) return;
       const y = this.laneY(S, i), run = p.v > 30 ? Math.sin(S.time * 22) : 0;
-      G.fig(g, p, p.x, y - 6 - Math.abs(run) * 6, Math.min(26, 640 / n * 0.28), { look: [1, 0], stun: p.st, squash: run * 0.05 });
-      if (p.ft) ST.text(g, p.fo + '.', p.x - 60, y - 6, 32, ST.YELLOW);
+      G.fig(g, p, p.x, y - 18 - Math.abs(run) * 6, Math.min(28, 640 / n * 0.3), { look: [1, 0], stun: p.st, squash: run * 0.05 });
+      if (p.ft) HR.ST.text(g, p.fo + '.', p.x - 60, y - 18, 32, '#ffd23c');
     });
-    const big = S.L === 'g' ? ['LAUF!', ST.LIME] : S.L === 'y' ? ['ACHTUNG …', ST.YELLOW] : ['STOPP!', ST.RED];
-    ST.text(g, big[0], 800, bot + 70, 56, big[1]);
+    const big = S.L === 'g' ? ['LAUF!', '#5be37a'] : S.L === 'y' ? ['ACHTUNG …', '#ffd23c'] : ['STOPP!', '#ff4d5e'];
+    HR.ST.text(g, big[0], 800, bot + 70, 56, big[1]);
   },
 });

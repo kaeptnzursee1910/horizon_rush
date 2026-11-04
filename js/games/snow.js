@@ -75,36 +75,30 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    const ST = HR.ST;
-    ST.floor(g, 60, 80, 1480, 860, ST.ICE, null, 80);
-    ST.frame(g, 60, 80, 1480, 860, ST.ICE, 5, 80);
-    // Schnee-Glitzer
-    for (let k = 0; k < 70; k++) { const tw = Math.sin(S.time * 3 + k * 1.7) > 0.6; g.fillStyle = tw ? 'rgba(255,255,255,.9)' : 'rgba(232,244,255,.3)'; const x = 90 + (k * 373) % 1420, y = 110 + (k * 211) % 800; g.fillRect(x, y, tw ? 3 : 2, tw ? 3 : 2); }
+    HR.ST.rrect(g, 60, 80, 1480, 860, 40); HR.ST.fill(g, '#eef6ff', 6);
+    g.fillStyle = 'rgba(160,190,230,.35)';
+    for (let k = 0; k < 40; k++) { g.beginPath(); g.ellipse(100 + (k * 373) % 1400, 120 + (k * 211) % 780, 40 + (k % 3) * 20, 12, 0, 0, 7); g.fill(); }
     const items = [];
     for (const [x, y, k] of S.cover) items.push([y, () => {
-      ST.shadow(g, x, y + 30, 50, 14, 0.35);
-      if (k) { // Tanne aus drei Dreieck-Konturen mit Schneespitze
-        ST.pool(g, x, y - 20, 80, ST.GREEN, 0.12);
-        ST.line(g, x, y + 8, x, y + 30); ST.thin(g, ST.DIM, 4, 0.9);
-        for (let j = 2; j >= 0; j--) { const w = 60 - j * 14, yy = y + 10 - j * 32; g.beginPath(); g.moveTo(x - w, yy); g.lineTo(x, yy - 52); g.lineTo(x + w, yy); g.closePath(); g.fillStyle = ST.BODY; g.fill(); g.fillStyle = 'rgba(43,255,136,.1)'; g.fill(); ST.glow(g, ST.GREEN, 2.5); }
-        g.beginPath(); g.moveTo(x - 14, y - 70); g.lineTo(x, y - 86); g.lineTo(x + 14, y - 70); ST.glow(g, ST.ICE, 2.5);
-      } else { // Schneemann als Kontur
-        ST.pool(g, x, y - 20, 70, ST.ICE, 0.12);
-        g.beginPath(); g.arc(x, y + 6, 40, 0, 7); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.ICE, 3);
-        g.beginPath(); g.arc(x, y - 44, 28, 0, 7); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.ICE, 3);
-        g.fillStyle = ST.ICE; g.fillRect(x - 12, y - 54, 6, 6); g.fillRect(x + 6, y - 54, 6, 6);
-        g.beginPath(); g.moveTo(x, y - 42); g.lineTo(x + 22, y - 38); g.lineTo(x, y - 34); ST.glow(g, ST.ORANGE, 2);
-        ST.line(g, x - 26, y - 18, x + 26, y - 18); ST.glow(g, ST.RED, 3);
-        for (const by of [y - 4, y + 14]) { g.fillStyle = ST.ICE; g.fillRect(x - 2, by - 2, 4, 4); }
+      HR.ST.shadow(g, x, y + 30, 50, 14);
+      if (k) { // Tanne
+        g.fillStyle = '#7a4a2a'; g.fillRect(x - 9, y + 4, 18, 26);
+        for (let j = 0; j < 3; j++) { const w = 60 - j * 14, yy = y + 10 - j * 32; g.beginPath(); g.moveTo(x - w, yy); g.lineTo(x, yy - 52); g.lineTo(x + w, yy); g.closePath(); HR.ST.fill(g, '#3f9a5a', 5); g.fillStyle = '#fff'; g.beginPath(); g.moveTo(x - w * 0.4, yy - 30); g.lineTo(x, yy - 52); g.lineTo(x + w * 0.4, yy - 30); g.closePath(); g.fill(); }
+      } else { // Schneemann
+        g.beginPath(); g.arc(x, y + 6, 40, 0, 7); HR.ST.fill(g, '#fff', 5);
+        g.beginPath(); g.arc(x, y - 44, 28, 0, 7); HR.ST.fill(g, '#fff', 5);
+        g.fillStyle = HR.ST.INK; g.beginPath(); g.arc(x - 9, y - 50, 4, 0, 7); g.arc(x + 9, y - 50, 4, 0, 7); g.fill();
+        g.fillStyle = '#ff8a2a'; g.beginPath(); g.moveTo(x, y - 42); g.lineTo(x + 22, y - 38); g.lineTo(x, y - 36); g.fill();
+        g.fillStyle = '#e8435a'; g.fillRect(x - 26, y - 22, 52, 9);
       }
     }]);
     for (const p of S.p) if (!p.gone) items.push([p.y, () => {
       G.fig(g, p, p.x, p.y - 12, this.PR, { look: [p.lx, p.ly], hat: 'beanie', stun: p.fz, alpha: p.iv && !p.fz && Math.floor(S.time * 12) % 2 ? 0.55 : 1 });
-      if (p.fz) { ST.rrect(g, p.x - 36, p.y - 54, 72, 76, 14); g.fillStyle = 'rgba(24,231,255,.2)'; g.fill(); ST.glow(g, ST.CYAN, 2.5); ST.line(g, p.x - 24, p.y - 40, p.x - 10, p.y - 48); ST.thin(g, '#ffffff', 2, 0.8); }
-      if (p.mk) { const r = 8 + (1 - Math.abs(Math.sin(S.time * 3))) * 6; ST.oct(g, p.x + p.lx * 30, p.y + 10, r); g.fillStyle = 'rgba(232,244,255,.5)'; g.fill(); ST.glow(g, ST.ICE, 2); }
+      if (p.fz) { g.fillStyle = 'rgba(160,220,255,.55)'; HR.ST.rrect(g, p.x - 34, p.y - 50, 68, 70, 14); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 3; g.stroke(); }
+      if (p.mk) { g.beginPath(); g.arc(p.x + p.lx * 30, p.y + 10, 8 + (1 - Math.abs(Math.sin(S.time * 3))) * 6, 0, 7); HR.ST.fill(g, '#fff', 3); }
     }]);
     items.sort((a, b) => a[0] - b[0]).forEach(it => it[1]());
-    for (const b of S.b) { ST.shadow(g, b.x, b.y + 22, 9, 4, 0.5); ST.pool(g, b.x, b.y, 30, '#ffffff', 0.3); g.beginPath(); g.arc(b.x, b.y, 10, 0, 7); g.fillStyle = '#fff'; g.fill(); ST.glow(g, ST.ICE, 2); }
-    for (const f of S.fx) ST.burst(g, f[0], f[1], (S.time - f[2]) / 0.4, ST.ICE, 10, 42);
+    for (const b of S.b) { HR.ST.shadow(g, b.x, b.y + 22, 9, 4); g.beginPath(); g.arc(b.x, b.y, 11, 0, 7); HR.ST.fill(g, '#fff', 3); }
+    for (const f of S.fx) HR.ST.burst(g, f[0], f[1], (S.time - f[2]) / 0.4, '#fff', 9, 40);
   },
 });

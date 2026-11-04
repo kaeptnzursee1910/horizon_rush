@@ -70,31 +70,26 @@ HR.AR.define({
 
   draw(g, S, G) {
     G.world(g);
-    const ST = HR.ST;
-    // Thronsaal: Raster, Zinnen, roter Leuchtteppich mit Rautenmuster, Säulen
-    for (let k = 0; k < 14; k++) { ST.rrect(g, 110 + k * 100, 84, 60, 30, 6); g.fillStyle = ST.BODY; g.fill(); ST.thin(g, ST.VIOLET, 2, 0.6); }
-    ST.floor(g, 120, 130, 1360, 760, ST.VIOLET, null, 85);
-    ST.frame(g, 112, 122, 1376, 776, ST.VIOLET, 5, 85);
-    ST.rrect(g, 740, 130, 120, 760, 8); g.fillStyle = 'rgba(255,51,85,.1)'; g.fill(); ST.glow(g, ST.RED, 2.5);
-    g.beginPath(); for (let y = 160; y < 880; y += 50) { g.moveTo(800, y - 16); g.lineTo(818, y); g.lineTo(800, y + 16); g.lineTo(782, y); g.closePath(); } ST.thin(g, ST.RED, 2, 0.6);
-    ST.rrect(g, 730, 96, 140, 40, 8); g.fillStyle = 'rgba(255,226,61,.12)'; g.fill(); ST.glow(g, ST.YELLOW, 2.5);
+    // Schlosshof: Mauer, Steinplatten, roter Teppich
+    HR.ST.rrect(g, 90, 100, 1420, 820, 30); HR.ST.fill(g, '#8d7aa8', 6);
+    HR.ST.floor(g, 120, 130, 1360, 760, '#d9cbe8', '#cdbedf', 85);
+    g.strokeStyle = HR.ST.INK; g.lineWidth = 5; g.strokeRect(120, 130, 1360, 760);
+    g.fillStyle = '#c8414f'; g.fillRect(740, 130, 120, 760); g.fillStyle = '#e0b84a'; g.fillRect(740, 130, 8, 760); g.fillRect(852, 130, 8, 760);
+    for (let k = 0; k < 14; k++) { HR.ST.rrect(g, 110 + k * 100, 84, 60, 34, 6); HR.ST.fill(g, '#9d8ab8', 4); }
     for (const [x, y] of this.POSTS) {
-      ST.pool(g, x, y, 90, ST.VIOLET, 0.15);
-      ST.oct(g, x, y, 44); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.VIOLET, 3.5);
-      ST.oct(g, x, y, 29); ST.thin(g, ST.VIOLET, 2, 0.6);
-      ST.oct(g, x, y, 13); ST.thin(g, ST.VIOLET, 2, 0.6);
+      HR.ST.shadow(g, x, y + 30, 50, 16);
+      g.beginPath(); g.arc(x, y, 44, 0, 7); HR.ST.fill(g, '#b9a6d4', 5);
+      g.beginPath(); g.arc(x, y - 6, 30, 0, 7); HR.ST.fill(g, '#d6c8ea', 4);
     }
     if (S.cr < 0) {
       const b = Math.sin(S.time * 4) * 6;
-      ST.pool(g, S.cx, S.cy, 90, ST.YELLOW, 0.3);
-      g.beginPath(); g.arc(S.cx, S.cy, 40 + Math.sin(S.time * 6) * 6, 0, 7); ST.glow(g, ST.YELLOW, 2, 0.5);
-      g.save(); g.translate(S.cx, S.cy + 30 + b); HR.ST.hat(g, 'crown', 40, S.time); g.restore();
+      g.save(); g.translate(S.cx, S.cy - 10 + b); HR.ST.hat(g, 'crown', 46, S.time); g.restore();
+      g.fillStyle = 'rgba(255,220,80,.25)'; g.beginPath(); g.arc(S.cx, S.cy, 40 + Math.sin(S.time * 6) * 6, 0, 7); g.fill();
     }
     for (const p of S.p.filter(p => !p.gone).sort((a, b) => a.y - b.y)) {
-      const c = G.color(p);
-      if (p.ds) { ST.line(g, p.x - p.lx * 70, p.y - p.ly * 70, p.x, p.y); ST.glow(g, c, 6, 0.45); }
+      if (p.ds) { g.strokeStyle = G.rgb(p, 0.5); g.lineWidth = 10; g.lineCap = 'round'; g.beginPath(); g.moveTo(p.x - p.lx * 60, p.y - p.ly * 60); g.lineTo(p.x, p.y); g.stroke(); }
       const hold = p.id === S.cr;
-      if (hold) { ST.pool(g, p.x, p.y, 80, ST.YELLOW, 0.3); g.beginPath(); g.arc(p.x, p.y - 12, 46, 0, 7); ST.glow(g, ST.YELLOW, 3, 0.6 + 0.3 * Math.sin(S.time * 8)); }
+      if (hold) { g.fillStyle = `rgba(255,220,80,${0.25 + 0.15 * Math.sin(S.time * 8)})`; g.beginPath(); g.arc(p.x, p.y, 48, 0, 7); g.fill(); }
       G.fig(g, p, p.x, p.y - 12, this.PR, { look: [p.lx, p.ly], hat: hold ? 'crown' : null, stun: p.st, alpha: hold && S.imm > 0 && Math.floor(S.time * 12) % 2 ? 0.6 : 1 });
     }
   },

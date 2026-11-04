@@ -76,29 +76,26 @@ HR.AR.define({
   draw(g, S, G) {
     G.world(g);
     const ST = HR.ST, R = S.R;
-    // Wasser: dunkel mit gestrichelten Wellenlinien
-    g.fillStyle = '#05070f'; g.fillRect(-2000, -2000, 5600, 5000);
-    for (let y = -60, k = 0; y < 1060; y += 34, k++) {
-      g.setLineDash([16 + (k * 7) % 22, 12 + (k * 5) % 16]); g.lineDashOffset = S.time * 18 * (k % 2 ? 1 : -1) + k * 13;
-      g.beginPath(); for (let x = -120; x <= 1720; x += 40) g.lineTo(x, y + Math.sin(x * 0.02 + k + S.time) * 4);
-      ST.thin(g, ST.CYAN, 2, 0.14 + (k % 3) * 0.06);
-    }
-    g.setLineDash([]); g.lineDashOffset = 0;
-    ST.pool(g, 800, 500, R * 1.5, ST.MAGENTA, 0.12);
-    // Plattform mit sichtbarer Dicke
-    g.beginPath(); g.ellipse(800, 522, R, R * 0.98, 0, 0, 7); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.VIOLET, 2);
+    // Rasen, darauf eine runde Asphaltplatte mit Randstein-Ring und Reifenstapeln
+    ST.grass(g, -2000, -2000, 5600, 5000, 70);
+    for (let k = 0; k < 44; k++) { const a = k / 44 * 6.283; ST.tyre(g, 800 + Math.cos(a) * 492, 500 + Math.sin(a) * 492, 16); }
+    for (let k = 0; k < 48; k++) { g.fillStyle = ST.KERB[k % 2]; g.beginPath(); g.moveTo(800, 500); g.arc(800, 500, R + 14, k / 48 * 6.283, (k + 1) / 48 * 6.283); g.fill(); }
+    const grd = g.createRadialGradient(740, 440, R * 0.1, 800, 500, R);
+    grd.addColorStop(0, '#85858b'); grd.addColorStop(1, '#69696f');
+    g.fillStyle = grd; g.beginPath(); g.arc(800, 500, R, 0, 7); g.fill();
     g.save(); g.beginPath(); g.arc(800, 500, R, 0, 7); g.clip();
-    ST.floor(g, 800 - R, 500 - R, R * 2, R * 2, ST.MAGENTA, null, 80);
+    ST.grain(g, 800 - R, 500 - R, R * 2, R * 2, 'rgba(255,255,255,.07)', 1800, 2);
+    g.strokeStyle = 'rgba(20,20,24,.3)'; g.lineWidth = 7;
+    for (const [a0, a1, rr] of [[-0.5, 1.2, 160], [2, 3.6, 230], [3.9, 5, 120]]) for (const d of [0, 18]) { g.beginPath(); g.arc(800, 500, rr + d, a0, a1); g.stroke(); }
     g.restore();
-    for (const k of [0.3, 0.62]) { g.beginPath(); g.arc(800, 500, R * k, 0, 7); ST.thin(g, ST.MAGENTA, 2, 0.35); }
-    if (R < 465) { g.setLineDash([16, 14]); g.lineDashOffset = -S.time * 30; g.beginPath(); g.arc(800, 500, R - 16, 0, 7); ST.glow(g, ST.YELLOW, 3, Math.floor(S.time * 2) % 2 ? 0.9 : 0.4); g.setLineDash([]); g.lineDashOffset = 0; }
-    g.beginPath(); g.arc(800, 500, R, 0, 7); ST.glow(g, ST.MAGENTA, 6);
+    g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 6; g.setLineDash([22, 16]); g.beginPath(); g.arc(800, 500, 130, 0, 7); g.stroke(); g.setLineDash([]);
+    if (R < 465 && Math.floor(S.time * 2) % 2) { g.strokeStyle = 'rgba(255,77,94,.7)'; g.lineWidth = 8; g.beginPath(); g.arc(800, 500, R - 6, 0, 7); g.stroke(); }
     for (const p of S.p.filter(p => !p.gone && (p.al || p.f < 1)).sort((a, b) => a.y - b.y)) {
       const sc = p.al ? 1 : 1 - p.f * 0.7;
-      if (p.al && p.dash > 0) { ST.oct(g, p.x, p.y, 48, S.time * 4); ST.glow(g, G.color(p), 3, 0.7); }
-      if (!p.al && p.f < 0.6) ST.burst(g, p.x, p.y, p.f / 0.6, ST.CYAN, 10, 50);
-      G.fig(g, p, p.x, p.y + (p.al ? 0 : p.f * 40), 30 * sc, { look: [Math.cos(p.a), Math.sin(p.a)], dead: !p.al, alpha: p.al ? 1 : 1 - p.f, squash: p.dash > 0 ? -0.08 : 0 });
-      if (p.al && p.id === G.me && p.cd <= 0) ST.text(g, 'STOSS BEREIT', p.x, p.y + 56, 18, ST.YELLOW);
+      if (p.al && p.dash > 0) { g.strokeStyle = G.rgb(p, 0.7); g.lineWidth = 8; g.beginPath(); g.arc(p.x, p.y, 46, 0, 7); g.stroke(); }
+      ST.car(g, p.x, p.y + (p.al ? 0 : p.f * 40), p.a, G.color(p), 76 * sc, { dead: !p.al, alpha: p.al ? 1 : 1 - p.f });
+      if (p.id === G.me && p.al) ST.you(g, p.x, p.y - 46, S.time, 'DU');
+      if (p.al && p.id === G.me && p.cd <= 0) ST.text(g, 'STOSS bereit', p.x, p.y + 52, 18, '#ffd23c');
     }
   },
 });

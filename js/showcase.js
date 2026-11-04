@@ -72,7 +72,7 @@ HR.Showcase = {
     if (def && document.querySelector('.panel.main')) {
       const sc = U.clamp(Math.min(W / 1000, H / 640), 0.7, 1.3);
       g.globalAlpha = 0.85 * (1 - f);
-      HR.Render.text(g, def.name.toUpperCase(), W - 14 * sc, H - 14 * sc - 16 * sc, 16 * sc, '#ffe23d', 'right');
+      HR.Render.text(g, def.name.toUpperCase(), W - 14 * sc, H - 14 * sc - 16 * sc, 16 * sc, HR.THEME === 'neon' ? '#ffe23d' : 'rgb(255,210,40)', 'right');
       g.globalAlpha = 1;
     }
   },

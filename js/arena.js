@@ -205,10 +205,9 @@ HR.ArenaGame = class {
     const w = this.watching();
     if (w && this.def.spot && this.phase === 'play') {
       const s = this.def.spot(this.S, w);
-      if (s) { g.save(); this.world(g); this.meMark(g, s[0], s[1], 46, this.S.time); this.label(g, this.name(w.id), s[0], s[1] - 50, 26, HR.ST.YELLOW); g.restore(); }
+      if (s) { g.save(); this.world(g); this.meMark(g, s[0], s[1], 46, this.S.time); this.label(g, this.name(w.id), s[0], s[1] - 50, 26, 'rgb(255,210,40)'); g.restore(); }
     }
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    HR.ST.overlay(g, W, H);
     if (this.show) return;
     this.hud(g, W, H);
     HR.Render.touch(g);
@@ -218,8 +217,8 @@ HR.ArenaGame = class {
   world(g) { const v = this.view; g.translate(v.ox, v.oy); g.scale(v.sc, v.sc); }
 
   meMark(g, x, y, r, t) {
-    g.setLineDash([r * 0.25, r * 0.18]); HR.ST.oct(g, x, y, r, (t || 0) * 0.8);
-    HR.ST.glow(g, HR.ST.YELLOW, Math.max(2, r * 0.07), 0.55 + 0.45 * Math.sin((t || 0) * 8)); g.setLineDash([]);
+    g.strokeStyle = `rgba(255,255,255,${0.55 + 0.45 * Math.sin((t || 0) * 8)})`; g.lineWidth = Math.max(2, r * 0.12);
+    g.beginPath(); g.arc(x, y, r, 0, 7); g.stroke();
   }
 
   // Party-Figur eines Spielers mit "DU"-Pfeil
@@ -229,61 +228,56 @@ HR.ArenaGame = class {
     if (p.id === this.me && !o.dead && !o.noMark) HR.ST.you(g, x, y - r * (o.hat ? 1.9 : 1.25), this.S.time, r > 22 ? 'DU' : '');
   }
 
-  label(g, txt, x, y, size, color) { HR.ST.text(g, txt, x, y, size, color || HR.ST.TEXT, 'center', 'bottom'); }
+  label(g, txt, x, y, size, color) { HR.ST.text(g, txt, x, y, size, color || '#fff', 'center', 'bottom'); }
 
   hud(g, W, H) {
-    const ST = HR.ST, S = this.S, sc = U.clamp(Math.min(W / 1000, H / 640), 0.62, 1.3);
-    const Y = ST.YELLOW;
-    // Spielerliste oben links: gefaste Leiste mit Token-Symbol, Name und Wert
+    const R = HR.Render, S = this.S, sc = U.clamp(Math.min(W / 1000, H / 640), 0.62, 1.3);
+    const Y = 'rgb(255,210,40)';
+    // Spielerliste oben links
     const rows = S.p.filter(p => !p.gone);
-    const fs = Math.round(13 * sc), lh = fs * 1.6, w = 196 * sc, x0 = 8, y0 = 8;
-    ST.rrect(g, x0, y0, w + 10, rows.length * lh + 12, 12 * sc);
-    g.fillStyle = 'rgba(12,10,28,.82)'; g.fill(); ST.glow(g, [58, 52, 102], 1.5);
+    const fs = Math.round(13 * sc), lh = fs * 1.45, w = 190 * sc;
+    g.fillStyle = 'rgba(15,20,45,.82)'; g.beginPath(); g.roundRect(6, 6, w + 8, rows.length * lh + 10, 6 * sc); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,.25)'; g.lineWidth = 2; g.stroke();
     rows.forEach((p, i) => {
-      const y = y0 + 6 + i * lh, cy = y + lh / 2, st = this.def.status ? this.def.status(S, p, this) : '';
-      const out = this.def.isOut ? this.def.isOut(S, p) : false, c = this.color(p), mine = p.id === this.me;
+      const y = 10 + i * lh, st = this.def.status ? this.def.status(S, p, this) : '';
+      const out = this.def.isOut ? this.def.isOut(S, p) : false;
       g.globalAlpha = out ? 0.45 : 1;
-      if (mine) { ST.rrect(g, x0 + 4, y + 1, w + 2, lh - 2, 6 * sc); g.fillStyle = ST.rgb(c, 0.14); g.fill(); ST.thin(g, c, 1.2, 0.7); }
-      ST.oct(g, x0 + 8 + fs * 0.6, cy, fs * 0.62); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, c, 1.5);
-      ST.symbol(g, ST.symFor(c), x0 + 8 + fs * 0.6, cy, fs * 0.36, c);
-      g.font = `${mine ? 700 : 500} ${fs}px ${HR.FONT}`; g.textAlign = 'left'; g.textBaseline = 'middle';
-      g.fillStyle = mine ? Y : ST.TEXT;
+      g.fillStyle = this.rgb(p); g.beginPath(); g.arc(12 + fs * 0.4, y + lh * 0.2 + fs * 0.4, fs * 0.45, 0, 7); g.fill();
+      g.font = `${p.id === this.me ? 'bold ' : ''}${fs}px ${HR.FONT}`; g.textAlign = 'left'; g.textBaseline = 'top';
+      g.fillStyle = p.id === this.me ? Y : '#fff';
       let nm = this.name(p.id); if (nm.length > 12) nm = nm.slice(0, 11) + '…';
-      g.fillText(nm.toUpperCase(), x0 + 10 + fs * 1.5, cy + 1);
-      g.textAlign = 'right'; g.font = `700 ${fs}px ${HR.FONT}`; g.fillStyle = out ? ST.RED : U.rgb(c);
-      g.fillText(out ? 'RAUS' : String(st).toUpperCase(), x0 + w + 2, cy + 1);
+      g.fillText(nm, 12 + fs * 1.2, y + lh * 0.12);
+      g.textAlign = 'right'; g.fillStyle = out ? 'rgb(255,120,110)' : '#fff';
+      g.fillText(out ? 'raus' : st, w, y + lh * 0.12);
       g.globalAlpha = 1;
     });
     // Titel und Zeit oben rechts
-    const T = ST.text;
-    T(g, this.def.name.toUpperCase(), W - 14, 18 * sc, 15 * sc, ST.DIM, 'right');
-    if (this.def.duration && this.phase !== 'count') {
-      const left = Math.max(0, this.def.duration - S.time), f = left / this.def.duration;
-      T(g, U.fmtTime(left).replace(/\.\d+$/, ''), W - 14, 18 * sc + 26 * sc, 28 * sc, left < 10 ? ST.RED : ST.CYAN, 'right');
-      const bw = 150 * sc, by = 18 * sc + 46 * sc;
-      g.fillStyle = 'rgba(24,231,255,.15)'; g.fillRect(W - 14 - bw, by, bw, 3 * sc);
-      ST.line(g, W - 14 - bw, by + 1.5 * sc, W - 14 - bw + bw * f, by + 1.5 * sc); ST.glow(g, left < 10 ? ST.RED : ST.CYAN, 3 * sc);
-    }
+    const T = HR.ST.text;
+    T(g, this.def.name.toUpperCase(), W - 12, 18 * sc, 15 * sc, Y, 'right');
+    if (this.def.duration && this.phase !== 'count') T(g, U.fmtTime(Math.max(0, this.def.duration - S.time)).replace(/\.\d+$/, ''), W - 12, 18 * sc + 26 * sc, 28 * sc, '#fff', 'right');
     if (this.def.hud) this.def.hud(g, S, this, W, H, sc);
     // Countdown, LOS, Ende
     if (this.phase === 'count') {
       const c = Math.ceil(this.count);
-      if (c > 0 && c <= 3) { ST.oct(g, W / 2, H * 0.42, 78 * sc); g.fillStyle = 'rgba(12,10,28,.7)'; g.fill(); ST.glow(g, ST.MAGENTA, 4 * sc); T(g, String(c), W / 2, H * 0.42 + 4 * sc, 100 * sc, ST.TEXT); }
-      T(g, (this.def.short || '').toUpperCase(), W / 2, H * 0.42 + 112 * sc, 22 * sc, ST.CYAN);
-    } else if (this.goT > 0) T(g, 'LOS!', W / 2, H * 0.42, 110 * sc, ST.LIME);
-    if (this.phase === 'end') T(g, 'ENDE!', W / 2, H * 0.42, 90 * sc, ST.MAGENTA);
+      if (c > 0 && c <= 3) T(g, String(c), W / 2, H * 0.42, 120 * sc, Y);
+      T(g, this.def.short || '', W / 2, H * 0.42 + 85 * sc, 24 * sc, '#fff');
+    } else if (this.goT > 0) T(g, 'LOS!', W / 2, H * 0.42, 110 * sc, 'rgb(90,235,110)');
+    if (this.phase === 'end') T(g, 'ENDE!', W / 2, H * 0.42, 90 * sc, Y);
     else if (this.phase === 'play' && this.def.isOut && this.def.isOut(S, S.p.find(p => p.id === this.me) || {})) {
-      T(g, 'AUSGESCHIEDEN', W / 2, H * 0.12 + 20 * sc, 30 * sc, ST.RED);
+      T(g, 'AUSGESCHIEDEN', W / 2, H * 0.12 + 20 * sc, 30 * sc, 'rgb(255,110,100)');
       const w = this.watching();
-      T(g, w ? 'Du schaust ' + this.name(w.id) + ' zu  ·  ◀ ▶ wechseln' : 'Du schaust den anderen zu', W / 2, H * 0.12 + 52 * sc, 17 * sc, ST.TEXT);
+      T(g, w ? 'Du schaust ' + this.name(w.id) + ' zu  ·  ◀ ▶ wechseln' : 'Du schaust den anderen zu', W / 2, H * 0.12 + 52 * sc, 17 * sc, '#fff');
     }
   }
 };
 
 // ---------- Helfer für die Spiele ----------
 const AR = HR.AR = {
+  // das Spiel selbst wird eingetragen (keine Kopie), damit der Neon-Stil seine Zeichenfunktionen nachträglich einsetzen kann
   define(def) {
-    HR.addGame(Object.assign({ kind: 'arena', create: ctx => new HR.ArenaGame(def, ctx) }, def));
+    if (!def.kind) def.kind = 'arena';
+    if (!def.create) def.create = ctx => new HR.ArenaGame(def, ctx);
+    HR.addGame(def);
   },
   need: S => (S.p.length > 1 ? 1 : 0),
   aliveCount: S => S.p.filter(p => p.al && !p.gone).length,

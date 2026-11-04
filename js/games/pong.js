@@ -108,44 +108,37 @@ HR.AR.define({
     const rot = Math.PI / 2 - sides[me.k].phi;
     G.world(g);
     g.translate(800, 500); g.rotate(rot);
-    const shape = (k, dy) => { g.beginPath(); sides.forEach((s, i) => (i ? g.lineTo : g.moveTo).call(g, s.B[0] * k, s.B[1] * k + (dy || 0))); g.closePath(); };
-    ST.pool(g, 0, 0, ap * 1.6, ST.CYAN, 0.08);
-    shape(1.06, 16); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.VIOLET, 2);
-    g.save(); shape(1.06); g.clip(); ST.floor(g, -640, -640, 1280, 1280, ST.CYAN, null, 80); g.restore();
-    shape(1.06); ST.glow(g, ST.VIOLET, 3);
-    // Mittelkreis mit Skala
-    g.beginPath(); g.arc(0, 0, 90, 0, 7); ST.thin(g, ST.CYAN, 2, 0.45);
-    g.beginPath(); for (let k = 0; k < 32; k++) { const a = k * Math.PI / 16, r2 = k % 4 ? 98 : 110; g.moveTo(Math.cos(a) * 90, Math.sin(a) * 90); g.lineTo(Math.cos(a) * r2, Math.sin(a) * r2); } ST.thin(g, ST.CYAN, 2, 0.45);
-    const P = (s, u, off) => [s.A[0] + s.dir[0] * u * s.L - s.n[0] * off, s.A[1] + s.dir[1] * u * s.L - s.n[1] * off];
+    // Spielfeld: Achteck mit Rand und Karo
+    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0] * 1.06, s.B[1] * 1.06 + 16)); g.closePath(); ST.fill(g, '#8a1c1c', 4);
+    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0] * 1.06, s.B[1] * 1.06)); g.closePath(); ST.fill(g, '#cd2d2d', 4);
+    g.save(); g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0], s.B[1])); g.closePath(); g.clip();
+    ST.floor(g, -600, -600, 1200, 1200, '#bfe4ff', '#acd8fa', 80); g.restore();
+    g.beginPath(); sides.forEach((s, k) => (k ? g.lineTo : g.moveTo).call(g, s.B[0], s.B[1])); g.closePath(); g.lineWidth = 5; g.strokeStyle = ST.INK; g.stroke();
+    g.strokeStyle = 'rgba(37,31,58,.15)'; g.lineWidth = 6; g.beginPath(); g.arc(0, 0, 90, 0, 7); g.stroke();
+    g.lineCap = 'round';
+    const seg = (s, a, b, off, w, col) => {
+      g.beginPath();
+      g.moveTo(s.A[0] + s.dir[0] * a * s.L - s.n[0] * off, s.A[1] + s.dir[1] * a * s.L - s.n[1] * off);
+      g.lineTo(s.A[0] + s.dir[0] * b * s.L - s.n[0] * off, s.A[1] + s.dir[1] * b * s.L - s.n[1] * off);
+      g.strokeStyle = ST.INK; g.lineWidth = w + 10; g.stroke(); g.strokeStyle = col; g.lineWidth = w; g.stroke();
+    };
     for (let k = 0; k < 8; k++) {
-      const s = sides[k], o = S.p.find(p => p.k === k && !p.gone), alive = o && o.al;
-      const c = alive ? G.color(o) : [130, 124, 170];
-      // Torzone schraffiert
-      g.save();
-      g.beginPath(); g.moveTo(...P(s, 0, 0)); g.lineTo(...P(s, 1, 0)); g.lineTo(...P(s, 1, 30)); g.lineTo(...P(s, 0, 30)); g.closePath(); g.clip();
-      g.beginPath(); for (let d = -700; d < 700; d += 12) { g.moveTo(d, -700); g.lineTo(d + 700, 700); } ST.thin(g, c, 2, alive ? 0.28 : 0.16);
-      g.restore();
-      ST.line(g, ...P(s, 0, 0), ...P(s, 1, 0));
-      if (!alive) { ST.glow(g, c, 8, 0.7); const [mx, my] = P(s, 0.5, 46); g.beginPath(); g.moveTo(mx - 10, my - 10); g.lineTo(mx + 10, my + 10); g.moveTo(mx + 10, my - 10); g.lineTo(mx - 10, my + 10); ST.thin(g, c, 3, 0.8); continue; }
-      ST.glow(g, c, 2.5, 0.8);
-      ST.line(g, ...P(s, o.u - this.HL, 12), ...P(s, o.u + this.HL, 12)); ST.glow(g, c, 9);
-      // Token hinter dem Schläger
+      const s = sides[k], o = S.p.find(p => p.k === k && !p.gone);
+      if (!o || !o.al) { seg(s, 0, 1, 0, 14, '#9a94b0'); continue; }
+      g.strokeStyle = G.rgb(o, 0.35); g.lineWidth = 6; g.beginPath(); g.moveTo(s.A[0], s.A[1]); g.lineTo(s.B[0], s.B[1]); g.stroke();
+      seg(s, o.u - this.HL, o.u + this.HL, 10, 18, G.rgb(o));
+      // Figur hinter dem Schläger
       const fx = s.A[0] + s.dir[0] * o.u * s.L + s.n[0] * 30, fy = s.A[1] + s.dir[1] * o.u * s.L + s.n[1] * 30;
-      g.save(); g.translate(fx, fy); g.rotate(-rot); ST.char(g, 0, 0, 16, G.color(o), { look: [-(s.n[0] * Math.cos(rot) - s.n[1] * Math.sin(rot)), -(s.n[0] * Math.sin(rot) + s.n[1] * Math.cos(rot))], t: S.time, noShadow: true, still: true }); g.restore();
+      g.save(); g.translate(fx, fy); g.rotate(-rot); HR.ST.char(g, 0, 0, 18, G.color(o), { look: [-(s.n[0] * Math.cos(rot) - s.n[1] * Math.sin(rot)), -(s.n[0] * Math.sin(rot) + s.n[1] * Math.cos(rot))], t: S.time, noShadow: true }); g.restore();
     }
-    for (const b of S.b) {
-      const A = g.globalAlpha; g.globalAlpha = b.w ? 0.45 : 1;
-      ST.pool(g, b.x, b.y, 50, '#ffffff', 0.3);
-      g.beginPath(); g.arc(b.x, b.y, this.BR + 2, 0, 7); g.fillStyle = '#fff'; g.fill(); ST.glow(g, ST.CYAN, 3);
-      g.globalAlpha = A;
-    }
+    for (const b of S.b) { g.globalAlpha = b.w ? 0.45 : 1; g.beginPath(); g.arc(b.x, b.y, this.BR + 2, 0, 7); ST.fill(g, '#fff', 4); g.globalAlpha = 1; }
     // Namen und Leben außen, aufrecht
     g.rotate(-rot);
     for (const p of S.p) {
       if (p.gone) continue;
       const s = sides[p.k], a = s.phi + rot, x = Math.cos(a) * (ap + 64), y = Math.sin(a) * (ap + 64);
-      const label = (p.id === G.me ? 'DU' : G.name(p.id).toUpperCase()) + (p.al ? '  ' + '◆'.repeat(Math.max(0, p.l)) : '  ✕');
-      ST.text(g, label, x, y, p.id === G.me ? 22 : 17, p.al ? G.rgb(p) : 'rgba(242,238,255,.45)');
+      const label = (p.id === G.me ? 'DU' : G.name(p.id)) + (p.al ? '  ' + '♥'.repeat(Math.max(0, p.l)) : '  ✕');
+      ST.text(g, label, x, y, p.id === G.me ? 22 : 17, p.al ? G.rgb(p) : 'rgba(255,255,255,.5)');
     }
   },
 });

@@ -91,44 +91,44 @@ HR.AR.define({
   },
 
   crate(g, x, y, s, a) {
-    const ST = HR.ST;
     g.save(); g.globalAlpha = a == null ? 1 : a;
-    ST.rrect(g, x - s / 2, y - s / 2, s, s, s * 0.1); g.fillStyle = ST.BODY; g.fill(); g.fillStyle = 'rgba(255,122,26,.16)'; g.fill(); ST.glow(g, ST.ORANGE, Math.max(2, s * 0.05));
-    ST.rrect(g, x - s * 0.34, y - s * 0.34, s * 0.68, s * 0.68, s * 0.05); ST.thin(g, ST.ORANGE, Math.max(1, s * 0.025), 0.6);
-    g.beginPath(); g.moveTo(x - s * 0.34, y - s * 0.34); g.lineTo(x + s * 0.34, y + s * 0.34); g.moveTo(x + s * 0.34, y - s * 0.34); g.lineTo(x - s * 0.34, y + s * 0.34); ST.thin(g, ST.ORANGE, Math.max(1, s * 0.02), 0.35);
+    HR.ST.rrect(g, x - s / 2, y - s / 2, s, s, s * 0.08); HR.ST.fill(g, '#c98a45', 5);
+    g.strokeStyle = '#8a5526'; g.lineWidth = s * 0.08;
+    g.strokeRect(x - s * 0.36, y - s * 0.36, s * 0.72, s * 0.72);
+    g.beginPath(); g.moveTo(x - s * 0.36, y - s * 0.36); g.lineTo(x + s * 0.36, y + s * 0.36); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x - s / 2 + 5, y - s / 2 + 5, s - 10, s * 0.12);
     g.restore();
   },
 
   draw(g, S, G) {
     G.world(g);
-    const ST = HR.ST, G0 = this.geo(), C = this.CELL, W = this.GX * C, H = this.GY * C;
-    ST.floor(g, G0.x0, G0.y0, W, H, ST.CYAN, null, C);
-    ST.frame(g, G0.x0 - 10, G0.y0 - 10, W + 20, H + 20, ST.CYAN, 5, C);
+    const G0 = this.geo(), C = this.CELL, W = this.GX * C, H = this.GY * C;
+    HR.ST.rrect(g, G0.x0 - 14, G0.y0 - 14, W + 28, H + 28, 20); HR.ST.fill(g, '#7a5a3a', 6);
+    HR.ST.floor(g, G0.x0, G0.y0, W, H, '#8fd06a', '#7fc25c', C);
+    g.strokeStyle = HR.ST.INK; g.lineWidth = 5; g.strokeRect(G0.x0, G0.y0, W, H);
     // Schilde
     for (const s of S.sh) {
       const [x, y] = this.cellXY(s.c), b = Math.sin(S.time * 5) * 5;
-      ST.pool(g, x, y + b, 50, ST.CYAN, 0.25);
-      g.beginPath(); g.moveTo(x, y - 26 + b); g.lineTo(x + 22, y - 18 + b); g.lineTo(x + 20, y + 6 + b); g.lineTo(x, y + 28 + b); g.lineTo(x - 20, y + 6 + b); g.lineTo(x - 22, y - 18 + b); g.closePath();
-      g.fillStyle = 'rgba(24,231,255,.18)'; g.fill(); ST.glow(g, ST.CYAN, 3);
-      ST.line(g, x, y - 18 + b, x, y + 18 + b); ST.thin(g, ST.CYAN, 2, 0.6);
+      g.beginPath(); g.moveTo(x, y - 26 + b); g.quadraticCurveTo(x + 26, y - 22 + b, x + 22, y + b); g.quadraticCurveTo(x + 14, y + 20 + b, x, y + 28 + b); g.quadraticCurveTo(x - 14, y + 20 + b, x - 22, y + b); g.quadraticCurveTo(x - 26, y - 22 + b, x, y - 26 + b);
+      HR.ST.fill(g, '#4ad6ff', 4);
     }
-    // Warnfelder der fallenden Kisten
+    // Schatten der fallenden Kisten
     for (const f of S.fall) {
       const [x, y] = this.cellXY(f.c), k = 1 - f.t / this.FALL;
-      g.fillStyle = `rgba(255,51,85,${0.06 + k * 0.18})`; ST.rrect(g, x - C / 2 * k, y - C / 2 * k, C * k, C * k, 8); g.fill();
-      g.setLineDash([10, 8]); g.lineDashOffset = -S.time * 30; ST.rrect(g, x - C / 2 + 5, y - C / 2 + 5, C - 10, C - 10, 8); ST.glow(g, ST.RED, 2.5, 0.4 + k * 0.6); g.setLineDash([]); g.lineDashOffset = 0;
+      g.fillStyle = `rgba(30,10,40,${0.15 + k * 0.4})`; HR.ST.rrect(g, x - C / 2 * k, y - C / 2 * k, C * k, C * k, 8); g.fill();
+      g.strokeStyle = `rgba(255,60,60,${k})`; g.lineWidth = 3; HR.ST.rrect(g, x - C / 2 + 4, y - C / 2 + 4, C - 8, C - 8, 8); g.stroke();
     }
-    // gelandete Kisten und Token, von oben nach unten
+    // gelandete Kisten und Figuren, von oben nach unten
     const items = [];
-    for (let i = 0; i < S.box.length; i++) if (S.box[i]) { const [x, y] = this.cellXY(i); items.push([y, () => this.crate(g, x, y, C - 6)]); }
+    for (let i = 0; i < S.box.length; i++) if (S.box[i]) { const [x, y] = this.cellXY(i); items.push([y, () => this.crate(g, x, y, C - 4)]); }
     for (const p of S.p) if (!p.gone) items.push([p.y, () => {
-      if (!p.al) { if (S.time - p.dt < 0.8) ST.burst(g, p.x, p.y, (S.time - p.dt) / 0.8, G.color(p), 14, 60); return; }
-      G.fig(g, p, p.x, p.y - 10, 24, { look: [p.lx, p.ly] });
-      if (p.sh) { ST.oct(g, p.x, p.y - 10, 38, S.time); ST.glow(g, ST.CYAN, 3, 0.6 + 0.3 * Math.sin(S.time * 8)); }
+      if (!p.al) { if (S.time - p.dt < 0.8) HR.ST.burst(g, p.x, p.y, (S.time - p.dt) / 0.8, G.rgb(p), 12, 60); return; }
+      G.fig(g, p, p.x, p.y - 14, 24, { look: [p.lx, p.ly] });
+      if (p.sh) { g.strokeStyle = `rgba(74,214,255,${0.6 + 0.3 * Math.sin(S.time * 8)})`; g.lineWidth = 5; g.beginPath(); g.arc(p.x, p.y - 14, 36, 0, 7); g.stroke(); }
     }]);
     items.sort((a, b) => a[0] - b[0]).forEach(it => it[1]());
-    for (const e of S.fx) { const [x, y] = this.cellXY(e.c); ST.burst(g, x, y + C * 0.3, (S.time - e.t) / 0.5, ST.ORANGE, 12, 70); }
+    for (const e of S.fx) { const [x, y] = this.cellXY(e.c); HR.ST.burst(g, x, y + C * 0.3, (S.time - e.t) / 0.5, '#e8d2a0', 10, 70); }
     // fallende Kisten über allem
-    for (const f of S.fall) { const [x, y] = this.cellXY(f.c), k = f.t / this.FALL; if (k < 0.75) this.crate(g, x, y - k * 700, (C - 6) * (1 + k * 0.4)); }
+    for (const f of S.fall) { const [x, y] = this.cellXY(f.c), k = f.t / this.FALL; if (k < 0.75) this.crate(g, x, y - k * 700, (C - 4) * (1 + k * 0.4)); }
   },
 });

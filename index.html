@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Horizon Rush">
-<meta name="theme-color" content="#07060f">
+<meta name="theme-color" content="#0f142d">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -22,37 +22,24 @@
 <div id="rotate"><div><b>Bitte quer halten</b><span>Horizon Rush wird im Querformat gespielt.</span></div></div>
 <noscript><p class="noscript">Horizon Rush braucht JavaScript.</p></noscript>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" async></script>
-<script src="js/core.js" defer></script>
-<script src="js/audio.js" defer></script>
-<script src="js/input.js" defer></script>
-<script src="js/render.js" defer></script>
-<script src="js/race.js" defer></script>
-<script src="js/net.js" defer></script>
-<script src="js/main.js" defer></script>
-<script src="js/party.js" defer></script>
-<script src="js/partyrace.js" defer></script>
-<script src="js/arena.js" defer></script>
-<script src="js/style.js" defer></script>
-<script src="js/games/lightcycle.js" defer></script>
-<script src="js/games/tanks.js" defer></script>
-<script src="js/games/sumo.js" defer></script>
-<script src="js/games/minirace.js" defer></script>
-<script src="js/games/clouds.js" defer></script>
-<script src="js/games/tunnel.js" defer></script>
-<script src="js/games/pong.js" defer></script>
-<script src="js/games/crossing.js" defer></script>
-<script src="js/games/floor.js" defer></script>
-<script src="js/games/laser.js" defer></script>
-<script src="js/games/crates.js" defer></script>
-<script src="js/games/crown.js" defer></script>
-<script src="js/games/snow.js" defer></script>
-<script src="js/games/memory.js" defer></script>
-<script src="js/games/redlight.js" defer></script>
-<script src="js/games/treasure.js" defer></script>
-<script src="js/games/quickdraw.js" defer></script>
-<script src="js/games/balloon.js" defer></script>
-<script src="js/games/dark.js" defer></script>
-<script src="js/games/coins.js" defer></script>
-<script src="js/showcase.js" defer></script>
+<script>
+// Grafikstil wählen (Einstellungen → Grafikstil) und die passenden Skripte laden.
+// Neon ersetzt nur Zeichen-Code; Spiellogik und Netzwerk sind in beiden Stilen gleich, daher können Spieler mit
+// unterschiedlichen Stilen zusammen spielen.
+(function () {
+  var t = 'classic';
+  try { if (localStorage.getItem('hr_theme') === 'neon') t = 'neon'; } catch (e) { }
+  window.HR_THEME = t;
+  var neon = t === 'neon', w = function (h) { document.write(h); };
+  if (neon) { document.querySelector('link[rel=stylesheet]').href = 'style-neon.css'; document.querySelector('meta[name=theme-color]').content = '#07060f'; }
+  var files = ['core', 'audio', 'input', 'render', 'race', 'net', 'main', 'party', 'partyrace', 'arena', 'style', 'games/lightcycle', 'games/tanks', 'games/sumo', 'games/minirace', 'games/clouds', 'games/tunnel', 'games/pong', 'games/crossing', 'games/floor', 'games/laser', 'games/crates', 'games/crown', 'games/snow', 'games/memory', 'games/redlight', 'games/treasure', 'games/quickdraw', 'games/balloon', 'games/dark', 'games/coins', 'showcase'];
+  var swap = { render: 1, style: 1 }, patch = { core: 1, partyrace: 1, arena: 1 };
+  files.forEach(function (f) {
+    if (neon && f === 'showcase') w('<script src="js/neon/games-patch.js" defer><\/script>');
+    w('<script src="js/' + (neon && swap[f] ? 'neon/' : '') + f + '.js" defer><\/script>');
+    if (neon && patch[f]) w('<script src="js/neon/' + f + '-patch.js" defer><\/script>');
+  });
+})();
+</script>
 </body>
 </html>

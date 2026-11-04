@@ -27,8 +27,10 @@ HR.POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
 HR.FIELD = 8;              // Autos im Starterfeld
 HR.MAX_ONLINE = 8;         // Spieler in einem Online-Rennen
 HR.STEP = 1 / 60;
-HR.FONT = '"Chakra Petch", "Arial Narrow", Arial, sans-serif';
-HR.FONT_TEXT = 'Barlow, "Helvetica Neue", Arial, sans-serif';
+HR.FONT = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+// Grafikstil: 'classic' (Original-Look) oder 'neon'; wird in index.html vor dem Laden der Skripte gewählt
+HR.THEMES = { classic: 'Original', neon: 'Neon' };
+HR.THEME = window.HR_THEME === 'neon' ? 'neon' : 'classic';
 
 // ---------- Hilfsfunktionen ----------
 const U = HR.U = {
@@ -98,15 +100,15 @@ HR.TRACKS = [
   {
     name: 'Küstenstraße', seed: 11,
     desc: 'Sonnige Küstenstraße mit Palmen, Villen und sanften Hügeln.',
-    sky: [[7, 6, 15], [58, 12, 66]], fog: [44, 10, 56],
-    light: { grass: [12, 9, 26], rumble: [200, 30, 168], road: [20, 17, 40], lane: [24, 231, 255] },
-    dark: { grass: [15, 11, 32], rumble: [150, 158, 190], road: [24, 20, 46], lane: null },
-    far: { color: [26, 12, 48], height: 0.3, ks: [3, 5, 8, 13], rough: 0.8 },
-    near: { color: [14, 10, 30], height: 0.15, ks: [4, 7, 11, 17], rough: 0.6 },
-    neon: { edge: [24, 231, 255], grid: [255, 43, 214], ridge: [155, 92, 255], ridge2: [155, 92, 255], horizon: [255, 43, 214], sun: [[255, 226, 61], [255, 43, 214]], skyline: true },
+    sky: [[40, 120, 220], [175, 215, 250]], fog: [175, 215, 250],
+    light: { grass: [110, 190, 80], rumble: [240, 240, 240], road: [120, 120, 126], lane: [240, 240, 240] },
+    dark: { grass: [96, 172, 70], rumble: [205, 45, 45], road: [113, 113, 119], lane: null },
+    far: { color: [125, 165, 205], height: 0.28, ks: [3, 5, 8, 13], rough: 0.8 },
+    near: { color: [70, 145, 85], height: 0.15, ks: [4, 7, 11, 17], rough: 0.6 },
+    sun: [255, 248, 215], clouds: true,
     decor: [['palm', 6, 1.3, 3.6], ['bush', 3, 1.25, 3.0], ['house', 1, 2.8, 4.6], ['villa', 1, 2.8, 4.8], ['lighthouse', 0.25, 4.5, 6.5]],
     spacing: [3, 7], both: 0.4, billboardEvery: 90, post: 'lamp',
-    sea: { water: [[6, 12, 40], [8, 16, 50]], sand: [[38, 16, 46], [44, 18, 54]] },
+    sea: { water: [[40, 125, 200], [34, 114, 186]], sand: [[236, 218, 165], [226, 207, 152]] },
     layout: [[10, 10, 10, 0, 0], [30, 40, 30, 0, 10], [40, 60, 40, 2, 0], [30, 30, 30, 0, 20],
       [30, 50, 30, -3, -10], [20, 20, 20, 0, 0], [40, 40, 40, 4, 15], [30, 40, 30, -2, -25],
       [25, 60, 25, 0, 0], [30, 30, 30, -4, 10], [30, 30, 30, 3, 0], [30, 40, 30, 0, -20],
@@ -119,12 +121,12 @@ HR.TRACKS = [
   {
     name: 'Alpenpass', seed: 23,
     desc: 'Verschneiter Bergpass mit Haarnadelkurven und steilen Kuppen.',
-    sky: [[4, 6, 14], [20, 34, 74]], fog: [20, 32, 68],
-    light: { grass: [10, 14, 30], rumble: [18, 160, 185], road: [18, 20, 40], lane: [232, 244, 255] },
-    dark: { grass: [13, 18, 37], rumble: [150, 160, 190], road: [22, 24, 46], lane: null },
-    far: { color: [16, 20, 44], height: 0.62, ks: [2, 3, 5, 7, 11], rough: 0.5, snow: true },
-    near: { color: [8, 12, 28], height: 0.22, ks: [5, 9, 14, 21], rough: 0.4 },
-    neon: { edge: [232, 244, 255], grid: [24, 231, 255], ridge: [232, 244, 255], ridge2: [24, 231, 255], horizon: [24, 231, 255], moon: true },
+    sky: [[80, 140, 210], [220, 232, 246]], fog: [220, 232, 246],
+    light: { grass: [236, 241, 246], rumble: [235, 235, 235], road: [96, 96, 102], lane: [235, 235, 235] },
+    dark: { grass: [218, 227, 237], rumble: [200, 35, 35], road: [88, 88, 95], lane: null },
+    far: { color: [115, 130, 165], height: 0.62, ks: [2, 3, 5, 7, 11], rough: 0.5, snow: true },
+    near: { color: [55, 90, 75], height: 0.22, ks: [5, 9, 14, 21], rough: 0.4 },
+    sun: null, clouds: true,
     decor: [['pine', 8, 1.3, 4.0], ['rock_grey', 2, 1.3, 3.0], ['chalet', 0.6, 2.6, 4.6], ['snowman', 0.4, 1.4, 2.6]],
     spacing: [2, 5], both: 0.6, billboardEvery: 150, post: 'snowpole', cliff: 'cliff_grey',
     layout: [[10, 10, 10, 0, 0], [20, 30, 20, 0, 30], [25, 25, 25, 5, 0], [20, 20, 20, 0, -20],
@@ -140,12 +142,12 @@ HR.TRACKS = [
   {
     name: 'Wüstencanyon', seed: 37,
     desc: 'Lange Geraden durch einen roten Canyon im Abendlicht – Vollgas!',
-    sky: [[10, 5, 18], [92, 24, 46]], fog: [74, 20, 40],
-    light: { grass: [22, 10, 20], rumble: [200, 90, 20], road: [26, 14, 30], lane: [255, 226, 61] },
-    dark: { grass: [28, 12, 24], rumble: [195, 170, 45], road: [30, 16, 34], lane: null },
-    far: { color: [36, 12, 30], height: 0.40, ks: [2, 3, 5, 9], rough: 0.6, flat: 0.62 },
-    near: { color: [20, 8, 20], height: 0.13, ks: [3, 6, 10], rough: 0.7 },
-    neon: { edge: [255, 122, 26], grid: [255, 43, 214], ridge: [255, 122, 26], ridge2: [255, 43, 214], horizon: [255, 122, 26], sun: [[255, 226, 61], [255, 51, 85]] },
+    sky: [[60, 40, 110], [250, 155, 85]], fog: [242, 165, 105],
+    light: { grass: [226, 182, 112], rumble: [250, 250, 250], road: [130, 112, 102], lane: [250, 240, 200] },
+    dark: { grass: [211, 166, 100], rumble: [190, 60, 40], road: [122, 104, 96], lane: null },
+    far: { color: [165, 75, 60], height: 0.40, ks: [2, 3, 5, 9], rough: 0.6, flat: 0.62 },
+    near: { color: [190, 115, 72], height: 0.13, ks: [3, 6, 10], rough: 0.7 },
+    sun: [255, 205, 130], clouds: false,
     decor: [['cactus', 5, 1.3, 3.5], ['rock_red', 3, 1.3, 3.5], ['shrub', 3, 1.25, 3.0], ['mesa', 0.8, 5.0, 9.0], ['skull', 0.5, 1.3, 2.4], ['gas', 0.15, 2.6, 3.4]],
     spacing: [3, 8], both: 0.3, billboardEvery: 100, post: 'telegraph', cliff: 'cliff_red',
     layout: [[10, 10, 10, 0, 0], [50, 100, 50, 0, 20], [60, 60, 60, 2, -20], [40, 80, 40, 0, 30],
@@ -156,8 +158,8 @@ HR.TRACKS = [
       [40, 100, 40, 0, 10, { posts: 1 }], [40, 40, 40, -5, 0], [50, 80, 50, 0, -10, { posts: 1 }]],
   },
 ];
-HR.BILLBOARDS = [['HORIZON RUSH', [24, 231, 255], [255, 43, 214]], ['TURBO-ÖL', [255, 122, 26], [255, 226, 61]],
-  ['VOLTA REIFEN', [155, 92, 255], [24, 231, 255]], ['NITRO COLA', [255, 51, 85], [232, 244, 255]]];
+HR.BILLBOARDS = [['HORIZON RUSH', [20, 20, 32], [255, 200, 0]], ['TURBO-ÖL', [200, 30, 30], [255, 255, 255]],
+  ['VOLTA REIFEN', [20, 90, 200], [255, 255, 255]], ['NITRO COLA', [250, 250, 250], [200, 0, 0]]];
 
 HR.buildTrack = function (cfg, sprites) {
   const segs = [], curveStarts = [];
@@ -243,211 +245,204 @@ HR.buildTrack = function (cfg, sprites) {
   return { cfg, segs, n, length: n * HR.SEG, colors, segAt(z) { return segs[Math.floor(z / HR.SEG) % n]; } };
 };
 
-// ---------- Objekte am Straßenrand (prozedural, Neon-Konturen) ----------
-// Jedes Objekt wird einmal als Bild mit echtem Leuchten vorgezeichnet; im Spiel wird nur noch das Bild gezeichnet.
+// ---------- Objekte am Straßenrand (prozedural, wie im Original) ----------
 HR.makeSprites = function () {
   const S = {};
-  const ST = HR.ST;
-  const mk = (w, h, f) => { const c = U.canvas(w, h); const g = c.getContext('2d'); g.lineJoin = 'miter'; g.miterLimit = 4; f(g, w, h); return c; };
-  const C = c => typeof c === 'string' ? ST.parse(c) : c;
-  // aktuellen Pfad leuchtend nachziehen (mit Weichzeichner, da nur einmal gezeichnet)
-  const N = (g, col, lw, fillA) => {
-    const c = C(col);
-    g.save();
-    if (fillA) { g.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${fillA})`; g.fill(); }
-    g.shadowColor = U.rgb(c); g.shadowBlur = lw * 3.2; g.strokeStyle = U.rgb(c); g.lineWidth = lw; g.stroke();
-    g.shadowBlur = 0; g.strokeStyle = U.rgb(U.mix(c, [255, 255, 255], 0.55)); g.lineWidth = Math.max(1, lw * 0.4); g.stroke();
-    g.restore();
-  };
-  const T = (g, col, lw, a) => { g.save(); g.globalAlpha = a == null ? 0.55 : a; g.strokeStyle = U.rgb(C(col)); g.lineWidth = lw; g.stroke(); g.restore(); };
-  const body = (g, a) => { g.fillStyle = `rgba(12,10,28,${a == null ? 0.92 : a})`; g.fill(); };
-  const poly = (g, pts) => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) g.lineTo(p[0], p[1]); g.closePath(); };
-  const line = (g, pts) => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) g.lineTo(p[0], p[1]); };
-  const rect = (g, x, y, w, h) => { g.beginPath(); g.rect(x, y, w, h); };
-  const cham = (g, x, y, w, h, r) => ST.rrect(g, x, y, w, h, r);
-  const pool = (g, x, y, r, col, a) => { const c = C(col), gr = g.createRadialGradient(x, y, 1, x, y, r); gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${a})`); gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); };
-  const text = (g, s, x, y, size, col, maxW) => {
-    let fs = size; g.font = `700 ${fs}px ${HR.FONT}`;
-    while (maxW && g.measureText(s).width > maxW && fs > 10) { fs -= 2; g.font = `700 ${fs}px ${HR.FONT}`; }
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.save(); g.shadowColor = U.rgb(C(col)); g.shadowBlur = fs * 0.6; g.fillStyle = U.rgb(C(col)); g.fillText(s, x, y);
-    g.shadowBlur = 0; g.fillStyle = U.rgb(U.mix(C(col), [255, 255, 255], 0.5)); g.fillText(s, x, y); g.restore();
-  };
-  const MAG = ST.MAGENTA, CY = ST.CYAN, LI = ST.LIME, YE = ST.YELLOW, OR = ST.ORANGE, VI = ST.VIOLET, RE = ST.RED, ICE = ST.ICE, GR = ST.GREEN, DIMC = [150, 142, 205];
+  const mk = (w, h, f) => { const c = U.canvas(w, h); const g = c.getContext('2d'); f(g, w, h); return c; };
+  const col = c => U.rgb(c);
+  const poly = (g, pts, c) => { g.fillStyle = col(c); g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) g.lineTo(p[0], p[1]); g.closePath(); g.fill(); };
+  const circle = (g, x, y, r, c) => { g.fillStyle = col(c); g.beginPath(); g.arc(x, y, Math.max(0.5, r), 0, Math.PI * 2); g.fill(); };
+  const rrect = (g, x, y, w, h, r, c) => { g.fillStyle = col(c); g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); };
 
   const palm = mk(170, 300, (g, w, h) => {
-    const pts = [];
-    for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([75 + 18 * Math.sin(t * 2.2), h - 8 - t * (h - 86)]); }
-    line(g, pts.map(([x, y]) => [x - 7, y])); N(g, MAG, 3);
-    line(g, pts.map(([x, y]) => [x + 7, y])); N(g, MAG, 3);
-    g.beginPath(); for (let i = 1; i < 12; i++) { const [x, y] = pts[i]; g.moveTo(x - 7, y); g.lineTo(x + 7, y - 6); } T(g, MAG, 2, 0.6);
-    const [tx, ty] = pts[12];
+    let tx = 0, ty = 0;
+    for (let i = 0; i < 40; i++) {
+      const t = i / 39;
+      tx = 75 + 18 * Math.sin(t * 2.2); ty = h - 6 - t * (h - 80);
+      circle(g, tx, ty, 10 - 4 * t, i % 4 < 2 ? [130, 92, 52] : [100, 70, 40]);
+    }
     for (let k = 0; k < 9; k++) {
-      const a = (k * 40) * Math.PI / 180, ex = tx + Math.cos(a) * 66, ey = ty + Math.sin(a) * 36 + 18, mx = tx + Math.cos(a) * 36, my = ty + Math.sin(a) * 18 - 14;
-      g.beginPath(); g.moveTo(tx, ty); g.quadraticCurveTo(mx, my, ex, ey); N(g, CY, 3);
-      g.beginPath(); for (let q = 0.3; q < 0.95; q += 0.15) { const x = (1 - q) * (1 - q) * tx + 2 * (1 - q) * q * mx + q * q * ex, y = (1 - q) * (1 - q) * ty + 2 * (1 - q) * q * my + q * q * ey; g.moveTo(x, y); g.lineTo(x + Math.cos(a + 1.2) * 8, y + Math.sin(a + 1.2) * 8 + 4); } T(g, CY, 1.5, 0.55);
+      const a = (k * 40) * Math.PI / 180;
+      const ex = tx + Math.cos(a) * 70, ey = ty + Math.sin(a) * 38 + 18;
+      const mx = tx + Math.cos(a) * 38, my = ty + Math.sin(a) * 20 - 14;
+      for (const [lw, c] of [[10, [30, 115, 40]], [4, [70, 165, 60]]]) {
+        g.strokeStyle = col(c); g.lineWidth = lw; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(tx, ty); g.quadraticCurveTo(mx, my, ex, ey); g.stroke();
+      }
     }
   });
   const pine = mk(140, 260, (g) => {
-    line(g, [[70, 214], [70, 254]]); N(g, DIMC, 4);
-    for (let i = 3; i >= 0; i--) {
-      const top = 14 + 46 * i, half = 24 + 13 * i;
-      poly(g, [[70, top], [70 - half, top + 84], [70 + half, top + 84]]); body(g); N(g, GR, 3, 0.08);
-      line(g, [[70 - half * 0.4, top + 34], [70, top], [70 + half * 0.4, top + 34]]); N(g, ICE, 2.5);
+    g.fillStyle = col([90, 60, 35]); g.fillRect(62, 210, 16, 50);
+    for (let i = 0; i < 4; i++) {
+      const top = 10 + 48 * i, half = 26 + 13 * i, c = [20 + 6 * i, 78 + 6 * i, 45];
+      poly(g, [[70, top], [70 - half, top + 90], [70 + half, top + 90]], c);
+      poly(g, [[70, top], [70 - half * 0.38, top + 34], [70 + half * 0.38, top + 34]], [240, 245, 250]);
     }
   });
   const cactus = mk(120, 220, (g) => {
-    const parts = [[44, 22, 32, 192, 14], [12, 72, 22, 72, 10], [12, 124, 44, 20, 9], [86, 46, 22, 64, 10], [64, 94, 44, 20, 9]];
-    for (const [x, y, w, h, r] of parts) { cham(g, x, y, w, h, r); body(g); }
-    for (const [x, y, w, h, r] of parts) { cham(g, x, y, w, h, r); N(g, LI, 3); }
-    g.beginPath(); for (const x of [54, 60, 66]) { g.moveTo(x, 34); g.lineTo(x, 206); } T(g, LI, 1.5, 0.45);
+    const c = [70, 145, 65];
+    rrect(g, 45, 20, 30, 200, 15, c); rrect(g, 10, 70, 22, 75, 11, c); rrect(g, 10, 125, 45, 20, 10, c);
+    rrect(g, 88, 45, 22, 65, 11, c); rrect(g, 65, 95, 45, 20, 10, c);
+    g.strokeStyle = col([45, 105, 45]); g.lineWidth = 2;
+    for (const x of [53, 60, 67]) { g.beginPath(); g.moveTo(x, 30); g.lineTo(x, 210); g.stroke(); }
   });
   const rock = c => mk(160, 100, (g) => {
-    poly(g, [[6, 96], [16, 56], [46, 28], [80, 18], [118, 32], [148, 60], [154, 96]]); body(g); N(g, c, 3, 0.08);
-    line(g, [[46, 28], [62, 52], [100, 46], [118, 32]]); T(g, c, 2, 0.55);
-    line(g, [[62, 52], [56, 96]]); line(g, [[100, 46], [112, 96]]); T(g, c, 1.5, 0.4);
+    poly(g, [[5, 100], [15, 55], [45, 25], [80, 15], [120, 30], [150, 60], [158, 100]], c);
+    poly(g, [[45, 25], [80, 15], [120, 30], [90, 45], [55, 45]], U.shade(c, 1.25));
+    poly(g, [[120, 30], [150, 60], [158, 100], [110, 100], [100, 60]], U.shade(c, 0.7));
   });
   const bush = c => mk(160, 90, (g) => {
-    poly(g, [[8, 86], [12, 58], [32, 36], [58, 28], [80, 16], [108, 22], [130, 40], [150, 60], [152, 86]]); body(g); N(g, c, 3, 0.08);
-    line(g, [[34, 62], [56, 48], [80, 40], [104, 44], [126, 60]]); T(g, c, 1.5, 0.45);
+    const cs = [[40, 60, 30], [80, 45, 40], [120, 60, 32], [60, 70, 25], [105, 72, 22]];
+    for (const [x, y, r] of cs) circle(g, x + 3, y + 3, r, U.shade(c, 0.75));
+    for (const [x, y, r] of cs) circle(g, x, y, r - 5, c);
   });
   const house = mk(220, 170, (g) => {
-    rect(g, 22, 72, 176, 94); body(g); N(g, VI, 3);
-    poly(g, [[8, 76], [110, 14], [212, 76]]); body(g); N(g, MAG, 3, 0.1);
-    for (const x of [42, 142]) { rect(g, x, 96, 36, 28); N(g, YE, 2, 0.35); line(g, [[x + 18, 96], [x + 18, 124]]); T(g, YE, 1.5, 0.6); }
-    rect(g, 96, 116, 28, 50); N(g, CY, 2, 0.12);
+    g.fillStyle = col([245, 240, 228]); g.fillRect(20, 70, 180, 100);
+    poly(g, [[5, 75], [110, 12], [215, 75]], [190, 80, 50]);
+    g.fillStyle = col([70, 120, 180]); g.fillRect(42, 95, 36, 30); g.fillRect(142, 95, 36, 30);
+    g.fillStyle = col([120, 80, 50]); g.fillRect(96, 115, 28, 55);
   });
-  const billboard = (txt, c, c2) => mk(300, 190, (g) => {
-    line(g, [[66, 112], [66, 186]]); N(g, DIMC, 4); line(g, [[234, 112], [234, 186]]); N(g, DIMC, 4);
-    cham(g, 8, 6, 284, 102, 12); body(g, 0.95); N(g, c, 4, 0.08);
-    cham(g, 18, 16, 264, 82, 8); T(g, c, 1.5, 0.5);
-    text(g, txt, 150, 58, 44, c2, 250);
+  const billboard = (txt, bg, fg) => mk(300, 190, (g) => {
+    g.fillStyle = col([60, 60, 66]); g.fillRect(60, 110, 14, 80); g.fillRect(226, 110, 14, 80);
+    g.fillStyle = col([40, 40, 45]); g.fillRect(5, 0, 290, 110);
+    g.fillStyle = col(bg); g.fillRect(10, 5, 280, 100);
+    let fs = 48; g.font = `bold ${fs}px ${HR.FONT}`;
+    while (g.measureText(txt).width > 265 && fs > 10) { fs -= 2; g.font = `bold ${fs}px ${HR.FONT}`; }
+    g.fillStyle = col(fg); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, 150, 57);
   });
   const chevron = dir => mk(120, 140, (g) => {
-    line(g, [[60, 96], [60, 136]]); N(g, DIMC, 4);
-    cham(g, 6, 6, 108, 88, 10); body(g, 0.95); N(g, YE, 3);
+    g.fillStyle = col([70, 70, 75]); g.fillRect(54, 90, 12, 50);
+    g.fillStyle = col([250, 210, 20]); g.fillRect(5, 5, 110, 90);
+    g.strokeStyle = '#111'; g.lineWidth = 3; g.strokeRect(5, 5, 110, 90);
     for (const ox of [-18, 14]) {
       const x = 60 + ox * dir;
-      line(g, dir > 0 ? [[x - 10, 20], [x + 10, 50], [x - 10, 80]] : [[x + 10, 20], [x - 10, 50], [x + 10, 80]]); N(g, YE, 5);
+      const pts = dir > 0 ? [[x - 12, 18], [x + 8, 50], [x - 12, 82], [x - 2, 82], [x + 18, 50], [x - 2, 18]] : [[x + 12, 18], [x - 8, 50], [x + 12, 82], [x + 2, 82], [x - 18, 50], [x + 2, 18]];
+      poly(g, pts, [15, 15, 15]);
     }
   });
   const banner = mk(440, 220, (g) => {
-    for (const x of [10, 414]) { rect(g, x, 50, 16, 166); body(g); N(g, MAG, 3); g.beginPath(); for (let y = 60; y < 210; y += 20) { g.moveTo(x, y); g.lineTo(x + 16, y + 10); } T(g, MAG, 1.5, 0.5); }
-    cham(g, 4, 4, 432, 56, 10); body(g, 0.96); N(g, CY, 3);
-    for (let c = 0; c < 42; c++) for (let r = 0; r < 2; r++) { g.fillStyle = (c + r) % 2 ? 'rgba(242,238,255,.9)' : 'rgba(11,9,24,.95)'; g.fillRect(10 + c * 10, 62 + r * 8, 10, 8); }
-    line(g, [[8, 60], [432, 60]]); N(g, ICE, 2);
-    text(g, 'START  ·  ZIEL', 220, 31, 30, MAG);
+    for (const x of [0, 424]) for (let y = 0; y < 220; y += 20) { g.fillStyle = (y / 20) % 2 ? '#fff' : col([210, 30, 30]); g.fillRect(x, y, 16, 20); }
+    g.fillStyle = '#000'; g.fillRect(0, 0, 440, 56);
+    for (let c = 0; c < 44; c++) for (let r = 0; r < 2; r++) { g.fillStyle = (c + r) % 2 ? '#fff' : '#111'; g.fillRect(c * 10, 56 + r * 8, 10, 8); }
+    g.fillStyle = col([255, 210, 0]); g.font = `bold 30px ${HR.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('START  ·  ZIEL', 220, 29);
   });
   // [Bild, Weltbreite, Kollisions-Halbbreite]
   S.palm = [palm, 1500, 0.12]; S.pine = [pine, 1300, 0.25]; S.cactus = [cactus, 900, 0.15];
-  S.rock_grey = [rock(DIMC), 1100, 0.22]; S.rock_red = [rock(OR), 1100, 0.22];
-  S.bush = [bush(LI), 900, 0]; S.shrub = [bush(YE), 800, 0];
+  S.rock_grey = [rock([140, 140, 150]), 1100, 0.22]; S.rock_red = [rock([170, 85, 60]), 1100, 0.22];
+  S.bush = [bush([60, 150, 60]), 900, 0]; S.shrub = [bush([150, 135, 80]), 800, 0];
   S.house = [house, 2600, 0.55]; S.chev_r = [chevron(1), 600, 0.1]; S.chev_l = [chevron(-1), 600, 0.1];
   S.banner = [banner, 4400, 0];
-  HR.BILLBOARDS.forEach(([t, c, c2], i) => S['bb' + i] = [billboard(t, c, c2), 2000, 0.45]);
+  HR.BILLBOARDS.forEach(([t, b, f], i) => S['bb' + i] = [billboard(t, b, f), 2000, 0.45]);
+  // ---------- zusätzliche Objekte der Web-Version ----------
   const villa = mk(240, 180, (g) => {
-    rect(g, 16, 64, 208, 112); body(g); N(g, CY, 3);
-    poly(g, [[6, 68], [120, 20], [234, 68]]); body(g); N(g, MAG, 3, 0.1);
-    for (const x of [30, 166]) { rect(g, x, 88, 44, 36); N(g, YE, 2, 0.3); line(g, [[x - 2, 130], [x + 46, 130]]); N(g, LI, 2); }
-    rect(g, 104, 112, 32, 64); N(g, MAG, 2, 0.12);
-    rect(g, 110, 94, 20, 10); N(g, YE, 2, 0.5);
+    g.fillStyle = col([246, 196, 190]); g.fillRect(14, 62, 212, 118);
+    g.fillStyle = col([236, 180, 172]); g.fillRect(14, 62, 212, 10);
+    poly(g, [[4, 66], [120, 18], [236, 66]], [170, 70, 45]);
+    g.fillStyle = col([255, 255, 255]); g.fillRect(30, 88, 44, 38); g.fillRect(166, 88, 44, 38);
+    g.fillStyle = col([60, 130, 190]); g.fillRect(34, 92, 36, 30); g.fillRect(170, 92, 36, 30);
+    g.fillStyle = col([95, 150, 60]); g.fillRect(28, 126, 48, 6); g.fillRect(164, 126, 48, 6);
+    g.fillStyle = col([110, 70, 45]); g.fillRect(104, 112, 32, 68);
+    g.fillStyle = col([255, 220, 120]); g.fillRect(110, 96, 20, 10);
   });
   const lighthouse = mk(120, 320, (g) => {
-    pool(g, 60, 46, 60, YE, 0.35);
-    poly(g, [[34, 316], [44, 72], [76, 72], [86, 316]]); body(g); N(g, ICE, 3);
-    g.beginPath(); for (let k = 0; k < 4; k++) { const y = 110 + k * 55; g.moveTo(42 - k * 1.3, y + 26); g.lineTo(78 + k * 1.3, y + 26); g.moveTo(43 - k, y); g.lineTo(77 + k, y); } N(g, RE, 2.5);
-    rect(g, 38, 58, 44, 12); N(g, ICE, 2); rect(g, 46, 36, 28, 22); N(g, YE, 2, 0.6);
-    poly(g, [[40, 34], [60, 10], [80, 34]]); N(g, ICE, 2.5);
-    g.fillStyle = 'rgba(255,226,61,.18)'; poly(g, [[74, 40], [120, 20], [120, 62]]); g.fill();
+    poly(g, [[34, 320], [44, 70], [76, 70], [86, 320]], [245, 245, 245]);
+    for (let k = 0; k < 4; k++) { const y = 110 + k * 55; poly(g, [[40 - k * 1.3, y + 26], [42 - k, y], [78 + k, y], [80 + k * 1.3, y + 26]], [210, 40, 40]); }
+    g.fillStyle = col([40, 40, 45]); g.fillRect(36, 58, 48, 12); g.fillRect(42, 28, 36, 8);
+    g.fillStyle = col([255, 236, 140]); g.fillRect(46, 36, 28, 22);
+    poly(g, [[38, 28], [60, 6], [82, 28]], [40, 40, 45]);
+    g.fillStyle = 'rgba(255,245,180,.35)'; poly(g, [[74, 40], [120, 22], [120, 60]], [255, 240, 170]);
   });
   const lamp = mk(110, 300, (g) => {
-    pool(g, 84, 34, 34, CY, 0.55);
-    line(g, [[25, 296], [25, 44]]); N(g, DIMC, 4);
-    g.beginPath(); g.moveTo(25, 46); g.quadraticCurveTo(30, 12, 80, 20); N(g, DIMC, 4);
-    rect(g, 66, 18, 34, 8); body(g); N(g, CY, 2);
-    line(g, [[70, 30], [96, 30]]); N(g, '#ffffff', 3);
-    rect(g, 15, 286, 20, 10); N(g, DIMC, 2);
+    g.fillStyle = col([70, 75, 85]); g.fillRect(20, 40, 10, 260); g.fillRect(14, 288, 22, 12);
+    g.strokeStyle = col([70, 75, 85]); g.lineWidth = 8; g.beginPath(); g.moveTo(25, 44); g.quadraticCurveTo(30, 10, 80, 18); g.stroke();
+    g.fillStyle = col([50, 52, 60]); g.fillRect(66, 16, 34, 10);
+    g.fillStyle = col([255, 240, 190]); g.fillRect(70, 26, 26, 5);
   });
   const snowpole = mk(30, 200, (g) => {
-    for (let k = 0; k < 8; k++) { rect(g, 10, 4 + k * 24, 10, 22); N(g, k % 2 ? ICE : RE, 2, 0.4); }
+    for (let k = 0; k < 8; k++) { g.fillStyle = k % 2 ? '#fff' : col([215, 40, 40]); g.fillRect(10, k * 25, 10, 25); }
   });
   const telegraph = mk(140, 320, (g) => {
-    line(g, [[70, 316], [70, 24]]); N(g, OR, 4);
-    line(g, [[16, 44], [124, 44]]); N(g, OR, 3); line(g, [[28, 78], [112, 78]]); N(g, OR, 3);
-    g.beginPath(); for (const x of [20, 46, 94, 120]) g.rect(x - 2, 32, 5, 10); for (const x of [34, 106]) g.rect(x - 2, 66, 5, 10); N(g, ICE, 1.5, 0.6);
+    g.fillStyle = col([110, 80, 55]); g.fillRect(64, 20, 12, 300);
+    g.fillRect(14, 40, 112, 9); g.fillRect(26, 74, 88, 8);
+    g.fillStyle = col([220, 220, 200]); for (const x of [18, 44, 96, 120]) g.fillRect(x, 32, 5, 8); for (const x of [32, 104]) g.fillRect(x, 66, 5, 8);
   });
   const umbrella = mk(150, 150, (g) => {
-    line(g, [[75, 40], [75, 146]]); N(g, DIMC, 3);
-    g.beginPath(); g.moveTo(8, 62); g.lineTo(75, 16); g.lineTo(142, 62); g.closePath(); body(g, 0.85); N(g, MAG, 3, 0.15);
-    g.beginPath(); for (const x of [30, 52, 98, 120]) { g.moveTo(75, 16); g.lineTo(x, 62); } T(g, ICE, 1.5, 0.6);
-    rect(g, 14, 132, 54, 10); N(g, CY, 2, 0.2);
+    g.fillStyle = col([90, 90, 90]); g.fillRect(72, 40, 6, 110);
+    for (let k = 0; k < 6; k++) {
+      g.fillStyle = k % 2 ? '#fff' : col([230, 70, 60]);
+      g.beginPath(); g.moveTo(75, 18); g.arc(75, 60, 70, Math.PI + k * Math.PI / 6, Math.PI + (k + 1) * Math.PI / 6); g.closePath(); g.fill();
+    }
+    g.fillStyle = col([60, 140, 220]); g.fillRect(14, 132, 54, 12);
   });
   const boat = mk(200, 210, (g) => {
-    poly(g, [[94, 14], [94, 148], [24, 148]]); N(g, ICE, 3, 0.1);
-    poly(g, [[106, 32], [106, 148], [166, 148]]); N(g, YE, 3, 0.1);
-    line(g, [[100, 8], [100, 156]]); N(g, DIMC, 3);
-    poly(g, [[12, 160], [188, 160], [164, 194], [36, 194]]); body(g); N(g, CY, 3);
-    line(g, [[22, 202], [178, 202]]); T(g, CY, 2, 0.5);
+    poly(g, [[96, 10], [96, 150], [20, 150]], [250, 250, 250]);
+    poly(g, [[104, 30], [104, 150], [170, 150]], [240, 200, 60]);
+    g.fillStyle = col([90, 70, 50]); g.fillRect(96, 6, 8, 150);
+    poly(g, [[10, 160], [190, 160], [165, 196], [35, 196]], [30, 40, 70]);
+    g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(20, 200, 160, 4);
   });
   const chalet = mk(260, 200, (g) => {
-    rect(g, 24, 86, 212, 110); body(g); N(g, OR, 3);
-    g.beginPath(); for (let y = 100; y < 196; y += 14) { g.moveTo(26, y); g.lineTo(234, y); } T(g, OR, 1.2, 0.3);
-    poly(g, [[4, 94], [130, 16], [256, 94]]); body(g); N(g, ICE, 3.5, 0.1);
-    for (const x of [48, 174]) { rect(g, x, 112, 38, 30); N(g, YE, 2, 0.4); line(g, [[x - 4, 146], [x + 42, 146]]); N(g, RE, 2.5); }
-    rect(g, 114, 140, 32, 56); N(g, OR, 2, 0.12);
+    g.fillStyle = col([130, 85, 45]); g.fillRect(22, 84, 216, 116);
+    for (let y = 92; y < 200; y += 14) { g.fillStyle = col([110, 70, 38]); g.fillRect(22, y, 216, 3); }
+    poly(g, [[0, 92], [130, 14], [260, 92]], [240, 244, 250]);
+    poly(g, [[8, 92], [130, 26], [252, 92], [252, 98], [8, 98]], [95, 60, 35]);
+    g.fillStyle = col([255, 225, 140]); g.fillRect(48, 112, 38, 30); g.fillRect(174, 112, 38, 30);
+    g.fillStyle = col([200, 60, 60]); g.fillRect(44, 142, 46, 8); g.fillRect(170, 142, 46, 8);
+    g.fillStyle = col([80, 50, 30]); g.fillRect(114, 140, 32, 60);
   });
   const snowman = mk(120, 170, (g) => {
-    for (const [y, r] of [[124, 40], [66, 28], [28, 19]]) { g.beginPath(); g.arc(60, y, r, 0, 7); body(g); N(g, ICE, 3); }
-    line(g, [[42, 10], [78, 10]]); N(g, ICE, 3); rect(g, 47, -2, 26, 12); N(g, ICE, 2);
-    g.fillStyle = '#e8f4ff'; g.fillRect(51, 22, 5, 5); g.fillRect(64, 22, 5, 5);
-    line(g, [[60, 30], [80, 34], [60, 36]]); N(g, OR, 2);
-    line(g, [[36, 46], [84, 46]]); N(g, RE, 3);
+    circle(g, 60, 125, 42, [248, 250, 255]); circle(g, 60, 66, 30, [248, 250, 255]); circle(g, 60, 26, 21, [248, 250, 255]);
+    g.fillStyle = '#222'; g.fillRect(44, 0, 32, 8); g.fillRect(38, 7, 44, 5);
+    circle(g, 53, 23, 3, [20, 20, 20]); circle(g, 67, 23, 3, [20, 20, 20]);
+    poly(g, [[60, 28], [78, 32], [60, 34]], [245, 130, 30]);
+    g.fillStyle = col([200, 40, 40]); g.fillRect(38, 42, 44, 8);
   });
   const mesa = mk(300, 360, (g) => {
-    poly(g, [[22, 356], [52, 42], [80, 24], [228, 26], [250, 52], [280, 356]]); body(g); N(g, OR, 3.5, 0.08);
-    g.beginPath(); for (const y of [90, 160, 230, 300]) { g.moveTo(44 - y * 0.02, y); g.lineTo(258 + y * 0.03, y + 6); } T(g, OR, 2, 0.4);
-    line(g, [[200, 26], [214, 356]]); T(g, MAG, 1.5, 0.35);
+    poly(g, [[20, 360], [52, 40], [80, 20], [230, 24], [252, 50], [282, 360]], [176, 82, 52]);
+    poly(g, [[200, 24], [230, 24], [252, 50], [282, 360], [215, 360]], [140, 62, 40]);
+    for (const y of [90, 160, 230, 300]) { g.fillStyle = 'rgba(110,40,25,.35)'; g.fillRect(36, y, 230, 9); }
+    g.fillStyle = 'rgba(255,200,140,.25)'; g.fillRect(52, 40, 30, 300);
   });
   const skull = mk(140, 70, (g) => {
-    g.beginPath(); g.moveTo(12, 14); g.quadraticCurveTo(40, 40, 58, 30); g.moveTo(128, 14); g.quadraticCurveTo(100, 40, 82, 30); N(g, ICE, 4);
-    poly(g, [[52, 26], [88, 26], [82, 62], [58, 62]]); body(g); N(g, ICE, 2.5);
-    g.fillStyle = '#ff2bd6'; g.fillRect(60, 35, 6, 6); g.fillRect(74, 35, 6, 6);
+    g.strokeStyle = col([240, 232, 210]); g.lineWidth = 9; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(10, 14); g.quadraticCurveTo(40, 40, 58, 30); g.moveTo(130, 14); g.quadraticCurveTo(100, 40, 82, 30); g.stroke();
+    poly(g, [[52, 26], [88, 26], [82, 62], [58, 62]], [240, 232, 210]);
+    circle(g, 63, 38, 4, [60, 40, 30]); circle(g, 77, 38, 4, [60, 40, 30]);
   });
   const gas = mk(360, 200, (g) => {
-    cham(g, 10, 22, 340, 46, 8); body(g, 0.95); N(g, RE, 3);
-    text(g, 'TANKSTELLE', 180, 45, 26, RE);
-    line(g, [[46, 68], [46, 196]]); N(g, DIMC, 4); line(g, [[314, 68], [314, 196]]); N(g, DIMC, 4);
-    for (const x of [120, 210]) { cham(g, x, 120, 34, 76, 4); body(g); N(g, CY, 2.5); rect(g, x + 7, 128, 20, 14); N(g, CY, 1.5, 0.5); }
-    rect(g, 250, 112, 90, 84); body(g); N(g, VI, 2.5); rect(g, 262, 124, 30, 26); N(g, YE, 2, 0.35);
+    g.fillStyle = col([230, 230, 225]); g.fillRect(10, 30, 340, 26);
+    g.fillStyle = col([215, 40, 40]); g.fillRect(10, 56, 340, 10);
+    g.fillStyle = '#fff'; g.font = `bold 22px ${HR.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('TANKSTELLE', 180, 44);
+    g.fillStyle = col([200, 200, 195]); g.fillRect(40, 66, 12, 134); g.fillRect(308, 66, 12, 134);
+    for (const x of [120, 210]) { g.fillStyle = col([215, 40, 40]); g.fillRect(x, 120, 34, 80); g.fillStyle = '#fff'; g.fillRect(x + 6, 128, 22, 16); }
+    g.fillStyle = col([245, 235, 210]); g.fillRect(250, 110, 90, 90);
+    g.fillStyle = col([80, 140, 200]); g.fillRect(262, 124, 30, 26);
   });
   const grandstand = mk(420, 220, (g) => {
-    poly(g, [[4, 216], [4, 120], [416, 42], [416, 216]]); body(g); N(g, VI, 3);
-    const crowd = [MAG, CY, LI, YE, OR, ICE, RE].map(C);
+    poly(g, [[0, 220], [0, 120], [420, 40], [420, 220]], [120, 125, 140]);
+    const crowd = [[230, 60, 60], [250, 220, 70], [60, 120, 220], [250, 250, 250], [60, 170, 90], [240, 140, 40], [170, 80, 190]];
     const r = U.rng(5);
-    for (let row = 0; row < 7; row++) for (let c = 0; c < 25; c++) {
-      const x = 16 + c * 16, yTop = 120 - (x / 420) * 80;
-      const col = crowd[Math.floor(r.random() * crowd.length)];
-      g.fillStyle = U.rgb(col); g.globalAlpha = 0.5 + r.random() * 0.5;
-      g.fillRect(x + r.uniform(-2, 2) - 2, yTop + 10 + row * 13 + r.uniform(-2, 2) - 2, 5, 5);
+    for (let row = 0; row < 7; row++) for (let c = 0; c < 26; c++) {
+      const x = 10 + c * 16, yTop = 120 - (x / 420) * 80;
+      circle(g, x + r.uniform(-2, 2), yTop + 10 + row * 13 + r.uniform(-2, 2), 5.5, crowd[Math.floor(r.random() * crowd.length)]);
     }
-    g.globalAlpha = 1;
-    line(g, [[4, 110], [416, 32]]); N(g, MAG, 4);
-    line(g, [[4, 206], [416, 206]]); N(g, VI, 2);
+    g.fillStyle = col([50, 55, 70]); g.fillRect(0, 205, 420, 15);
+    poly(g, [[0, 110], [420, 30], [420, 22], [0, 102]], [200, 40, 40]);
   });
   const flag = mk(110, 240, (g) => {
-    line(g, [[10, 236], [10, 4]]); N(g, DIMC, 3);
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) { g.fillStyle = (r + c) % 2 ? 'rgba(242,238,255,.95)' : 'rgba(11,9,24,.95)'; g.fillRect(14 + c * 14, 8 + r * 14, 14, 14); }
-    rect(g, 14, 8, 84, 56); N(g, ICE, 2);
+    g.fillStyle = col([200, 200, 205]); g.fillRect(6, 0, 7, 240);
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) { g.fillStyle = (r + c) % 2 ? '#fff' : '#111'; g.fillRect(13 + c * 15, 6 + r * 15, 15, 15); }
   });
-  const cliff = (col, snow) => mk(420, 300, (g) => {
-    const r = U.rng(C(col)[0] * 7 + C(col)[2]);
-    const pts = [[4, 300], [4, 70]];
-    for (let x = 4; x <= 416; x += 30) pts.push([x, 14 + r.uniform(0, 76)]);
-    pts.push([416, 300]);
-    poly(g, pts); body(g, 0.96); N(g, col, 3.5, 0.06);
-    if (snow) { line(g, pts.slice(2, -1).map(([x, y]) => [x, y + 26 + (x % 60 ? 6 : -4)])); N(g, ICE, 2.5); }
-    g.beginPath(); for (let k = 0; k < 5; k++) { const y = 120 + k * 36 + r.uniform(-8, 8); g.moveTo(10, y); for (let x = 40; x <= 410; x += 50) g.lineTo(x, y + r.uniform(-8, 8)); } T(g, col, 1.5, 0.35);
-    for (let k = 0; k < 8; k++) { const x = r.uniform(30, 380), y = r.uniform(110, 270); poly(g, [[x, y], [x + 26, y - 14], [x + 40, y + 6], [x + 10, y + 18]]); T(g, col, 1.5, 0.5); }
+  const cliff = (base, snow) => mk(420, 300, (g) => {
+    const r = U.rng(base[0] * 7 + base[2]);
+    const pts = [[0, 300], [0, 70]];
+    for (let x = 0; x <= 420; x += 30) pts.push([x, 10 + r.uniform(0, 80)]);
+    pts.push([420, 300]);
+    poly(g, pts, base);
+    if (snow) { g.save(); g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const q of pts) g.lineTo(q[0], q[1]); g.closePath(); g.clip(); g.fillStyle = 'rgb(242,246,252)'; g.fillRect(0, 0, 420, 105); g.restore(); }
+    for (let k = 0; k < 5; k++) { g.fillStyle = `rgba(0,0,0,${0.06 + r.random() * 0.08})`; g.fillRect(0, 110 + k * 40 + r.uniform(-8, 8), 420, 8 + r.uniform(0, 8)); }
+    for (let k = 0; k < 10; k++) { const x = r.uniform(10, 400), y = r.uniform(100, 280); poly(g, [[x, y], [x + 26, y - 14], [x + 40, y + 6], [x + 10, y + 18]], U.shade(base, r.uniform(0.75, 1.2))); }
+    
   });
   Object.assign(S, {
     villa: [villa, 2700, 0.6], lighthouse: [lighthouse, 1700, 0.2], lamp: [lamp, 900, 0.06],
@@ -455,182 +450,100 @@ HR.makeSprites = function () {
     boat: [boat, 1600, 0], chalet: [chalet, 2700, 0.6], snowman: [snowman, 700, 0.14],
     mesa: [mesa, 4200, 0], skull: [skull, 700, 0], gas: [gas, 3600, 0.85],
     grandstand: [grandstand, 3800, 0.95], flag: [flag, 700, 0.05],
-    cliff_grey: [cliff(DIMC, true), 2600, 0.65], cliff_red: [cliff(OR), 2600, 0.65],
+    cliff_grey: [cliff([132, 134, 142], true), 2600, 0.65], cliff_red: [cliff([168, 78, 50]), 2600, 0.65],
   });
   return S;
 };
 
-// ---------- Hintergrund (Nachthimmel, Streifensonne, Neon-Bergketten, Skyline) ----------
+// ---------- Hintergrund (Himmel, Sonne, Wolken, Bergketten) ----------
 // Wird pro Strecke und Ansichtsgröße einmal gezeichnet.
 HR.makeBackground = function (cfg, vw, vh) {
   vw = Math.max(64, Math.round(vw)); vh = Math.max(64, Math.round(vh));
   const hy = Math.round(vh * HR.HORIZON);
   const lw = vw * 2;
   const rnd = U.rng(cfg.seed + 99);
-  const nz = cfg.neon;
-  const glowLine = (g, col, w) => {
-    g.save(); g.shadowColor = U.rgb(col); g.shadowBlur = w * 4; g.strokeStyle = U.rgb(col); g.lineWidth = w; g.stroke();
-    g.shadowBlur = 0; g.strokeStyle = U.rgb(U.mix(col, [255, 255, 255], 0.5)); g.lineWidth = Math.max(1, w * 0.4); g.stroke(); g.restore();
-  };
   const sky = U.canvas(vw, vh);
   {
     const g = sky.getContext('2d');
-    const gr = g.createLinearGradient(0, 0, 0, hy);
-    gr.addColorStop(0, U.rgb(cfg.sky[0])); gr.addColorStop(0.65, U.rgb(U.mix(cfg.sky[0], cfg.sky[1], 0.45))); gr.addColorStop(1, U.rgb(cfg.sky[1]));
-    g.fillStyle = gr; g.fillRect(0, 0, vw, hy);
-    const sr = U.rng(cfg.seed + 5);
-    for (let i = 0; i < vw * hy / 2500; i++) {
-      const s = sr.random(), x = sr.random() * vw, y = sr.random() * hy * 0.85;
-      g.fillStyle = `rgba(242,238,255,${0.2 + s * 0.6})`; g.fillRect(x, y, s > 0.93 ? 2 : 1, s > 0.93 ? 2 : 1);
-    }
+    for (let y = 0; y < hy; y++) { g.fillStyle = U.rgb(U.mix(cfg.sky[0], cfg.sky[1], Math.pow(y / hy, 0.8))); g.fillRect(0, y, vw, 1); }
     g.fillStyle = U.rgb(cfg.fog); g.fillRect(0, hy, vw, vh - hy);
   }
-  const layer = (draw) => { const c = U.canvas(lw, hy + 2); const g = c.getContext('2d'); g.lineJoin = 'miter'; draw(g); return c; };
+  const layer = (draw) => { const c = U.canvas(lw, hy); draw(c.getContext('2d')); return c; };
   const skyL = layer(g => {
-    if (nz.sun) {
-      const x = 0.3 * lw, r = 0.3 * hy, y = hy - r * 0.15;
-      const glow = g.createRadialGradient(x, y - r * 0.3, r * 0.2, x, y - r * 0.3, r * 2.4);
-      glow.addColorStop(0, `rgba(${nz.sun[1].join(',')},.35)`); glow.addColorStop(1, `rgba(${nz.sun[1].join(',')},0)`);
-      g.fillStyle = glow; g.fillRect(x - r * 2.5, 0, r * 5, hy);
-      g.save(); g.beginPath(); g.arc(x, y, r, Math.PI, 0); g.closePath(); g.clip();
-      const sg = g.createLinearGradient(0, y - r, 0, y);
-      sg.addColorStop(0, U.rgb(nz.sun[0])); sg.addColorStop(1, U.rgb(nz.sun[1]));
-      g.fillStyle = sg; g.fillRect(x - r, y - r, r * 2, r);
-      g.fillStyle = U.rgb(cfg.sky[1]);
-      for (let k = 0; k < 8; k++) { const yy = y - r * 0.08 - k * r * 0.1; g.fillRect(x - r, yy, r * 2, Math.max(1, r * (0.012 + (7 - k) * 0.008))); }
-      g.restore();
+    if (cfg.sun) {
+      const x = 0.3 * lw, y = 0.5 * hy, r = 0.14 * hy;
+      for (let k = 5; k >= 1; k--) { g.fillStyle = `rgba(${cfg.sun.join(',')},${22 / 255})`; g.beginPath(); g.arc(x, y, r * (1 + k * 0.35), 0, 7); g.fill(); }
+      g.fillStyle = U.rgb(cfg.sun); g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
     }
-    if (nz.moon) {
-      const x = 0.7 * lw, y = 0.32 * hy, r = 0.09 * hy;
-      const glow = g.createRadialGradient(x, y, r * 0.5, x, y, r * 4);
-      glow.addColorStop(0, 'rgba(232,244,255,.25)'); glow.addColorStop(1, 'rgba(232,244,255,0)');
-      g.fillStyle = glow; g.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
-      g.beginPath(); g.arc(x, y, r, 0, 7); g.fillStyle = 'rgba(232,244,255,.12)'; g.fill(); glowLine(g, [232, 244, 255], Math.max(1.5, r * 0.08));
-      g.beginPath(); g.arc(x - r * 0.3, y - r * 0.2, r * 0.25, 0, 7); g.strokeStyle = 'rgba(232,244,255,.4)'; g.lineWidth = 1; g.stroke();
-      // Polarlicht
-      for (let k = 0; k < 3; k++) {
-        g.beginPath();
-        for (let xx = 0; xx <= lw; xx += 8) g.lineTo(xx, hy * (0.18 + k * 0.07) + Math.sin(xx / lw * Math.PI * 6 + k) * hy * 0.05);
-        g.strokeStyle = `rgba(43,255,136,${0.12 - k * 0.03})`; g.lineWidth = hy * 0.03; g.stroke();
+    if (cfg.clouds) {
+      g.fillStyle = `rgba(255,255,255,${120 / 255})`;
+      for (let i = 0; i < 12; i++) {
+        const cx = rnd.uniform(0, lw), cy = rnd.uniform(0.08, 0.5) * hy, s = rnd.uniform(0.6, 1.4) * hy * 0.06;
+        for (let j = 0; j < 6; j++) { g.beginPath(); g.ellipse(cx + rnd.uniform(-3, 3) * s, cy + rnd.uniform(-0.6, 0.6) * s, s * rnd.uniform(1.4, 2.4), s * rnd.uniform(0.7, 1.1), 0, 0, 7); g.fill(); }
       }
     }
   });
-  const ridge = (p, col, near) => layer(g => {
+  const ridge = (p) => layer(g => {
     const amps = p.ks.map(k => rnd.uniform(0.4, 1) / Math.pow(k, p.rough));
     const phs = p.ks.map(() => rnd.uniform(0, Math.PI * 2));
     const sum = amps.reduce((a, b) => a + b, 0);
     const H = p.height * hy;
     const top = [];
-    for (let x = 0; x <= lw; x += 4) {
+    for (let x = 0; x <= lw; x += 2) {
       let v = 0;
       p.ks.forEach((k, i) => v += amps[i] * (0.5 + 0.5 * Math.sin(2 * Math.PI * k * x / lw + phs[i])));
       v /= sum;
       if (p.flat) v = Math.min(v, p.flat) / p.flat;
       top.push([x, hy - v * H]);
     }
-    g.beginPath(); g.moveTo(0, hy + 2); for (const [x, y] of top) g.lineTo(x, y); g.lineTo(lw, hy + 2); g.closePath();
-    g.fillStyle = U.rgb(p.color); g.fill();
-    // senkrechte Gratlinien als Innenzeichnung
-    g.save(); g.clip();
-    g.strokeStyle = U.rgb(col); g.globalAlpha = near ? 0.12 : 0.18; g.lineWidth = 1; g.beginPath();
-    for (let i = 4; i < top.length - 4; i += near ? 9 : 6) { const [x, y] = top[i]; g.moveTo(x, y); g.lineTo(x + (i % 2 ? 14 : -10), hy); }
-    for (let k = 1; k < 4; k++) { const yy = hy - H * k / 4; g.moveTo(0, yy); g.lineTo(lw, yy); }
-    g.stroke(); g.restore();
+    g.fillStyle = U.rgb(p.color);
+    g.beginPath(); g.moveTo(0, hy); for (const [x, y] of top) g.lineTo(x, y); g.lineTo(lw, hy); g.closePath(); g.fill();
     if (p.snow) {
-      g.beginPath(); let on = false;
-      for (const [x, y] of top) { const s = hy - y > H * 0.55; if (s) { on ? g.lineTo(x, y + H * 0.08) : g.moveTo(x, y + H * 0.08); on = true; } else on = false; }
-      g.strokeStyle = 'rgba(232,244,255,.55)'; g.lineWidth = 1.5; g.stroke();
-    }
-    g.beginPath(); top.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
-    glowLine(g, col, near ? 2 : 1.6);
-  });
-  // Skyline als nahe Ebene (Küste)
-  const skyline = (col) => layer(g => {
-    const r = U.rng(cfg.seed + 3);
-    let x = 0;
-    while (x < lw) {
-      const w = (0.03 + r.random() * 0.05) * lw / 2, h = (0.08 + r.random() * 0.2) * hy;
-      const ww = Math.min(w, lw - x);
-      g.fillStyle = '#0d0a1d'; g.fillRect(x, hy - h, ww, h + 2);
-      g.strokeStyle = U.rgb(col); g.globalAlpha = 0.6; g.lineWidth = 1; g.strokeRect(x + 0.5, hy - h + 0.5, ww - 1, h + 4); g.globalAlpha = 1;
-      const st = Math.max(5, hy * 0.025);
-      for (let wy = hy - h + st; wy < hy - st * 0.5; wy += st) for (let wx = x + st * 0.6; wx < x + ww - st * 0.6; wx += st * 0.9) {
-        if (r.random() < 0.2) { g.fillStyle = r.random() < 0.5 ? 'rgba(255,43,214,.8)' : 'rgba(24,231,255,.75)'; g.fillRect(wx, wy, Math.max(1, st * 0.35), Math.max(1, st * 0.22)); }
-      }
-      if (r.random() < 0.25 && ww > 6) { g.fillStyle = '#ff3355'; g.fillRect(x + ww / 2, hy - h - st, 2, st); }
-      x += ww + 1 + r.random() * 4;
+      g.save(); g.clip();
+      g.fillStyle = 'rgb(240,244,250)'; g.fillRect(0, 0, lw, hy - 0.42 * H);
+      g.restore();
     }
   });
-  const far = ridge(cfg.far, nz.ridge, false);
-  const near = nz.skyline ? skyline(nz.ridge2) : ridge(cfg.near, nz.ridge2, true);
-  // Horizontlinie
-  { const g = sky.getContext('2d'); g.beginPath(); g.moveTo(0, hy); g.lineTo(vw, hy); glowLine(g, nz.horizon, 2); }
-  return { sky, skyL, far, near, vw, vh, hy, lw };
+  return { sky, skyL, far: ridge(cfg.far), near: ridge(cfg.near), vw, vh, hy, lw };
 };
 
-// ---------- Autos von hinten (6 Bilder: Neigung × Bremslicht), Neon-Konturen ----------
+// ---------- Autos von hinten (6 Bilder: Neigung × Bremslicht) ----------
 HR.makeCarFrames = function (car, color) {
-  const ST = HR.ST, ct = HR.CARS[car];
+  const ct = HR.CARS[car];
   const w = 240, h = 128;
   const frames = {};
-  const nc = ST.neonRGB(color);
-  const N = (g, col, lw, fillA) => {
-    g.save();
-    if (fillA) { g.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${fillA})`; g.fill(); }
-    g.shadowColor = U.rgb(col); g.shadowBlur = lw * 3; g.strokeStyle = U.rgb(col); g.lineWidth = lw; g.stroke();
-    g.shadowBlur = 0; g.strokeStyle = U.rgb(U.mix(col, [255, 255, 255], 0.55)); g.lineWidth = Math.max(1, lw * 0.4); g.stroke();
-    g.restore();
-  };
-  const poly = (g, pts) => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) g.lineTo(p[0], p[1]); g.closePath(); };
+  const poly = (g, pts, c) => { g.fillStyle = U.rgb(c); g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) g.lineTo(p[0], p[1]); g.closePath(); g.fill(); };
   const bt = { wedge: 54, round: 48, sport: 50, rally: 42 }[ct.style];
   const ctop = { wedge: 26, round: 14, sport: 20, rally: 9 }[ct.style];
-  const RED = [255, 51, 85], ICE = [232, 244, 255], GREY = [130, 124, 175];
   for (const lean of [-1, 0, 1]) for (const brake of [false, true]) {
     const c = U.canvas(w, h), g = c.getContext('2d');
-    g.lineJoin = 'miter';
     const L = lean * 7;
-    // Lichtfleck und Schatten
-    const pg = g.createRadialGradient(w / 2, h - 8, 4, w / 2, h - 8, w / 2);
-    pg.addColorStop(0, `rgba(${nc.join(',')},.25)`); pg.addColorStop(1, `rgba(${nc.join(',')},0)`);
-    g.fillStyle = pg; g.fillRect(0, h - 40, w, 40);
-    g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(w / 2, h - 8, w / 2 - 10, 7, 0, 0, 7); g.fill();
-    // Räder
-    for (const x of [14, w - 52]) { g.beginPath(); g.rect(x, h - 48, 38, 40); g.fillStyle = '#05040b'; g.fill(); g.strokeStyle = U.rgb(GREY); g.lineWidth = 1.5; g.stroke(); g.beginPath(); for (let y = h - 42; y < h - 10; y += 7) { g.moveTo(x + 3, y); g.lineTo(x + 35, y); } g.strokeStyle = 'rgba(130,124,175,.35)'; g.lineWidth = 1; g.stroke(); }
-    // Karosserie
-    poly(g, [[8, h - 20], [6, bt + 16], [24 + L, bt], [w - 24 + L, bt], [w - 6, bt + 16], [w - 8, h - 20]]);
-    g.fillStyle = '#0c0a1c'; g.fill(); N(g, nc, 3, 0.16);
-    poly(g, [[12, bt + 19], [26 + L, bt + 5], [w - 26 + L, bt + 5], [w - 12, bt + 19]]); g.strokeStyle = `rgba(${nc.join(',')},.45)`; g.lineWidth = 1.2; g.stroke();
-    g.beginPath(); g.moveTo(12, h - 28); g.lineTo(w - 12, h - 28); g.strokeStyle = `rgba(${nc.join(',')},.5)`; g.lineWidth = 1.5; g.stroke();
-    // Kabine und Heckscheibe
-    poly(g, [[38 + L, bt + 2], [62 + 2 * L, ctop], [w - 62 + 2 * L, ctop], [w - 38 + L, bt + 2]]);
-    g.fillStyle = '#0c0a1c'; g.fill(); N(g, nc, 2.5, 0.08);
-    poly(g, [[48 + L, bt - 1], [67 + 2 * L, ctop + 6], [w - 67 + 2 * L, ctop + 6], [w - 48 + L, bt - 1]]);
-    g.fillStyle = 'rgba(24,231,255,.08)'; g.fill(); g.strokeStyle = `rgba(${U.mix(nc, [255, 255, 255], 0.4).map(v => v | 0).join(',')},.6)`; g.lineWidth = 1.2; g.stroke();
-    // Rückleuchten-Bänder
-    const tl = brake ? [255, 90, 110] : RED;
-    for (const x0 of [18, w - 66]) {
-      g.beginPath(); g.rect(x0 + L * 0.5, bt + 27, 48, 10);
-      g.save(); if (brake) { g.shadowColor = 'rgb(255,51,85)'; g.shadowBlur = 26; }
-      g.fillStyle = brake ? 'rgba(255,120,140,.95)' : 'rgba(255,51,85,.45)'; g.fill(); g.restore();
-      N(g, tl, brake ? 3 : 2);
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(w / 2, h - 8, w / 2 - 6, 9, 0, 0, 7); g.fill();
+    g.fillStyle = 'rgb(22,22,26)'; g.fillRect(12, h - 48, 40, 42); g.fillRect(w - 52, h - 48, 40, 42);
+    poly(g, [[8, h - 20], [6, bt + 16], [24 + L, bt], [w - 24 + L, bt], [w - 6, bt + 16], [w - 8, h - 20]], color);
+    poly(g, [[10, bt + 18], [24 + L, bt + 3], [w - 24 + L, bt + 3], [w - 10, bt + 18], [w - 10, bt + 22], [10, bt + 22]], U.shade(color, 1.35));
+    g.fillStyle = U.rgb(U.shade(color, 0.62)); g.fillRect(8, h - 30, w - 16, 12);
+    poly(g, [[38 + L, bt + 2], [62 + 2 * L, ctop], [w - 62 + 2 * L, ctop], [w - 38 + L, bt + 2]], U.shade(color, 0.9));
+    poly(g, [[46 + L, bt], [66 + 2 * L, ctop + 6], [w - 66 + 2 * L, ctop + 6], [w - 46 + L, bt]], [35, 50, 70]);
+    for (const x0 of [16, w - 64]) {
+      g.fillStyle = U.rgb(brake ? [255, 60, 50] : [180, 22, 22]); g.fillRect(x0 + L * 0.5, bt + 26, 48, 13);
+      g.fillStyle = U.rgb(brake ? [255, 200, 180] : [235, 70, 60]); g.fillRect(x0 + 14 + L * 0.5, bt + 29, 20, 7);
     }
-    g.beginPath(); g.moveTo(66 + L * 0.5, bt + 32); g.lineTo(w - 66 + L * 0.5, bt + 32); g.strokeStyle = brake ? 'rgba(255,90,110,.8)' : 'rgba(255,51,85,.35)'; g.lineWidth = 2; g.stroke();
-    // Kennzeichen und Auspuff
-    g.beginPath(); g.rect(w / 2 - 24 + L * 0.5, h - 46, 48, 14); g.fillStyle = 'rgba(232,244,255,.1)'; g.fill(); N(g, ICE, 1.5);
-    for (const x of [w / 2 - 66, w / 2 + 52]) { g.beginPath(); g.rect(x, h - 23, 14, 6); g.strokeStyle = U.rgb(GREY); g.lineWidth = 1.5; g.stroke(); }
-    // Stilmerkmale
+    g.fillStyle = 'rgb(235,235,225)'; g.fillRect(w / 2 - 24 + L * 0.5, h - 46, 48, 15);
+    g.fillStyle = 'rgb(60,60,60)'; g.fillRect(w / 2 - 18 + L * 0.5, h - 41, 36, 4);
+    g.fillStyle = 'rgb(70,70,75)'; g.fillRect(w / 2 - 70, h - 22, 14, 7); g.fillRect(w / 2 + 56, h - 22, 14, 7);
     if (ct.style === 'wedge') {
-      g.beginPath(); g.moveTo(10 + L, bt - 14); g.lineTo(w - 10 + L, bt - 14); N(g, nc, 3);
-      g.beginPath(); g.moveTo(44 + L, bt - 12); g.lineTo(44 + L, bt); g.moveTo(w - 44 + L, bt - 12); g.lineTo(w - 44 + L, bt); N(g, nc, 2);
+      g.fillStyle = U.rgb(U.shade(color, 0.45));
+      g.fillRect(10 + L, bt - 18, w - 20, 9); g.fillRect(40 + L, bt - 10, 8, 12); g.fillRect(w - 48 + L, bt - 10, 8, 12);
     } else if (ct.style === 'sport') {
-      g.beginPath(); g.moveTo(26 + L, bt - 4); g.lineTo(w - 26 + L, bt - 4); N(g, nc, 2);
-      g.beginPath(); g.moveTo(w / 2 - 6 + L, bt + 2); g.lineTo(w / 2 - 6 + L * 0.5, h - 48); g.moveTo(w / 2 + 6 + L, bt + 2); g.lineTo(w / 2 + 6 + L * 0.5, h - 48); N(g, ICE, 1.5);
+      g.fillStyle = U.rgb(U.shade(color, 0.5)); g.fillRect(24 + L, bt - 5, w - 48, 6);
+      g.fillStyle = 'rgb(245,245,245)'; g.fillRect(w / 2 - 9 + L, bt, 18, h - 50 - bt);
     } else if (ct.style === 'round') {
-      g.beginPath(); g.moveTo(28 + L, bt + 46); g.lineTo(62 + L, bt + 46); g.moveTo(w - 62 + L, bt + 46); g.lineTo(w - 28 + L, bt + 46); N(g, ICE, 1.5);
+      g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(30 + L, bt + 44, 30, 3); g.fillRect(w - 60 + L, bt + 44, 30, 3);
     } else if (ct.style === 'rally') {
-      g.beginPath(); g.rect(64 + 2 * L, ctop - 9, w - 128, 8); g.fillStyle = '#0c0a1c'; g.fill(); N(g, GREY, 1.5);
-      for (let i = 0; i < 4; i++) { g.beginPath(); g.rect(72 + 2 * L + i * 26, ctop - 8, 18, 6); N(g, [255, 226, 61], 1.5, 0.7); }
-      for (const x of [16, w - 48]) { g.beginPath(); g.rect(x, h - 22, 32, 12); g.fillStyle = '#05040b'; g.fill(); N(g, GREY, 1.2); }
+      g.fillStyle = 'rgb(30,30,30)'; g.fillRect(64 + 2 * L, ctop - 8, w - 128, 9);
+      g.fillStyle = 'rgb(255,230,90)'; for (let i = 0; i < 4; i++) g.fillRect(72 + 2 * L + i * 26, ctop - 7, 18, 7);
+      g.fillStyle = 'rgb(25,25,25)'; g.fillRect(14, h - 20, 34, 12); g.fillRect(w - 48, h - 20, 34, 12);
     }
     frames[lean + ',' + (brake ? 1 : 0)] = c;
   }

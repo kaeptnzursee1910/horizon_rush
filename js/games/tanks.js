@@ -118,37 +118,29 @@ HR.AR.define({
   draw(g, S, G) {
     G.world(g);
     const ST = HR.ST;
-    ST.floor(g, 0, 0, 1600, 1000, ST.CYAN, null, 100);
-    // Mauern als Leuchtbalken mit Endkappen
+    ST.floor(g, 0, 0, 1600, 1000, '#8fd06a', '#84c35f', 100);
+    // Mauern als Holzkisten-Blöcke
     for (const w of S.walls) {
-      if (w[0] <= 0 || w[1] <= 0 || w[0] + w[2] >= 1600 || w[1] + w[3] >= 1000) continue;
-      ST.rrect(g, w[0], w[1], w[2], w[3], 6); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, ST.CYAN, 4);
-      const hz = w[2] > w[3], cx = w[0] + w[2] / 2, cy = w[1] + w[3] / 2;
-      const ends = hz ? [[w[0], cy], [w[0] + w[2], cy]] : [[cx, w[1]], [cx, w[1] + w[3]]];
-      ST.line(g, ends[0][0] + (hz ? 12 : 0), ends[0][1] + (hz ? 0 : 12), ends[1][0] - (hz ? 12 : 0), ends[1][1] - (hz ? 0 : 12)); ST.thin(g, ST.CYAN, 2, 0.55);
-      for (const [x, y] of ends) { g.beginPath(); g.rect(x - 7, y - 7, 14, 14); g.fillStyle = 'rgba(24,231,255,.35)'; g.fill(); ST.glow(g, ST.CYAN, 2); }
+      g.fillStyle = 'rgba(20,10,40,.2)'; g.fillRect(w[0] + 8, w[1] + 10, w[2], w[3]);
+      ST.rrect(g, w[0], w[1], w[2], w[3], 8); ST.fill(g, '#c98a4e', 5);
+      ST.rrect(g, w[0] + 6, w[1] + 6, w[2] - 12, Math.min(14, w[3] - 12), 5); g.fillStyle = 'rgba(255,255,255,.25)'; g.fill();
     }
-    ST.frame(g, 8, 8, 1584, 984, ST.CYAN, 6, 100);
-    for (const b of S.b) { ST.pool(g, b.x, b.y, 34, '#ffffff', 0.25); g.beginPath(); g.arc(b.x, b.y, 7, 0, 7); g.fillStyle = '#fff'; g.fill(); ST.glow(g, ST.YELLOW, 2.5); }
+    for (const b of S.b) { g.beginPath(); g.arc(b.x, b.y, 8, 0, 7); ST.fill(g, '#fff4b0', 3); }
     for (const p of S.p) {
       if (p.gone || p.rt > 0) continue;
-      const blink = p.inv > 0 && Math.floor(S.time * 10) % 2, c = G.color(p);
-      g.save(); if (blink) g.globalAlpha = 0.4;
-      ST.pool(g, p.x, p.y, 70, c, 0.2);
+      const blink = p.inv > 0 && Math.floor(S.time * 10) % 2;
+      g.save(); if (blink) g.globalAlpha = 0.45;
+      ST.shadow(g, p.x, p.y + 22, 30, 10);
       g.translate(p.x, p.y); g.rotate(p.a);
-      for (const sy of [-1, 1]) {
-        ST.rrect(g, -27, sy * 18 - 7, 54, 14, 4); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, c, 1.6);
-        g.beginPath(); for (let k = -22; k <= 22; k += 7) { g.moveTo(k, sy * 18 - 5); g.lineTo(k, sy * 18 + 5); } ST.thin(g, c, 1.3, 0.6);
-      }
-      ST.rrect(g, -21, -13, 42, 26, 6); g.fillStyle = ST.BODY; g.fill(); g.fillStyle = ST.rgb(c, 0.2); g.fill(); ST.glow(g, c, 3);
-      ST.line(g, 10, 0, 38, 0); ST.glow(g, c, 4.5);
-      ST.oct(g, 0, 0, 11); g.fillStyle = ST.BODY; g.fill(); ST.glow(g, c, 2.2);
+      ST.rrect(g, -26, -25, 52, 14, 6); ST.fill(g, '#4a4460', 4);
+      ST.rrect(g, -26, 11, 52, 14, 6); ST.fill(g, '#4a4460', 4);
+      ST.rrect(g, 2, -6, 34, 12, 4); ST.fill(g, '#6a6480', 4);
+      ST.rrect(g, -22, -16, 44, 32, 10); ST.fill(g, G.rgb(p), 4);
       g.restore();
-      g.save(); if (blink) g.globalAlpha = 0.4; ST.symbol(g, ST.symFor(c), p.x, p.y, 7, c); g.restore();
-      if (p.id === G.me) ST.you(g, p.x, p.y - 40, S.time, 'DU');
+      G.fig(g, p, p.x, p.y - 4, 14, { look: [Math.cos(p.a), Math.sin(p.a)], noShadow: true, alpha: blink ? 0.45 : 1 });
     }
-    for (const e of S.boom) { const k = 1 - e.t / 0.6; ST.burst(g, e.x, e.y, k, '#ff7a1a', 16, 80); }
+    for (const e of S.boom) { const k = 1 - e.t / 0.6; ST.burst(g, e.x, e.y, k, '#ff9a3c', 12, 70); g.globalAlpha = Math.max(0, 1 - k); g.beginPath(); g.arc(e.x, e.y, 18 + 30 * k, 0, 7); ST.fill(g, '#ffd23c', 4); g.globalAlpha = 1; }
     const me = S.p.find(p => p.id === G.me);
-    if (me && me.rt > 0) ST.text(g, 'GLEICH WIEDER DA … ' + Math.ceil(me.rt), 800, 520, 44, ST.TEXT);
+    if (me && me.rt > 0) ST.text(g, 'Gleich wieder da … ' + Math.ceil(me.rt), 800, 520, 44, '#fff');
   },
 });
