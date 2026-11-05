@@ -46,6 +46,11 @@ beliebig kurz, machen ab und zu Fehler und haben jeweils ihren eigenen Stil (vor
 
 Alle Arena-Spiele teilen einen Grafikstil (runde Party-Figuren, kräftige Farben, dunkle Umrisse).
 
+Ohne stabiles WLAN (Verbindungseinstellungen → **Hotspot**): Ein Gerät öffnet einen Hotspot (Handy, iPad mit SIM-Karte
+oder Windows-PC über „Mobiler Hotspot“), alle verbinden sich damit. WLAN-Name und Passwort reisen im Einladungslink mit,
+in der Lobby zeigt der Gastgeber zusätzlich QR-Codes für den Hotspot und für die Party. Das Spiel läuft dann direkt im
+Hotspot-Netz; nur das Laden der Seite und das Finden der Party brauchen kurz Internet über den Hotspot.
+
 Mit Tastatur: Pfeiltasten oder WASD, Leertaste oder Enter für die Hauptaktion, Shift oder Q für die zweite Aktion.
 
 ## Technik
