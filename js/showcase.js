@@ -5,6 +5,7 @@
 HR.Showcase = {
   PERIOD: 5, FADE: 0.45,
   arena: null, code: null, t: 0, list: [], idx: 0,
+  lead: 0, mind: null,   // Reaktionszeit und Spielweise des Computer-Spielers, der gerade entscheidet (siehe arena.js)
 
   // neuer Durchlauf (wird bei jedem Start der Menü-Animation aufgerufen)
   reset() {
@@ -104,24 +105,65 @@ HR.Showcase = {
   },
 
   // Richtung zu einem Ziel als Tasten (8 Richtungen)
+  // Computer-Spieler mit Reaktionszeit halten etwas früher an, sonst kreisen sie um das Ziel herum
   toward(x, y, tx, ty, tol) {
     const dx = tx - x, dy = ty - y, d = Math.hypot(dx, dy) || 1;
-    if (d < (tol || 4)) return {};
+    if (d < Math.max(tol || 4, this.mind && (tol || 4) >= 1 ? 16 : 0)) return {};   // (tol < 1: reine Richtung, keine Strecke)
     return { l: dx / d < -0.38, r: dx / d > 0.38, u: dy / d < -0.38, d: dy / d > 0.38 };
   },
 
   bots: {
+    // Lichtrad: misst, wie viel Platz geradeaus, links und rechts ist (Flutfüllung auf einem groben Raster),
+    // und biegt rechtzeitig in den größeren freien Raum ab – so wie ein Mensch, der nicht in die Sackgasse fährt
     B1(S, p, def) {
-      const D = def.DIRS, free = d => {
-        for (const k of [25, 55]) {
-          const x = p.x + D[d][0] * k, y = p.y + D[d][1] * k;
-          if (x < 10 || x > 1590 || y < 10 || y > 990 || def.hits(S, { x, y })) return false;
+      if (!p.al) return {};
+      const SC = HR.Showcase, M = SC.mind || { err: 0, bold: 0.5 }, D = def.DIRS, C = 20, GW = 80, GH = 50;
+      if (p._cd > 0) { p._cd--; return p._cd > 7 ? p._lt : {}; }   // Taste halten, dann kurz loslassen (sonst zählt der nächste Druck nicht)
+      if (!S._g || S._gt !== S.time) {
+        // Raster: Spuren und die nächsten Meter der anderen Köpfe sind belegt
+        const g = S._g = new Uint8Array(GW * GH); S._gt = S.time;
+        const mark = (x0, y0, x1, y1) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 10) + 1; for (let k = 0; k <= n; k++) { const x = x0 + (x1 - x0) * k / n, y = y0 + (y1 - y0) * k / n, cx = Math.floor(x / C), cy = Math.floor(y / C); if (cx >= 0 && cy >= 0 && cx < GW && cy < GH) g[cy * GW + cx] = 1; } };
+        for (const o of S.p) { const v = o.v; for (let k = 0; k < v.length; k++) { const q = k + 1 < v.length ? v[k + 1] : [o.x, o.y]; mark(v[k][0], v[k][1], q[0], q[1]); } }
+        S._heads = S.p.filter(o => o.al);
+      }
+      const g = S._g;
+      const free = d => {
+        let k = 6;
+        const hc = Math.floor(p.y / C) * GW + Math.floor(p.x / C);
+        for (; k < 600; k += 5) {
+          const x = p.x + D[d][0] * k, y = p.y + D[d][1] * k, c = Math.floor(y / C) * GW + Math.floor(x / C);
+          if (x < 6 || x > 1594 || y < 6 || y > 994 || (c !== hc && g[c] && k > 14) || def.hits(S, { x, y })) break;
+          let hit = false;
+          for (const o of S._heads) { if (o === p) continue; const t = k / S.sp, ox = o.x + D[o.d][0] * S.sp * t, oy = o.y + D[o.d][1] * S.sp * t; if (Math.abs(ox - x) < 30 && Math.abs(oy - y) < 30) { hit = true; break; } }
+          if (hit) break;
         }
-        return true;
+        return k;
       };
-      const L = (p.d + 3) % 4, R = (p.d + 1) % 4;
-      if (!free(p.d) || Math.random() < 0.006) { if (free(L) && (Math.random() < 0.5 || !free(R))) return { l: 1 }; if (free(R)) return { r: 1 }; }
-      return {};
+      const room = (d, f) => {
+        // Flutfüllung ab dem ersten freien Feld in dieser Richtung
+        const k = Math.min(f - 4, 30), sx = Math.floor((p.x + D[d][0] * k) / C), sy = Math.floor((p.y + D[d][1] * k) / C);
+        if (f < 20 || sx < 0 || sy < 0 || sx >= GW || sy >= GH) return 0;
+        const seen = new Uint8Array(GW * GH), q = [sy * GW + sx]; seen[q[0]] = 1;
+        const hx = Math.floor(p.x / C), hy = Math.floor(p.y / C); seen[hy * GW + hx] = 1;
+        for (let h = 0; h < q.length && q.length < 900; h++) {
+          const c = q[h], cx = c % GW, cy = (c - cx) / GW;
+          for (const [ex, ey] of D) { const nx = cx + ex, ny = cy + ey, n = ny * GW + nx; if (nx >= 0 && ny >= 0 && nx < GW && ny < GH && !seen[n] && !g[n]) { seen[n] = 1; q.push(n); } }
+        }
+        return q.length;
+      };
+      p._th = (p._th || 0) - 1;
+      const need = S.sp * (SC.lead + 0.1) + 22 + M.err * 25;
+      const L = (p.d + 3) % 4, R = (p.d + 1) % 4, fs = free(p.d);
+      if (fs >= need && p._th > 0) return {};
+      p._th = 6 + Math.floor(Math.random() * 6);   // nicht in jedem Bild neu nachdenken
+      const fl = free(L), fr = free(R);
+      const cdF = Math.round((SC.lead + 0.1) * 60) + 8, side = S.sp * cdF / 60 + 25;   // nach dem Abbiegen braucht er so viel Platz, bis er wieder lenken kann
+      const val = (d, f) => f < side ? -1e6 + f * 10 + Math.min(room(d, f), 900) : Math.min(room(d, f), 900) * 8 + Math.min(f, 300) + Math.random() * 400 * M.err;
+      const vs = fs < need ? -1e6 + fs : val(p.d, fs) + 600 * (0.4 + M.bold), vl = val(L, fl), vr = val(R, fr);
+      if (vs >= vl && vs >= vr) return {};
+      p._lt = vl >= vr ? { l: 1 } : { r: 1 };
+      p._cd = cdF;   // gleiche Entscheidung halten, bis die Abbiegung da ist
+      return p._lt;
     },
     B2(S, p) {
       const o = S.p.find(q => q !== p && q.rt <= 0 && !q.gone);
@@ -144,18 +186,67 @@ HR.Showcase = {
       const d = HR.AR.angDiff(Math.atan2(q[1] - p.y, q[0] - p.x), p.a);
       return { l: d < -0.05, r: d > 0.05, u: 1 };
     },
+    // Wolken: sucht die höchste Wolke, die er im jetzigen Sprung noch erreichen kann, und steuert dorthin, wo sie bei der Landung ist.
+    // Ein gewähltes Ziel behält er, solange es erreichbar bleibt (sonst zappelt er hin und her).
     B6(S, p, def) {
-      let best = null;
-      const r0 = Math.floor(p.h / def.ROW) + 1;
-      for (let r = r0; r < r0 + 3; r++) for (const c of def.row(S, r)) { const x = def.cx(c, S.time); if (best == null || Math.abs(x - p.x) < Math.abs(best - p.x)) best = x; }
-      return best == null ? {} : { l: best < p.x - 20, r: best > p.x + 20 };
+      if (!p.al) return {};
+      const SC = HR.Showcase, M = SC.mind || { err: 0, bold: 0.5 }, ROW = def.ROW, Gv = 1750;
+      const vh = p.vh - Gv * SC.lead;
+      const plan = (r, c) => {
+        const top = r * ROW, disc = vh * vh + 2 * Gv * (p.h - top);
+        if (disc < 0 || top < S.cb + 40) return null;
+        const t = (vh + Math.sqrt(disc)) / Gv; if (t <= 0.04) return null;
+        if (c.k === 'g') return S.time + t > 8 ? null : { t, dx: 0 };
+        const dx = ((def.cx(c, S.time + t + SC.lead) - p.x) % 1600 + 2400) % 1600 - 800;
+        return Math.abs(dx) > 440 * Math.max(0, t - 0.1) * (p._tc && p._tc.c === c ? 0.95 : 0.7) + c.w / 2 ? null : { t, dx };
+      };
+      if (!p._k || p._k-- <= 0) {
+        p._k = 5 + Math.floor(Math.random() * 5);
+        let best = null, bs = -1e9;
+        const r0 = Math.max(0, Math.floor(p.h / ROW) - 4), r1 = Math.floor((p.h + Math.max(0, vh) * vh / (2 * Gv)) / ROW);
+        for (let r = r0; r <= r1; r++) def.row(S, r).forEach((c, i) => {
+          const q = plan(r, c); if (!q) return;
+          const sc = r * 100 + (c.k === 's' ? 160 : 0) - Math.abs(q.dx) * 0.08 + (p._tc && p._tc.r === r && p._tc.i === i ? 400 : 0);
+          if (sc > bs) { bs = sc; best = { r, i }; }
+        });
+        if (!best) p._tc = null;
+        else if (!p._tc || p._tc.r !== best.r || p._tc.i !== best.i) p._tc = { r: best.r, i: best.i, c: def.row(S, best.r)[best.i], off: (Math.random() - 0.5) * 0.5 * M.err };
+      }
+      if (!p._tc) return {};
+      const c = def.row(S, p._tc.r)[p._tc.i], q = c && plan(p._tc.r, c);
+      if (!q) { p._k = 0; return {}; }
+      const dx = q.dx + (c.w || 0) * p._tc.off;
+      p._tx = p.x + dx;
+      // loslassen, wenn er mit dem Schwung ohnehin ankommt (das Bremsen trägt ihn noch ein Stück)
+      if (Math.abs(dx) < 16 || (Math.sign(dx) === Math.sign(p.vx) && Math.abs(p.vx) * 0.26 > Math.abs(dx))) return {};
+      return dx > 0 ? { r: 1 } : { l: 1 };
     },
+    // Tunnel: plant für den Ring, der nach seiner Reaktionszeit als Nächstes kommt, und schaut dabei schon auf den übernächsten
     B7(S, p, def) {
-      const j = Math.max(0, Math.floor((S.z - def.Z0) / def.GAP) + 1), r = def.ring(S, j);
-      const K = def.K, sw = Math.PI * 2 / K;
-      let best = null;
-      for (let k = 0; k < K; k++) if (!r.b[k]) { const d = HR.AR.angDiff((k + 0.5) * sw, p.a); if (best == null || Math.abs(d) < Math.abs(best)) best = d; }
-      return best == null ? {} : { l: best > 0.05, r: best < -0.05 };
+      if (!p.al) return {};
+      const SC = HR.Showcase, M = SC.mind || { err: 0 }, K = def.K, sw = Math.PI * 2 / K, D = HR.AR.angDiff;
+      const z = S.z + S.sp * SC.lead, j = Math.max(0, Math.floor((z - def.Z0) / def.GAP) + 1);
+      const r = def.ring(S, j), r2 = def.ring(S, j + 1), tr = (def.ringZ(j) - z) / S.sp;
+      const gaps = R => { const o = []; for (let k = 0; k < K; k++) if (!R.b[k]) o.push((k + 0.5) * sw); return o; };
+      const g1 = gaps(r), g2 = gaps(r2);
+      let best = null, bs = 1e9;
+      for (const a of g1) {
+        const d = D(a, p.a);
+        // in der Lücke darf er nicht am Rand kleben: nur Sektoren, deren Nachbarn auch frei sind, zählen voll
+        const k = Math.floor(a / sw);
+        let clr = 0; while (clr < 3 && !r.b[(k + clr + 1) % K] && !r.b[(k - clr - 1 + K * 4) % K]) clr++;
+        const edge = 3 - clr;
+        const late = Math.abs(d) > 3.5 * Math.max(0, tr - 0.05) ? 6 : 0;
+        const nxt = Math.min(...g2.map(b => Math.abs(D(b, a))));
+        const sc = Math.abs(d) + edge * 0.45 + late + nxt * 0.3;
+        if (sc < bs) { bs = sc; best = d; }
+      }
+      if (best == null) return {};
+      // genaue Vorhersage: wo er steht, wenn die schon gedrückten Tasten angekommen sind
+      if (SC.now && SC.pend) best += p.a - (SC.now.a + 3.5 * (SC.pend.l - SC.pend.r));
+      p._e = p._e != null && Math.random() > 0.02 ? p._e : (Math.random() - 0.5) * sw * 0.6 * M.err;
+      const d = best + p._e;
+      return { l: d > 0.16, r: d < -0.16 };
     },
     B9(S, p, def) {
       const geo = def.geo(), s = geo.sides[p.k];
@@ -165,47 +256,61 @@ HR.Showcase = {
     },
     // erst hüpfen, wenn die nächste Spur frei ist (Straße) oder ein Stamm da ist (Fluss)
     // ---------- neue Minispiele ----------
+    // Brüchiger Boden: sucht sich eine feste Platte in der Nähe, zu der der Weg geradeaus sicher ist, und läuft hin.
+    // Wird die Platte unter ihm rissig, sucht er die nächste.
     C1(S, p, def) {
       if (!p.al) return {};
-      if (!def._nb) { def._nb = []; for (let i = 0; i < S.T.length; i++) { const [x, y] = def.center(i); def._nb[i] = []; for (let j = 0; j < S.T.length; j++) { const [u, v] = def.center(j); if (j !== i && Math.hypot(u - x, v - y) < def.R * 1.9) def._nb[i].push(j); } } }
-      const good = i => S.T[i] >= 0 && S.T[i] < def.POINT * 0.4, pass = i => S.T[i] >= 0 && S.T[i] < def.POINT;
+      const M = HR.Showcase.mind || { err: 0, bold: 0.5 }, n = S.T.length, P = def.POINT;
+      const ok = i => i >= 0 && S.T[i] >= 0 && S.T[i] < P * 0.8;
       const cur = def.tileAt(p.x, p.y);
-      const at = p._t != null && Math.hypot(def.center(p._t)[0] - p.x, def.center(p._t)[1] - p.y) < 22;
-      if (cur >= 0 && (p._t == null || !pass(p._t) || at)) {
-        // Breitensuche über begehbare Platten zur nächsten guten festen Platte, dann nur den ersten Schritt gehen
-        const first = new Map([[cur, -1]]), q = [cur]; let best = null, bs = -1e9;
-        for (let h = 0; h < q.length && q.length < 160; h++) {
-          const c = q[h];
-          for (const j of def._nb[c]) {
-            if (first.has(j) || !pass(j)) continue;
-            first.set(j, first.get(c) === -1 ? j : first.get(c)); q.push(j);
-            if (good(j) && j !== p._last) {
-              const [x, y] = def.center(j), dep = q.length;
-              const sc = def._nb[j].filter(good).length * 10 - Math.hypot(x - 800, y - 500) * 0.02 - Math.hypot(x - p.x, y - p.y) * 0.06 + Math.random() * 10;
-              if (sc > bs) { bs = sc; best = j; }
-            }
-          }
+      // die Platte, auf der er steht, darf rissig sein – er will ja gerade herunter
+      const lineOk = (x0, y0, x1, y1) => { const k = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 18); for (let j = 1; j <= k; j++) { const t = def.tileAt(x0 + (x1 - x0) * j / k, y0 + (y1 - y0) * j / k); if (t !== cur || S.T[t] < 0) { if (!ok(t)) return false; } } return true; };
+      // angekommen: gleich weiter zur nächsten Platte (stehen bleiben lässt den Boden reißen)
+      const there = p._g != null && Math.hypot(def.center(p._g)[0] - p.x, def.center(p._g)[1] - p.y) < 40 + 30 * M.bold;
+      const bad = p._g == null || !ok(p._g) || there || (cur === p._g && S.T[cur] > P * (0.3 + 0.3 * M.bold));
+      // ein Ziel wird beibehalten, bis es unsicher wird (sonst läuft er im Zickzack)
+      const [gx, gy] = p._g != null ? def.center(p._g) : [0, 0];
+      if (!bad && p._g != null && !lineOk(p.x, p.y, gx, gy) && cur !== p._g) p._g = null;
+      if (bad || p._g == null) {
+        let best = null, bs = -1e9;
+        for (let i = 0; i < n; i++) {
+          if (!ok(i) || i === cur || i === p._g) continue;
+          const [x, y] = def.center(i), d = Math.hypot(x - p.x, y - p.y);
+          if (d > 380) continue;
+          if (!lineOk(p.x, p.y, x, y)) continue;
+          let nb = 0; for (let j = 0; j < n; j++) { if (j === i) continue; const [u, v] = def.center(j); if (Math.hypot(u - x, v - y) < def.R * 1.9 && ok(j)) nb++; }
+          let crowd = 0; for (const o of S.p) if (o !== p && o.al) crowd += Math.max(0, 160 - Math.hypot(o.x - x, o.y - y));
+          const sc = nb * 12 - S.T[i] * 60 - d * 0.05 - Math.hypot(x - 800, y - 500) * 0.03 - crowd * 0.15 + (i === p._g ? 25 : 0) + Math.random() * 25 * (0.5 + M.err);
+          if (sc > bs) { bs = sc; best = i; }
         }
-        p._last = cur; p._t = best == null ? null : first.get(best);
+        if (best != null) p._g = best;
       }
-      if (p._t == null) return {};
-      const [tx, ty] = def.center(p._t);
-      return HR.Showcase.toward(p.x, p.y, tx, ty, 8);
+      if (p._g == null) return {};
+      const [tx, ty] = def.center(p._g);
+      return HR.Showcase.toward(p.x, p.y, tx, ty, 20);
     },
+    // Laser-Sprung: springt so, dass er gerade in der Luft ist, wenn der Strahl durchläuft (seine Reaktionszeit eingerechnet)
     C2(S, p, def) {
       if (!p.al) return {};
+      const SC = HR.Showcase, M = SC.mind || { err: 0 }, lead = SC.lead;
       const pa = Math.atan2(p.y - 520, p.x - 800), d = Math.max(1, Math.hypot(p.x - 800, p.y - 520)), w = 26 / d, sp = Math.max(0.3, S.sp || 1);
-      let tmin = 9, inside = false;
+      let tmin = 9;
       for (const l of S.L) {
         let gap = ((pa - l.a) * (S.dir || 1)) % 6.283; if (gap < 0) gap += 6.283;
-        if (gap < w || gap > 6.283 - w) inside = true;
+        if (gap > 6.283 - w) gap -= 6.283;                // Strahl steht gerade auf ihm
         tmin = Math.min(tmin, (gap - w) / sp);
       }
-      // Sprung so legen, dass die Figur hoch ist, während der Strahl durchläuft
-      const o = inside || (tmin > 0.03 && tmin < 0.11) ? { a: 1 } : {};
-      if (tmin < 0.7 || inside || p.z > 0) return o;
+      // bester Absprung: die Luftzeit (0,06 s bis 0,56 s nach dem Absprung) liegt mittig um den Durchgang des Strahls
+      const roll = () => (Math.random() - 0.5) * 0.22 * (0.4 + M.err);
+      if (p._jr == null) p._jr = roll();
+      const t = tmin - lead, air = p.z > 0, best = 0.31 - w / sp + p._jr;
+      const o = !air && p.jt <= -0.1 && t <= best && t > -0.15 ? { a: 1 } : {};
+      if (o.a) p._jr = roll();
+      // nahe am Kern ist der Strahl zu breit zum Überspringen: dann zuerst nach außen
+      if (d < 230) return Object.assign(HR.Showcase.toward(p.x, p.y, 800 + (p.x - 800) / d * 300, 520 + (p.y - 520) / d * 300, 10), o);
+      if (tmin < 0.9 || air) return o;
       p._w = (p._w || 0) + 1;
-      const ang = (p.id * 1.7 + p._w * 0.004), tx = 800 + Math.cos(ang) * 240, ty = 520 + Math.sin(ang) * 240;
+      const ang = (p.id * 1.7 + p._w * 0.004), tx = 800 + Math.cos(ang) * 280, ty = 520 + Math.sin(ang) * 280;
       return Object.assign(HR.Showcase.toward(p.x, p.y, tx, ty, 30), o);
     },
     C3(S, p, def) {
@@ -234,29 +339,57 @@ HR.Showcase = {
       const h = S.p.find(q => q.id === S.cr), d = Math.hypot(h.x - p.x, h.y - p.y);
       return Object.assign(HR.Showcase.toward(p.x, p.y, h.x, h.y, 4), d < 170 && S.imm <= 0 && Math.random() < 0.3 ? { a: 1 } : {});
     },
+    // Schneeball: weicht anfliegenden Bällen aus, dreht sich zum Gegner (8 Richtungen), wirft erst, wenn die Linie passt,
+    // und formt neue Bälle, wenn keine mehr da sind
     C5(S, p) {
       if (p.fz > 0 || p.mk > 0) return {};
-      if (!p.am) return Math.random() < 0.5 ? { a: 1 } : {};
+      const SC = HR.Showcase, M = SC.mind || { err: 0, bold: 0.5 };
+      // Ausweichen
+      for (const b of S.b) {
+        if (b.o === p.id || b.vx == null) continue;
+        const rx = p.x - b.x, ry = p.y - 10 - b.y, sp = Math.hypot(b.vx, b.vy) || 1, along = (rx * b.vx + ry * b.vy) / sp;
+        if (along < 0 || along > 420) continue;
+        const side = (rx * -b.vy + ry * b.vx) / sp;
+        if (Math.abs(side) < 40 && Math.random() < 0.85 - M.err) { const s = side >= 0 ? 1 : -1; return SC.toward(0, 0, -b.vy / sp * s, b.vx / sp * s, 0.1); }
+      }
+      if (!p.am) { p._f = 0; return Math.random() < 0.5 ? { a: 1 } : {}; }
       let t = null, td = 1e9;
-      for (const q of S.p) if (q !== p && !q.gone && q.fz <= 0) { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < td) { td = d; t = q; } }
+      for (const q of S.p) if (q !== p && !q.gone && q.fz <= 0 && q.iv <= 0) { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < td) { td = d; t = q; } }
+      if (!t) for (const q of S.p) if (q !== p && !q.gone) { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < td) { td = d; t = q; } }
       if (!t) return {};
-      if (td > 480) return HR.Showcase.toward(p.x, p.y, t.x, t.y, 10);
-      // in einer der 8 Richtungen zielen: passt die Linie, werfen, sonst seitlich ausrichten
+      if (td > 560 - 120 * M.bold) return SC.toward(p.x, p.y, t.x, t.y, 10);
       const ang = Math.atan2(t.y - p.y, t.x - p.x), q = Math.round(ang / (Math.PI / 4)), diff = ang - q * Math.PI / 4;
       const qx = Math.round(Math.cos(q * Math.PI / 4)), qy = Math.round(Math.sin(q * Math.PI / 4));
-      const o = { l: qx < 0, r: qx > 0, u: qy < 0, d: qy > 0 };
-      if (Math.abs(Math.sin(diff)) * td < 26) return Math.random() < 0.4 ? Object.assign(o, { a: 1 }) : o;
+      const off = Math.abs(Math.sin(diff)) * td;
+      if (off < 32 + M.err * 14) {
+        // erst umdrehen (Richtung kurz antippen), dann werfen
+        const facing = Math.abs(p.lx - qx / Math.hypot(qx, qy)) < 0.2 && Math.abs(p.ly - qy / Math.hypot(qx, qy)) < 0.2;
+        if (!facing) return { l: qx < 0, r: qx > 0, u: qy < 0, d: qy > 0 };
+        p._f = (p._f || 0) + 1;
+        return p._f % 10 < 5 && p.cd <= 0 ? { a: 1 } : {};
+      }
+      // seitlich auf eine Wurflinie gehen
       const px = -Math.sin(q * Math.PI / 4) * Math.sign(diff), py = Math.cos(q * Math.PI / 4) * Math.sign(diff);
-      return HR.Showcase.toward(0, 0, -px, -py, 0.1);
+      return SC.toward(0, 0, -px, -py, 0.1);
     },
+    // Gedächtnis: merkt sich die Folge mit kleinen Fehlern (je länger die Folge, desto eher), läuft hin und stampft erst,
+    // wenn er sicher auf dem Feld steht
     C6(S, p, def) {
       if (!p.al) return {};
-      if (S.ph !== 'go' || p.ok) { const [x, y] = def.tileXY(5 + (p.id % 2) * 5); return HR.Showcase.toward(p.x, p.y, x + (p.id % 3) * 30 - 30, y, 30); }
-      if (p._rd !== S.rd) { p._rd = S.rd; p._plan = S.seq.map(t => Math.random() < 0.035 * S.n ? (t + 1 + Math.floor(Math.random() * 15)) % 16 : t); p._st = 0; }
+      const SC = HR.Showcase, M = SC.mind || { err: 0 };
+      if (S.ph !== 'go' || p.ok) { const [x, y] = def.tileXY(5 + (p.id % 2) * 5); return SC.toward(p.x, p.y, x + (p.id % 3) * 30 - 30, y, 30); }
+      if (p._rd !== S.rd) {
+        p._rd = S.rd; p._pf = -1;
+        const pe = (0.006 + 0.014 * Math.max(0, S.n - 3)) * (0.5 + M.err * 2.5);
+        p._plan = S.seq.map(t => Math.random() < pe ? (t + 1 + Math.floor(Math.random() * 15)) % 16 : t);
+      }
       const t = p._plan[p.pg]; if (t == null) return {};
-      const [x, y] = def.tileXY(t);
-      if (Math.abs(x - p.x) < 50 && Math.abs(y - p.y) < 50) { p._st = !p._st; return p._st ? { a: 1 } : {}; }
-      return HR.Showcase.toward(p.x, p.y, x, y, 10);
+      const [x, y] = def.tileXY(t), now = SC.now || p;
+      const on = def.tileAt(p.x, p.y) === t && def.tileAt(now.x, now.y) === t && Math.abs(x - p.x) < 60 && Math.abs(y - p.y) < 60;
+      // genau ein Stampfer pro Feld: drücken, loslassen und warten, bis er gezählt wurde
+      if (p._pf === p.pg && S.time - p._pt < SC.lead + 0.35) return p._ph-- > 0 ? { a: 1 } : {};
+      if (on) { p._pf = p.pg; p._pt = S.time; p._ph = 6; return { a: 1 }; }
+      return SC.toward(p.x, p.y, x, y, 10);
     },
     C7(S, p) {
       if (p.ft) return {};
@@ -264,17 +397,28 @@ HR.Showcase = {
       if (p._y == null) { p._y = S.time; p._rx = 0.08 + Math.random() * 0.3; p._brave = Math.random() < 0.12; }
       return S.time - p._y < p._rx || (p._brave && S.L === 'y') ? { a: 1 } : {};
     },
+    // Schatzgräber: nimmt sich einen Hügel (oder liegen gebliebene Münzen) vor, läuft hin, bleibt stehen und gräbt
     C8(S, p) {
-      if (p.st > 0) return {};
-      let best = null, bs = 1e9;
-      for (const d of S.drops) { const v = Math.hypot(d.x - p.x, d.y - p.y) - 120; if (v < bs) { bs = v; best = d; } }
-      for (const m of S.m) { if (m.d) continue; const v = Math.hypot(m.x - p.x, m.y - p.y) - (m.sp ? 150 : 0) + (p.id % 3) * 20; if (v < bs) { bs = v; best = m; } }
-      if (!best) return {};
-      if (best.c !== undefined || best.sp !== undefined) { if (Math.hypot(best.x - p.x, best.y - p.y) < 34) return { a: 1 }; }
-      return HR.Showcase.toward(p.x, p.y, best.x, best.y, 4);
+      if (p.st > 0) { p._tg = null; return {}; }
+      const SC = HR.Showcase, now = SC.now || p;
+      let tg = p._tg && (p._tg.m ? S.m.find(m => m.i === p._tg.i && !m.d) : S.drops.find(d => d.i === p._tg.i));
+      if (!tg) {
+        let bs = 1e9; p._tg = null;
+        for (const d of S.drops) { const v = Math.hypot(d.x - p.x, d.y - p.y) - 120; if (v < bs) { bs = v; tg = d; p._tg = { i: d.i, m: 0 }; } }
+        for (const m of S.m) {
+          if (m.d) continue;
+          let crowd = 0; for (const o of S.p) if (o !== p && Math.hypot(o.x - m.x, o.y - m.y) < 60) crowd += 120;
+          const v = Math.hypot(m.x - p.x, m.y - p.y) - (m.sp ? 150 : 0) + crowd + Math.random() * 80;
+          if (v < bs) { bs = v; tg = m; p._tg = { i: m.i, m: 1 }; }
+        }
+      }
+      if (!tg) return {};
+      const dn = Math.hypot(tg.x - now.x, tg.y - now.y), dp = Math.hypot(tg.x - p.x, tg.y - p.y);
+      if (p._tg.m && dn < 44 && dp < 44) return { a: 1 };     // stehen bleiben und graben
+      return SC.toward(p.x, p.y, tg.x, tg.y, p._tg.m ? 20 : 10);
     },
     C9(S, p) {
-      if (p._rd !== S.rd) { p._rd = S.rd; p._r = 0.19 + Math.random() * 0.28; p._k = 0; }
+      if (p._rd !== S.rd) { const M = HR.Showcase.mind; p._rd = S.rd; p._r = M ? Math.random() * 0.12 * (0.5 + M.err * 2) : 0.19 + Math.random() * 0.28; p._k = 0; }   // mit Reaktionszeit kommt hier nur noch etwas Zögern dazu
       if (S.ph === 'sig' && !p.pr && !p.er && S.time - S.sigT > p._r) { p._k = !p._k; return p._k ? { a: 1 } : {}; }
       if ((S.ph === 'wait') && Math.random() < (S.fake ? 0.006 : 0.0006)) return { a: 1 };
       return {};
@@ -297,10 +441,10 @@ HR.Showcase = {
         if (best) { const bc = def.cellOf(best.x, best.y); if (bc === c) return HR.Showcase.toward(p.x, p.y, best.x, best.y, 2); next = def.nextStep(S, c, bc); }
       }
       if (next == null || next === c) return {};
-      const cx = def.cx(c), cy = def.cy(c), horiz = Math.abs(next - c) === 1;
-      if (horiz && Math.abs(p.y - cy) > 6) return p.y < cy ? { d: 1 } : { u: 1 };
-      if (!horiz && Math.abs(p.x - cx) > 6) return p.x < cx ? { r: 1 } : { l: 1 };
-      return HR.Showcase.toward(p.x, p.y, def.cx(next), def.cy(next), 2);
+      // in Laufrichtung gehen und dabei zur Gangmitte rutschen (der Gang ist breit genug für etwas Ungenauigkeit)
+      const cx = def.cx(c), cy = def.cy(c), horiz = Math.abs(next - c) === 1, nx = def.cx(next), ny = def.cy(next);
+      if (horiz) { const o = nx > p.x ? { r: 1 } : { l: 1 }; if (Math.abs(p.y - cy) > 12) o[p.y < cy ? 'd' : 'u'] = 1; if (Math.abs(p.y - cy) > 22) { delete o.r; delete o.l; } return o; }
+      const o = ny > p.y ? { d: 1 } : { u: 1 }; if (Math.abs(p.x - cx) > 12) o[p.x < cx ? 'r' : 'l'] = 1; if (Math.abs(p.x - cx) > 22) { delete o.u; delete o.d; } return o;
     },
     C12(S, p, def) {
       if (p.st > 0) return {};
@@ -320,21 +464,125 @@ HR.Showcase = {
       if (best.y > p.y + 20 && p.y < def.GY - 5 && Math.abs(dx) < 220) o.d = 1;
       return o;
     },
+    // Hüpf-Parcours: folgt dem günstigsten Weg durch das Level (Spalte für Spalte), springt an der Kante ab,
+    // steuert in der Luft auf die Landestelle zu und wartet vor Sägen, bis sie oben sind.
+    // Zustand (wo er steht) nach der echten Lage, Absprung und Lenken nach der Lage, wenn der Tastendruck ankommt.
+    D1(S, p, def) {
+      if (p.dead > 0 || p.fin || !S.L || !S.L.adj) { p._to = null; return {}; }
+      const SC = HR.Showcase, M = SC.mind || { err: 0, bold: 0.5 }, L = S.L, T = def.T, lead = SC.lead;
+      const now = SC.now || p, surf = c => (def.NR - L.top[c]) * T;
+      const ac = U.clamp(Math.floor(now.x / T), 0, L.NC - 1);
+      // auf welcher Spalte steht er wirklich? (an der Kante zählt die Spalte, auf der die Füße noch Halt haben)
+      if (p.og) {
+        let c = ac;
+        if (!def.stand(L, c) || Math.abs(now.y - surf(c)) > 6) for (const k of [ac - 1, ac + 1]) if (k >= 0 && k < L.NC && def.stand(L, k) && Math.abs(now.y - surf(k)) < 6) c = k;
+        if (def.stand(L, c) && Math.abs(now.y - surf(c)) < 6) {
+          // geplant wird von der Spalte aus, auf der er ist, wenn sein Tastendruck ankommt (gleich hoher Boden voraus)
+          const pc = U.clamp(Math.floor(p.x / T), 0, L.NC - 1), st = pc > c ? 1 : -1;
+          let k = c; while (k !== pc && def.stand(L, k + st) && L.top[k + st] === L.top[c] && L.kind[k + st] !== 's') k += st;
+          p._on = k;
+        }
+      } else if (L.kind[ac] === 's' && p.vy < 0 && now.y > surf(ac) - 80) p._on = ac;   // gerade von der Feder abgefedert
+      if (p._on == null) p._on = ac;
+      const on = p._on;
+      if ((p._from !== on && !p._back) || p._to == null) {
+        p._from = on; let best = null, bs = 1e9;
+        for (const b of L.adj[on] || []) {
+          const d = L.dist[b]; if (d < 0) continue;
+          const saw = Math.abs(b - on) > 1 && L.saws.some(sw => (sw.c - on) * (sw.c - b) <= 0);   // nicht über eine Säge springen
+          const sc = d + def.cost(L, on, b) + (b < on ? 2 : 0) + (saw ? 12 : 0) + Math.random() * 2 * M.err;
+          if (sc < bs) { bs = sc; best = b; }
+        }
+        p._to = best;
+      }
+      if (on === L.goal) return { r: 1 };   // an der Zielflagge: nur noch hinlaufen
+      const to = p._to;
+      if (to == null) return { r: 1 };
+      const dir = to > on ? 1 : to < on ? -1 : 0, tx = (to + 0.5) * T, far = Math.abs(to - on), up = L.top[to] - L.top[on];
+      const o = {};
+      // Sprungtaste: nach dem Absprung halten (hoher Sprung) oder kurz tippen (kleiner Hüpfer); der Druck kommt erst nach der Reaktionszeit an
+      const high = up >= 1 || far >= 3 || L.kind[on] === 's';
+      const pressing = p._jt != null && S.time - p._jt < lead + 0.1;   // Druck ist noch unterwegs
+      if (pressing || (!p.og && p.vy < 0 && high)) o.a = 1;
+      if (!pressing) p._jt = null;
+      if (p.og && !pressing) {
+        // Säge auf dem Weg? Vor ihr warten, bis sie hoch genug ist und noch eine Weile oben bleibt
+        for (const s of L.saws) {
+          const ahead = (def.sawX(s) - p.x) * (dir || 1);
+          if (ahead > 30 && ahead < 200) {
+            const top = surf(s.c) - 150, tt = (ahead + 60) / def.RUN + 0.1;
+            const low = [0, 0.5, 1].some(f => def.sawY(s, S.time + lead + tt * f) > top);
+            if (low && ahead < 120) return o;
+          }
+        }
+        const plain = dir && far === 1 && up <= 0 && L.kind[to] !== 's';
+        if (dir) o[dir > 0 ? 'r' : 'l'] = 1;
+        if (!dir) { if (Math.abs(tx - p.x) > 12) o[tx > p.x ? 'r' : 'l'] = 1; return o; }
+        if (!plain) {
+          const edgeX = dir > 0 ? (on + 1) * T : on * T, toEdge = (edgeX - p.x) * dir;   // p.x: Lage, wenn der Druck ankommt
+          const wall = far === 1 && up > 0;
+          const slow = far >= 3 && p.vx * dir < def.RUN * 0.8;
+          // für weite Sprünge erst Anlauf nehmen: ein Stück zurück, dann mit vollem Tempo zur Kante
+          let room = 1; while (room < 4 && def.stand(L, on - dir * room) && L.top[on - dir * room] === L.top[on] && L.kind[on - dir * room] !== 's') room++;
+          const maxBack = room * T - 30;
+          if (slow && toEdge < 50 && !p._back && maxBack > 110) p._back = 1;
+          if (p._back) {
+            if (toEdge >= Math.min(150, maxBack)) p._back = 0;
+            else { delete o.r; delete o.l; o[dir > 0 ? 'l' : 'r'] = 1; return o; }
+          }
+          if (toEdge < 14 + 12 * M.bold || (wall && toEdge < 34)) { o.a = 1; p._jt = S.time; }
+        }
+        return o;
+      }
+      // in der Luft: Landestelle ohne Lenken vorausberechnen und nachsteuern
+      // (mit der echten Lage und den Tasten, die schon gedrückt, aber noch nicht angekommen sind)
+      const sy = surf(to), G2 = def.GRAV, disc = p.vy * p.vy + 2 * G2 * (sy - now.y);
+      const tl = disc > 0 ? (-p.vy + Math.sqrt(disc)) / G2 : 0.3;
+      const pd = SC.pend || { l: 0, r: 0 }, vx1 = U.clamp(p.vx + def.AIR * (pd.r - pd.l), -def.RUN, def.RUN);
+      const land = now.x + (p.vx + vx1) / 2 * Math.min(lead, tl) + vx1 * Math.max(0, tl - lead);
+      // irgendwo auf dem Stück Boden landen, zu dem die Zielspalte gehört (nicht genau auf ihrer Mitte)
+      let a0 = to, a1 = to;
+      while (a0 - 1 >= 0 && def.stand(L, a0 - 1) && L.top[a0 - 1] === L.top[to] && L.kind[a0 - 1] !== 's') a0--;
+      while (a1 + 1 < L.NC && def.stand(L, a1 + 1) && L.top[a1 + 1] === L.top[to] && L.kind[a1 + 1] !== 's') a1++;
+      const m = 22 + 14 * M.err, lo = L.kind[to] === 's' ? tx - 8 : a0 * T + m, hi = L.kind[to] === 's' ? tx + 8 : (a1 + 1) * T - m;
+      // weiter voraus ist besser (dort geht es weiter), aber nicht über das Stück hinaus
+      const aim = dir >= 0 ? Math.min(hi, Math.max(lo, tx)) : Math.max(lo, Math.min(hi, tx));
+      if (land > hi) o.l = 1; else if (land < lo) o.r = 1; else if (Math.abs(land - aim) > 90 && (aim - land) * dir > 0) o[dir > 0 ? 'r' : 'l'] = 1;
+      return o;
+    },
+    // Straße: hüpft Feld für Feld, jeweils erst, wenn die nächste Spur zum Zeitpunkt der Landung frei ist
+    // (seine Reaktionszeit eingerechnet); nach jedem Sprung kurz loslassen und neu schauen
     B10(S, p, def) {
-      if (p.dead > 0) return {};
-      const safe = (r, x) => {
+      if (p.dead > 0) { p._hr = null; return {}; }
+      const SC = HR.Showcase, M = SC.mind || { err: 0, bold: 0.5 }, L0 = SC.lead;
+      if (p._hr != null) {
+        // auf den letzten Sprung warten
+        if (p.r === p._hr && S.time - p._ht < L0 + 0.3) return p._hk-- > 0 ? p._hb : {};
+        p._hr = null;
+      }
+      const marg = 44 + 30 * (1 - M.bold) + 20 * M.err;
+      const safe = (r, x, tt) => {
         const L = S.lanes[r];
         if (!L) return true;
         if (L.type === 'road') {
-          for (const o of L.o) for (const dt of [0, 0.25, 0.5]) { const ox = def.ox(L, o, S.time + dt); if (x + 44 > ox && x - 44 < ox + L.len) return false; }
+          for (const o of L.o) for (const dt of [0, 0.2, 0.45, 0.7]) { const ox = def.ox(L, o, S.time + tt + dt); if (x + marg > ox && x - marg < ox + L.len) return false; }
         } else if (L.type === 'river') {
-          const ox = L.o.map(([o, len]) => [def.ox(L, o, S.time + 0.12), len]);
-          if (!ox.some(([a, len]) => x > a + 26 && x < a + len - 26) || x < 90 || x > 1510) return false;
+          for (const dt of [0, 0.3]) {
+            const ox = L.o.map(([o, len]) => [def.ox(L, o, S.time + tt + dt), len]);
+            const xx = x + L.dir * L.sp * dt;
+            if (!ox.some(([a, len]) => xx > a + 30 && xx < a + len - 30) || xx < 90 || xx > 1510) return false;
+          }
         }
         return true;
       };
-      if (safe(p.r + 1, p.x)) return { u: 1 };
-      if (!safe(p.r, p.x) && S.lanes[p.r].type === 'road' && safe(p.r - 1, p.x)) return { d: 1 };
+      const go = b => { p._hr = p.r; p._ht = S.time; p._hk = 5; p._hb = b; return b; };
+      const t = L0 + 0.05;
+      // auf dem Fluss treibt er mit: vorhersagen, wo er bei der Landung ist
+      const L = S.lanes[p.r], drift = L && L.type === 'river' ? L.dir * L.sp * t : 0;
+      if (safe(p.r + 1, p.x + drift, t)) return go({ u: 1 });
+      if (!safe(p.r, p.x + drift, t) && S.lanes[p.r].type === 'road' && safe(p.r - 1, p.x, t)) return go({ d: 1 });
+      // auf dem Fluss nicht aus dem Bild treiben lassen
+      if (L && L.type === 'river' && (p.x < 260 || p.x > 1340) && safe(p.r, p.x + (p.x < 800 ? 1 : -1) * def.CW, t)) return go(p.x < 800 ? { r: 1 } : { l: 1 });
       return {};
     },
   },

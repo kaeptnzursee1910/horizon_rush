@@ -17,8 +17,9 @@ HR.ArenaGame = class {
     this.snaps = []; this.fx = []; this.fxSeq = 0; this.fxSeen = 0; this.ended = false;
     this.lerpKeys = new Set(['x', 'y', 'a', 't', 'u', 'h', 'z', 'R', 'cb'].concat(def.lerpKeys || []));
     this.view = { sc: 1, ox: 0, oy: 0 };
-    this.ai = ctx.players.filter(p => p.ai).map(p => p.id);   // Computer-Spieler (Singleplayer)
-    this.sloppy = [0.3, 0.12, 0.02][Game.diff] || 0;
+    this.ai = ctx.players.filter(p => p.ai).map(p => p.id);   // Computer-Spieler
+    this.bots = {};
+    for (const p of ctx.players) if (p.ai) this.bots[p.id] = HR.ArenaGame.botMind(p, ctx.seed);
   }
 
   start() {
@@ -97,7 +98,7 @@ HR.ArenaGame = class {
       if (this.endT > 2.5 && !this.ended) { this.ended = true; this.onEnd(this.def.rank(S, this)); }
       return;
     }
-    for (const id of this.ai) { const p = S.p.find(q => q.id === id); if (p) this.inputs[id] = HR.Showcase.botBits(this.def, S, p, this.sloppy); }
+    for (const id of this.ai) { const p = S.p.find(q => q.id === id); if (p) this.inputs[id] = HR.ArenaGame.botPress(this.bots[id], this.def, S, p, dt); }
     const inp = {};
     for (const p of S.p) {
       const k = this.inputs[p.id] | 0, pk = this.prevIn[p.id] | 0, e = (this.edges[p.id] | 0) | (k & ~pk);
@@ -269,6 +270,72 @@ HR.ArenaGame = class {
       T(g, w ? 'Du schaust ' + this.name(w.id) + ' zu  ·  ◀ ▶ wechseln' : 'Du schaust den anderen zu', W / 2, H * 0.12 + 52 * sc, 17 * sc, '#fff');
     }
   }
+};
+
+// ---------- Computer-Spieler wie Menschen ----------
+// Jeder Computer-Spieler bekommt eine eigene Spielweise: Reaktionszeit, kurze Unaufmerksamkeiten, Mindestdauer
+// eines Tastendrucks und Wagemut. Seine Tasten kommen um die Reaktionszeit verzögert an (wie bei einem Menschen,
+// der erst sehen und dann drücken muss). Die Spiel-Bots in showcase.js planen dafür um HR.Showcase.lead Sekunden voraus.
+HR.ArenaGame.botMind = function (pl, seed) {
+  const rnd = U.rng(((seed | 0) ^ Math.imul((pl.id | 0) + 7, 2654435761)) >>> 0);
+  const d = U.clamp(Game.diff == null ? 1 : Game.diff, 0, 2);
+  const sk = pl.skill == null ? 0.5 : U.clamp((pl.skill - 0.8) / 0.2, 0, 1);   // innerhalb der Stufe: 0 schwächer … 1 stärker
+  const r = (a, b) => a + (b - a) * rnd.random();
+  return {
+    rd: [0.32, 0.23, 0.165][d] * r(0.85, 1.2) * (1.12 - sk * 0.24),       // Reaktionszeit in s
+    lapse: [0.16, 0.08, 0.03][d] * r(0.6, 1.5),                          // Aussetzer pro Sekunde
+    hold: r(0.06, 0.1),                                                   // so kurz kann er minimal drücken
+    err: [0.35, 0.2, 0.08][d] * r(0.7, 1.3),                             // Ungenauigkeit (für die Spiel-Bots)
+    bold: r(0, 1),                                                        // Wagemut (für die Spiel-Bots)
+    q: [], out: 0, chg: -1, lap: 0, t: 0,
+  };
+};
+
+HR.ArenaGame.botPress = function (B, def, S, p, dt) {
+  const SC = HR.Showcase;
+  B.t += dt;
+  // in Spielen, in denen man den Weg vor sich sieht und vorausplant (Jump and Run), reagiert man schneller als auf Überraschungen
+  const rd = B.rd * (def.botReact || 1);
+  // er entscheidet nach der Stelle, an der er sein wird, wenn sein Tastendruck ankommt (Bewegung der letzten Bilder fortgesetzt)
+  const keys = ['x', 'y', 'a', 'h'], save = {};
+  for (const k of keys) {
+    if (typeof p[k] !== 'number') continue;
+    const prev = B.pv && B.pv[k];
+    let v = prev == null || !(dt > 0) ? 0 : (p[k] - prev) / dt;
+    if (Math.abs(v) > (k === 'a' ? 12 : 1500)) v = 0;        // Sprung (Teleport, Umbruch am Rand): nicht fortsetzen
+    B.v = B.v || {}; B.v[k] = B.v[k] == null ? v : B.v[k] * 0.6 + v * 0.4;
+    save[k] = p[k];
+  }
+  B.pv = Object.assign({}, save);
+  if (def.botPredict !== false && p.al !== 0) for (const k in save) p[k] = save[k] + B.v[k] * rd * 0.9;
+  // wie lange jede Taste in den noch nicht angekommenen Entscheidungen gedrückt ist (in s), für Bots, die genau rechnen
+  const pend = { l: 0, r: 0, u: 0, d: 0, a: 0, b: 0 }, nm = ['l', 'r', 'u', 'd', 'a', 'b'];
+  for (let i = 0; i < B.q.length; i++) {
+    const t0 = Math.max(B.q[i][0], B.t - rd), t1 = i + 1 < B.q.length ? B.q[i + 1][0] : B.t;
+    if (t1 > t0) for (let k = 0; k < 6; k++) if (B.q[i][1] & (1 << k)) pend[nm[k]] += t1 - t0;
+  }
+  SC.lead = rd; SC.mind = B; SC.now = save; SC.pend = pend;
+  let raw;
+  try { raw = SC.botBits(def, S, p, 0); } finally { SC.lead = 0; SC.mind = null; SC.now = null; SC.pend = null; Object.assign(p, save); }
+  // festgelaufen (z. B. an einer Wand): wie ein Mensch kurz seitlich ausweichen
+  if (typeof save.x === 'number' && typeof save.y === 'number') {
+    const moved = B.sx == null ? 99 : Math.hypot(save.x - B.sx, save.y - B.sy);
+    B.sx = save.x; B.sy = save.y;
+    if (B.esc > 0) { B.esc -= dt; raw = (raw & ~15) | B.escB; }
+    else if ((B.out & 15) && moved < 0.5 * dt * 60) { B.stk = (B.stk || 0) + dt; if (B.stk > 0.45) { B.stk = 0; B.esc = 0.35 + Math.random() * 0.4; B.escB = [1, 2, 4, 8, 5, 6, 9, 10][Math.floor(Math.random() * 8)]; } }
+    else B.stk = 0;
+  }
+  B.q.push([B.t, raw]);
+  // was er vor der Reaktionszeit entschieden hat, kommt jetzt an
+  while (B.q.length > 1 && B.q[1][0] <= B.t - rd) B.q.shift();
+  const want = B.q[0][0] <= B.t - rd ? B.q[0][1] : 0;
+  // kurze Unaufmerksamkeit: lässt die Tasten los und reagiert einen Moment nicht
+  // (in Spielen mit def.botLapse === 'hold' hält er dabei die Tasten einfach weiter, z. B. beim Rennen und Springen)
+  const hold = def.botLapse === 'hold';
+  if (B.lap > 0) { B.lap -= dt; if (!hold) B.out = 0; return B.out; }
+  if (Math.random() < B.lapse * dt) { B.lap = 0.15 + Math.random() * 0.35; if (!hold) B.out = 0; return B.out; }
+  if (want !== B.out && B.t - B.chg >= B.hold) { B.out = want; B.chg = B.t; }
+  return B.out;
 };
 
 // ---------- Helfer für die Spiele ----------
