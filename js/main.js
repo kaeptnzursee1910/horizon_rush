@@ -76,7 +76,10 @@ const Game = HR.Game = {
     if (inv.length === 4 && HR.Net.MODES[qs.get('via')]) HR.Net.setMode(qs.get('via'));
     const km = /[#&]k=([A-Za-z0-9+/]+)/.exec(location.hash);
     if (km) { try { const [u, p] = JSON.parse(decodeURIComponent(escape(atob(km[1])))); if (u && p) HR.Net.setKey(String(u), String(p)); } catch (_) { } }
-    if (inv.length === 4 || km) history.replaceState(null, '', location.pathname);
+    // Hotspot des Gastgebers (Name und Passwort) aus dem Link übernehmen
+    const wm = /[#&]w=([A-Za-z0-9+/]+)/.exec(location.hash);
+    if (wm) { try { const [s, p] = JSON.parse(decodeURIComponent(escape(atob(wm[1])))); if (s) HR.Net.setHotspot(String(s), String(p || '')); } catch (_) { } }
+    if (inv.length === 4 || km || wm) history.replaceState(null, '', location.pathname);
     if (inv.length === 4) { UI.main(); UI.party(inv); }
     else UI.main();
     let last = performance.now(), acc = 0;
@@ -710,11 +713,18 @@ const UI = HR.UI = {
       direct: 'Die Geräte verbinden sich direkt miteinander. Der Spielverkehr läuft nie über den Verbindungsserver und spart dessen Kontingent. In Netzen, die direkte Verbindungen sperren, klappt das nicht.',
       auto: 'Direkt, wenn möglich. Nur wenn das Netz es verhindert, läuft die Verbindung über den Verbindungsserver' + (k.user ? '.' : ' (dafür unten Zugangsdaten eintragen).'),
       relay: 'Der gesamte Verkehr läuft über den Verbindungsserver. Funktioniert auch in gesperrten Netzen, verbraucht aber Server-Kontingent.' + (k.user ? '' : ' Dafür unten Zugangsdaten eintragen!'),
+      hotspot: 'Für Orte ohne stabiles WLAN: Ein Gerät öffnet einen Hotspot (Handy, iPad mit SIM-Karte oder Windows-PC über „Mobiler Hotspot“), alle Spieler verbinden sich damit. Das Spiel läuft dann direkt im Hotspot-Netz. Nur das Laden der Seite und das Finden der Party brauchen kurz die mobilen Daten des Hotspot-Geräts. Name und Passwort des Hotspots reisen im Einladungslink mit.',
     }[mode];
+    const hs = HR.Net.getHotspot() || {};
+    const hotForm = mode === 'hotspot' ? `<h3>Hotspot</h3>
+      <p class="note">Steht auf dem Hotspot-Gerät: iPhone/iPad unter <b>Einstellungen → Persönlicher Hotspot</b>, Android unter <b>Hotspot und Tethering</b>, Windows unter <b>Einstellungen → Netzwerk und Internet → Mobiler Hotspot</b>.</p>
+      <label class="field"><span>WLAN-Name</span><input id="hssid" value="${this.esc(hs.ssid || '')}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="z. B. iPhone von Simon oder DESKTOP-1234"></label>
+      <label class="field"><span>Passwort</span><input id="hpass" value="${this.esc(hs.pass || '')}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>` : '';
     this.show(`<div class="panel narrow"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Verbindung</h2></header>
       <h3>Verbindungsweg</h3>
       <div class="seg">${Object.entries(HR.Net.MODES).map(([m, label]) => `<button class="${m === mode ? 'on' : ''}" data-act="cmode" data-arg="${m}">${label}</button>`).join('')}</div>
       <p class="note">${modeNote} Als Gastgeber gibst du diese Wahl im Einladungslink an deine Mitspieler weiter.</p>
+      ${hotForm}
       <h3>Verbindungsserver</h3>
       <p class="note">In manchen Netzwerken, etwa in Firmen- oder Hochschul-WLANs, können sich Geräte nicht direkt verbinden. Dann läuft die Verbindung über einen Verbindungsserver. Die Zugangsdaten werden nur auf diesem Gerät gespeichert.</p>
       <label class="field"><span>Benutzername</span><input id="kuser" value="${this.esc(k.user || '')}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
@@ -810,10 +820,12 @@ const UI = HR.UI = {
     keyform() { UI._keyBack = UI.el.querySelector('.settings') ? () => UI.settings() : () => UI.online(); UI.keyform(); },
     keysave() {
       const u = UI.el.querySelector('#kuser').value.trim(), p = UI.el.querySelector('#kpass').value.trim();
-      HR.Net.setKey(u, p); UI.toast(u && p ? 'Zugangsdaten gespeichert' : 'Zugangsdaten gelöscht');
+      const hs = UI.el.querySelector('#hssid'), hp = UI.el.querySelector('#hpass');
+      if (hs) HR.Net.setHotspot(hs.value.trim(), hp.value);
+      HR.Net.setKey(u, p); UI.toast(hs && hs.value.trim() ? 'Gespeichert' : u && p ? 'Zugangsdaten gespeichert' : 'Zugangsdaten gelöscht');
       UI._keyBack ? UI._keyBack() : UI.online();
     },
-    cmode(m) { HR.Net.setMode(m); UI.keyform(); const b = UI.el.querySelector(`[data-act="cmode"][data-arg="${m}"]`); if (b) b.focus(); },
+    cmode(m) { const hs = UI.el.querySelector('#hssid'); if (hs && hs.value.trim()) HR.Net.setHotspot(hs.value.trim(), UI.el.querySelector('#hpass').value); HR.Net.setMode(m); UI.keyform(); const b = UI.el.querySelector(`[data-act="cmode"][data-arg="${m}"]`); if (b) b.focus(); },
     keydel() { HR.Net.setKey(null); UI.toast('Zugangsdaten gelöscht'); UI._keyBack ? UI._keyBack() : UI.online(); },
     readName() { const n = UI.el.querySelector('#pname'); if (n) { Game.settings.name = n.value.trim().slice(0, 16) || Game.settings.name; Game.save(); } },
     host() { UI.acts.readName(); Game.onlineHost(); },

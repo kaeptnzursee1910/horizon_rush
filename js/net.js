@@ -13,8 +13,21 @@ HR.Net = {
   KEY_STORE: 'hr_online_key',
   MODE_STORE: 'hr_conn_mode',
   // Verbindungsweg: 'direct' = nur direkt (spart Server-Verkehr), 'auto' = direkt mit Server als Ausweichweg,
-  // 'relay' = immer über den Verbindungsserver (TURN)
-  MODES: { direct: 'Direkt (P2P)', auto: 'Automatisch', relay: 'Über Server' },
+  // 'relay' = immer über den Verbindungsserver (TURN),
+  // 'hotspot' = alle Geräte im Hotspot des Gastgebers (wie 'auto', zusätzlich reisen Name und Passwort des Hotspots im Link mit)
+  MODES: { direct: 'Direkt (P2P)', auto: 'Automatisch', relay: 'Über Server', hotspot: 'Hotspot' },
+  HOT_STORE: 'hr_hotspot',
+  getHotspot() {
+    try { const h = JSON.parse(localStorage.getItem(this.HOT_STORE) || 'null'); return h && h.ssid ? h : null; } catch (_) { return null; }
+  },
+  setHotspot(ssid, pass) {
+    try { if (ssid) localStorage.setItem(this.HOT_STORE, JSON.stringify({ ssid, pass: pass || '' })); else localStorage.removeItem(this.HOT_STORE); } catch (_) { }
+  },
+  // Inhalt für einen WLAN-QR-Code: die Kamera von iPad, iPhone und Android verbindet sich damit direkt
+  wifiCode(h) {
+    const e = s => String(s).replace(/([\\;,:"])/g, '\\$1');
+    return 'WIFI:T:' + (h.pass ? 'WPA' : 'nopass') + ';S:' + e(h.ssid) + ';' + (h.pass ? 'P:' + e(h.pass) + ';' : '') + ';';
+  },
   getMode() {
     try { const m = localStorage.getItem(this.MODE_STORE); return this.MODES[m] ? m : 'auto'; } catch (_) { return 'auto'; }
   },
@@ -168,9 +181,9 @@ HR.Net = {
 
   errText(e) {
     switch (e && e.type) {
-      case 'peer-unavailable': return this.prefix === this.PREFIX ? 'Kein Rennen mit diesem Code gefunden.' : 'Keine Party mit diesem Code gefunden.';
+      case 'peer-unavailable': return (this.prefix === this.PREFIX ? 'Kein Rennen mit diesem Code gefunden.' : 'Keine Party mit diesem Code gefunden.') + (this.getMode() === 'hotspot' ? ' Bist du mit dem Hotspot des Gastgebers verbunden?' : '');
       case 'network': case 'server-error': case 'socket-error': case 'socket-closed':
-        return 'Keine Verbindung zum Vermittlungsserver. Ist das Gerät online?';
+        return 'Keine Verbindung zum Vermittlungsserver. Ist das Gerät online?' + (this.getMode() === 'hotspot' ? ' Prüfe, ob du mit dem Hotspot verbunden bist und ob beim Hotspot-Gerät mobile Daten an sind.' : '');
       case 'browser-incompatible': return 'Dieser Browser unterstützt kein WebRTC.';
       default: return 'Verbindungsfehler: ' + ((e && (e.type || e.message)) || 'unbekannt');
     }

@@ -46,7 +46,9 @@ HR.AR.define({
         const [x, y] = this.cellXY(f.c);
         for (const p of S.p) {
           if (!p.al || p.gone || Math.abs(p.x - x) > this.CELL / 2 + 14 || Math.abs(p.y - y) > this.CELL / 2 + 14) continue;
-          if (p.sh) { p.sh = 0; G.sfx('lap', p.id); const d = Math.hypot(p.x - x, p.y - y) || 1; p.x += (p.x - x) / d * 60; p.y += (p.y - y) / d * 60; }
+          // das Schild hält den Treffer ab und schiebt die Figur von der Kiste herunter;
+          // ist ringsum kein Platz mehr, wird sie trotzdem eingeklemmt
+          if (p.sh) { p.sh = 0; G.sfx('lap', p.id); if (!this.eject(S, p)) { p.al = 0; p.dt = S.time; G.sfx('crash'); } }
           else { p.al = 0; p.dt = S.time; G.sfx('crash'); }
         }
         S.sh = S.sh.filter(s => s.c !== f.c);
@@ -57,6 +59,8 @@ HR.AR.define({
     const G0 = this.geo(), W = this.GX * this.CELL, H = this.GY * this.CELL;
     for (const p of S.p) {
       if (!p.al || p.gone) continue;
+      // steckt jemand in einer Kiste (z. B. nach dem Wegschubsen), muss er heraus – sonst ist er eingeklemmt
+      if (this.stuck(S, p) && !this.eject(S, p)) { p.al = 0; p.dt = S.time; G.sfx('crash'); continue; }
       const [dx, dy] = HR.ST.dir(inp[p.id]);
       if (dx || dy) { p.lx = dx; p.ly = dy; }
       this.move(S, p, dx * 300 * dt, 0); this.move(S, p, 0, dy * 300 * dt);
@@ -65,6 +69,34 @@ HR.AR.define({
       if (s && !p.sh) { p.sh = 1; S.sh = S.sh.filter(q => q !== s); G.sfx('select', p.id); }
     }
     HR.ST.separate(S.p.filter(p => p.al && !p.gone), 22);
+  },
+
+  // berührt die Figur eine gelandete Kiste?
+  stuck(S, p) {
+    const r = 17;
+    for (const [ox, oy] of [[0, 0], [-r, -r], [r, -r], [-r, r], [r, r]]) { const c = this.cellOf(p.x + ox, p.y + oy); if (c >= 0 && S.box[c]) return true; }
+    return false;
+  },
+
+  // Figur auf den nächsten freien Platz neben den Kisten setzen; false, wenn es keinen gibt
+  eject(S, p) {
+    const C = this.CELL, G0 = this.geo(), cx0 = Math.floor((p.x - G0.x0) / C), cy0 = Math.floor((p.y - G0.y0) / C);
+    let best = null, bd = 1e9;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const cx = cx0 + dx, cy = cy0 + dy;
+      if (cx < 0 || cy < 0 || cx >= this.GX || cy >= this.GY) continue;
+      const c = cy * this.GX + cx;
+      if (S.box[c]) continue;
+      // nächster Punkt in diesem Feld, mit Abstand zum Rand, damit die Figur nicht wieder in einer Kiste hängt
+      const x = U.clamp(p.x, G0.x0 + cx * C + 20, G0.x0 + (cx + 1) * C - 20), y = U.clamp(p.y, G0.y0 + cy * C + 20, G0.y0 + (cy + 1) * C - 20);
+      const q = { x, y };
+      if (this.stuck(S, q)) continue;
+      const d = Math.hypot(x - p.x, y - p.y);
+      if (d < bd) { bd = d; best = q; }
+    }
+    if (!best) return false;
+    p.x = best.x; p.y = best.y;
+    return true;
   },
 
   // gegen gelandete Kisten laufen

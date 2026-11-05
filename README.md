@@ -6,8 +6,8 @@ Läuft auf iPad, Android-Tablet und Windows-PC in Safari, Chrome, Edge oder Fire
 **Spielen:** https://kaeptnzursee1910.github.io/horizon_rush/
 
 ## Inhalt
-- **Multiplayer:** Party für bis zu 8 Spieler mit 24 Minispielen, Chat und Siegerehrung. Freie Plätze füllen beim Start Computergegner auf.
-- **Singleplayer:** alle 24 Minispiele gegen 1 bis 7 Computergegner, mit Runden, Punkten und Siegerehrung.
+- **Multiplayer:** Party für bis zu 8 Spieler mit 25 Minispielen, Chat und Siegerehrung. Freie Plätze füllen beim Start Computergegner auf.
+- **Singleplayer:** alle 25 Minispiele gegen 1 bis 7 Computergegner, mit Runden, Punkten und Siegerehrung.
   Dort gibt es auch ein freies Rennen gegen 7 Computergegner.
 - 3 Strecken (Küstenstraße, Alpenpass, Wüstencanyon), 4 Autos mit Lackierungen
 
@@ -35,9 +35,21 @@ Minispiele:
 - **Arena-Spiele:** Lichtrad-Arena, Panzer-Arena, Autoscooter-Sumo, Mini-Rennen von oben,
   Wolken-Wettklettern, Tunnel-Überleben, Pong-Achteck, Straßen-Überquerung, Brüchiger Boden,
   Laser-Sprung, Kistenregen, Kronenjagd, Schneeballschlacht, Gedächtnis-Felder, Ampel-Lauf,
-  Schatzgräber, Schnellzieher, Ballonpumpen, Im Dunkeln, Münzsturm
+  Schatzgräber, Schnellzieher, Ballonpumpen, Im Dunkeln, Münzsturm, Hüpf-Parcours
+
+Autoscooter-Sumo geht über 5 Runden, es gewinnt, wer die meisten Runden für sich entscheidet.
+Der Hüpf-Parcours ist ein Jump and Run: Jedes Mal wird ein neues Level gebaut (Lücken, Stacheln,
+schwebende Plattformen, Sprungfedern, Kreissägen) und vorher geprüft, ob es bis zur Zielflagge lösbar ist.
+
+Die Computergegner spielen wie Menschen: Sie reagieren mit kurzer Verzögerung, drücken Tasten nicht
+beliebig kurz, machen ab und zu Fehler und haben jeweils ihren eigenen Stil (vorsichtig oder mutig).
 
 Alle Arena-Spiele teilen einen Grafikstil (runde Party-Figuren, kräftige Farben, dunkle Umrisse).
+
+Ohne stabiles WLAN (Verbindungseinstellungen → **Hotspot**): Ein Gerät öffnet einen Hotspot (Handy, iPad mit SIM-Karte
+oder Windows-PC über „Mobiler Hotspot“), alle verbinden sich damit. WLAN-Name und Passwort reisen im Einladungslink mit,
+in der Lobby zeigt der Gastgeber zusätzlich QR-Codes für den Hotspot und für die Party. Das Spiel läuft dann direkt im
+Hotspot-Netz; nur das Laden der Seite und das Finden der Party brauchen kurz Internet über den Hotspot.
 
 Mit Tastatur: Pfeiltasten oder WASD, Leertaste oder Enter für die Hauptaktion, Shift oder Q für die zweite Aktion.
 

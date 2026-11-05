@@ -22,6 +22,7 @@
 <div id="rotate"><div><b>Bitte quer halten</b><span>Horizon Rush wird im Querformat gespielt.</span></div></div>
 <noscript><p class="noscript">Horizon Rush braucht JavaScript.</p></noscript>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" async></script>
+<script src="js/qrcode.js" defer></script>
 <script>
 // Grafikstil wählen (Einstellungen → Grafikstil) und die passenden Skripte laden.
 // Neon ersetzt nur Zeichen-Code; Spiellogik und Netzwerk sind in beiden Stilen gleich, daher können Spieler mit
@@ -32,7 +33,7 @@
   window.HR_THEME = t;
   var neon = t === 'neon', w = function (h) { document.write(h); };
   if (neon) { document.querySelector('link[rel=stylesheet]').href = 'style-neon.css'; document.querySelector('meta[name=theme-color]').content = '#07060f'; }
-  var files = ['core', 'audio', 'input', 'render', 'race', 'net', 'main', 'party', 'partyrace', 'arena', 'style', 'games/lightcycle', 'games/tanks', 'games/sumo', 'games/minirace', 'games/clouds', 'games/tunnel', 'games/pong', 'games/crossing', 'games/floor', 'games/laser', 'games/crates', 'games/crown', 'games/snow', 'games/memory', 'games/redlight', 'games/treasure', 'games/quickdraw', 'games/balloon', 'games/dark', 'games/coins', 'showcase'];
+  var files = ['core', 'audio', 'input', 'render', 'race', 'net', 'main', 'party', 'partyrace', 'arena', 'style', 'games/lightcycle', 'games/tanks', 'games/sumo', 'games/minirace', 'games/clouds', 'games/tunnel', 'games/pong', 'games/crossing', 'games/floor', 'games/laser', 'games/crates', 'games/crown', 'games/snow', 'games/memory', 'games/redlight', 'games/treasure', 'games/quickdraw', 'games/balloon', 'games/dark', 'games/coins', 'games/parkour', 'showcase'];
   var swap = { render: 1, style: 1 }, patch = { core: 1, partyrace: 1, arena: 1 };
   files.forEach(function (f) {
     if (neon && f === 'showcase') w('<script src="js/neon/games-patch.js" defer><\/script>');

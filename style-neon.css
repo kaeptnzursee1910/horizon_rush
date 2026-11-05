@@ -380,3 +380,12 @@ small.via.relay { background: rgba(255, 226, 61, .14); color: #fff3a8; border-co
   .main .bigmenu button.big b { font-size: 24px; }
   .logo { font-size: clamp(36px, 8vw, 64px); }
 }
+
+/* Hotspot: Anleitung und QR-Codes */
+.hotspot { border: 1px dashed var(--line); border-radius: 6px; padding: 4px 12px; margin: 10px 0; }
+.hotspot .pw { color: var(--yellow); letter-spacing: .04em; user-select: all; -webkit-user-select: all; }
+.qrs { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin: 8px 0; }
+.qr { margin: 0; text-align: center; }
+.qr div { background: #fff; border-radius: 4px; padding: 4px; width: 150px; height: 150px; }
+.qr svg { width: 100%; height: 100%; display: block; }
+.qr figcaption { color: var(--dim); font-size: 13px; margin-top: 4px; font-family: var(--font); }

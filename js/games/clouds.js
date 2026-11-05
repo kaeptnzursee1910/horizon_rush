@@ -84,7 +84,8 @@ HR.AR.define({
     // Kamera
     if (S.time > 4) S.cb += (35 + S.time * 2.3) * dt;
     let top = 0; for (const p of S.p) if (p.al && p.h > top) top = p.h;
-    S.cb = Math.max(S.cb, top - 860);
+    // dem Höchsten folgen, aber höchstens mit 480 px/s, damit eine Sprungfeder die anderen nicht sofort aus dem Bild wirft
+    if (top - 860 > S.cb) S.cb = Math.min(top - 860, S.cb + 480 * dt);
     for (const p of S.p) if (p.al && p.h < S.cb - 60) { p.al = 0; p.dt = S.time; G.sfx('crash'); }
   },
 

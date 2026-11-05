@@ -13,7 +13,7 @@ HR.PARTY_COLOR_NAMES = HR.THEME === 'neon'
 
 // Spiele melden sich hier an (partyrace.js und games/*.js)
 HR.GAMES = {};
-HR.GAME_ORDER = ['A1', 'A2', 'A3', 'A5', 'B1', 'B2', 'B3', 'B4', 'B6', 'B7', 'B9', 'B10', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12'];
+HR.GAME_ORDER = ['A1', 'A2', 'A3', 'A5', 'B1', 'B2', 'B3', 'B4', 'B6', 'B7', 'B9', 'B10', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'D1'];
 HR.addGame = def => { HR.GAMES[def.code] = def; };
 
 const Party = HR.Party = {
@@ -469,6 +469,25 @@ const PUI = HR.PUI = {
   },
 
   // --- Lobby: alle sehen die Einstellungen des Gastgebers ---
+  // QR-Codes zum Hotspot und zur Party: Mitspieler am selben Tisch scannen sie mit der Kamera
+  qr(text, label) {
+    if (typeof window.qrcode !== 'function') return '';
+    try {
+      if (qrcode.stringToBytesFuncs && qrcode.stringToBytesFuncs['UTF-8']) qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];   // Umlaute im WLAN-Namen
+      const q = qrcode(0, 'M'); q.addData(text, 'Byte'); q.make();
+      return `<figure class="qr"><div>${q.createSvgTag({ cellSize: 4, margin: 2, scalable: true })}</div><figcaption>${label}</figcaption></figure>`;
+    } catch (_) { return ''; }
+  },
+  hotspotBox(P) {
+    if (HR.Net.getMode() !== 'hotspot') return '';
+    const hs = HR.Net.getHotspot();
+    if (!hs) return `<p class="note">Verbindung über Hotspot: Trage in den <button class="link" data-act="keyform">Verbindungseinstellungen</button> Name und Passwort deines Hotspots ein, dann reisen sie im Einladungslink mit.</p>`;
+    const link = location.origin + location.pathname + '?party=' + P.code + '&via=hotspot';
+    return `<div class="hotspot"><h3>Hotspot</h3>
+      <p class="note">WLAN <b>${UI.esc(hs.ssid)}</b>${hs.pass ? ` · Passwort <b>${UI.esc(hs.pass)}</b>` : ''}. Mitspieler scannen erst den linken Code (verbindet mit dem Hotspot), dann den rechten (öffnet die Party).</p>
+      <div class="qrs">${this.qr(HR.Net.wifiCode(hs), '1. Hotspot')}${this.qr(link, '2. Party')}</div></div>`;
+  },
+
   lobby() {
     this.frame(Party.P.solo ? 'Singleplayer' : 'Party-Lobby', Party.P.solo ? 'Minispiele gegen Computergegner' : '', '<div id="pset"></div>');
     this.settings();
@@ -499,7 +518,8 @@ const PUI = HR.PUI = {
         <p class="note">Lieber ein normales Rennen? <button class="link" data-act="soloRace">Freies Rennen fahren</button></p>`
       : host ? `<nav class="list row"><button class="hot" data-act="pstart">Party starten</button><button data-act="pinvite">Einladungslink teilen</button></nav>
         <p class="note">Freie Plätze bis ${P.max} Spieler füllen beim Start Computergegner auf (Stärke wie in den Einstellungen).</p>
-        <p class="note">Wer den Link öffnet, kommt direkt in die Party. Oder: <b>Multiplayer</b> tippen und den Code <b>${P.code}</b> eingeben.</p>`
+        <p class="note">Wer den Link öffnet, kommt direkt in die Party. Oder: <b>Multiplayer</b> tippen und den Code <b>${P.code}</b> eingeben.</p>
+        ${PUI.hotspotBox(P)}`
         : `<p class="note wait">Nur ${UI.esc(Party.hostName())} kann die Einstellungen ändern. Warte, bis die Party startet …</p>`}`;
     UI.bind(el);
     if (focus) { const b = el.querySelector(`[data-act="${focus[0]}"]${focus[1] != null ? `[data-arg="${focus[1]}"]` : ''}`); if (b && !b.disabled) b.focus({ preventScroll: true }); }
@@ -603,12 +623,22 @@ Object.assign(UI.acts, {
   },
   pleave() { Party.leave(); },
   // Einladungslink: über das Teilen-Menü (WhatsApp usw.) oder in die Zwischenablage
+  hcopy() {
+    const hs = HR.Net.getHotspot(); if (!hs) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(hs.pass).then(() => UI.toast('Passwort kopiert'), () => {});
+  },
   pinvite() {
     const P = Party.P; if (!P || !P.code) return;
     // die Zugangsdaten des Verbindungsservers reisen im Teil nach # mit: der wird nie an einen Server geschickt
-    const k = HR.Net.getKey();
-    const url = location.origin + location.pathname + '?party=' + P.code + '&via=' + HR.Net.getMode() + (k && k.user && k.pass ? '#k=' + btoa(unescape(encodeURIComponent(JSON.stringify([k.user, k.pass])))).replace(/=+$/, '') : '');
-    const text = 'Komm in meine Horizon-Rush-Party! Code ' + P.code;
+    const k = HR.Net.getKey(), hs = HR.Net.getMode() === 'hotspot' ? HR.Net.getHotspot() : null;
+    const b64 = a => btoa(unescape(encodeURIComponent(JSON.stringify(a)))).replace(/=+$/, '');
+    const hash = [];
+    if (k && k.user && k.pass) hash.push('k=' + b64([k.user, k.pass]));
+    if (hs) hash.push('w=' + b64([hs.ssid, hs.pass]));
+    const url = location.origin + location.pathname + '?party=' + P.code + '&via=' + HR.Net.getMode() + (hash.length ? '#' + hash.join('&') : '');
+    // Hotspot-Daten auch als Text: ohne Internet lässt sich der Link erst öffnen, wenn man im Hotspot ist
+    const text = hs ? `Komm in meine Horizon-Rush-Party! Verbinde dich zuerst mit dem WLAN „${hs.ssid}“${hs.pass ? ` (Passwort: ${hs.pass})` : ''}, dann öffne den Link. Code ${P.code}`
+      : 'Komm in meine Horizon-Rush-Party! Code ' + P.code;
     if (navigator.share) { navigator.share({ title: 'Horizon Rush', text, url }).catch(() => {}); return; }
     const done = () => UI.toast('Link kopiert: ' + url);
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text + '\n' + url).then(done, () => window.prompt('Link kopieren:', url));
@@ -638,6 +668,7 @@ UI.party = function (invite) {
   this.show(`<div class="panel narrow"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Party</h2></header>
     ${invite ? `<p class="note">Du wurdest in die Party <b>${invite}</b> eingeladen. Gib deinen Namen ein und tippe auf <b>Beitreten</b>.</p>`
       : '<p class="note">Bis zu 8 Spieler, jeder auf seinem eigenen Gerät. Mehrere Runden mit wechselnden Minispielen, am Ende gibt es eine Siegerehrung.</p>'}
+    ${UI.hotspotSteps(invite)}
     <label class="field"><span>Dein Name</span><input id="pname" maxlength="16" value="${this.esc(s.name)}" autocomplete="off"></label>
     ${invite ? '' : '<nav class="list"><button data-act="pcreate" autofocus>Party eröffnen</button></nav>'}
     <div class="join">
@@ -648,6 +679,17 @@ UI.party = function (invite) {
     <p class="error" id="err" hidden></p></div>`, () => this.main());
   this.el.querySelector('#jcode').addEventListener('keydown', e => { if (e.key === 'Enter') UI.acts.pjoin(); });
   this.el.querySelector('#pname').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+};
+
+// Anleitung für den Hotspot-Weg: erst ins WLAN des Gastgebers, dann beitreten
+UI.hotspotSteps = function (invite) {
+  if (HR.Net.getMode() !== 'hotspot') return '';
+  const hs = HR.Net.getHotspot();
+  if (!invite) return hs ? `<p class="note">Weg: Hotspot <b>${this.esc(hs.ssid)}</b>. Zuerst den Hotspot einschalten (Handy, iPad oder Windows „Mobiler Hotspot“) und alle Geräte damit verbinden.</p>` : '';
+  if (!hs) return '<p class="note">Verbinde dich zuerst mit dem Hotspot des Gastgebers.</p>';
+  return `<div class="hotspot"><p class="note"><b>1.</b> Öffne <b>Einstellungen → WLAN</b> und verbinde dich mit <b>${this.esc(hs.ssid)}</b>.</p>
+    ${hs.pass ? `<p class="note">Passwort: <b class="pw">${this.esc(hs.pass)}</b> <button class="link" data-act="hcopy">kopieren</button></p>` : ''}
+    <p class="note"><b>2.</b> Komm hierher zurück und tippe auf <b>Beitreten</b>.</p></div>`;
 };
 
 // Menü während eines Party-Spiels
