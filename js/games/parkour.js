@@ -258,6 +258,7 @@ HR.AR.define({
     S.fx = S.fx.filter(f => S.time - f[2] < 0.8);
   },
 
+  done: (S, p) => !!p.fin,
   over(S) {
     const live = S.p.filter(p => !p.gone);
     return live.every(p => p.fin) || (S.first >= 0 && S.time - S.first >= this.AFTER);

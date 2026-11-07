@@ -46,10 +46,24 @@ HR.ArenaGame = class {
 
   // Geräusche: der Gastgeber spielt sie und schickt sie mit dem nächsten Spielstand an alle
   sfx(name, onlyFor) {
-    if (!this.host || this.show) return;
+    if (!this.host || this.show || this.ff) return;
     if (onlyFor == null || onlyFor === this.me) HR.Audio.play(name);
     this.fx.push([++this.fxSeq, name, onlyFor == null ? -1 : onlyFor, this.S.time]);
     if (this.fx.length > 20) this.fx.shift();
+  }
+
+  // Ist ein Spieler schon fertig (ausgeschieden, im Ziel oder weg)?
+  done(p) { const d = this.def, S = this.S; return !!p.gone || !!(d.isOut && d.isOut(S, p)) || !!(d.done && d.done(S, p)); }
+  // Leben nur noch Computer-Spieler? Dann muss kein Mensch mehr zuschauen, wie sie es unter sich ausmachen.
+  onlyBots() {
+    if (this.show || !this.ai.length) return false;
+    let bot = false;
+    for (const p of this.S.p) {
+      if (this.done(p)) continue;
+      if (!this.bots[p.id]) return false;   // ein Mensch spielt noch
+      bot = true;
+    }
+    return bot;
   }
 
   readInput() {
@@ -72,6 +86,15 @@ HR.ArenaGame = class {
     }
     if (this.host) {
       this.acc += dt;
+      // nur noch Computer im Spiel: den Rest im Zeitraffer zu Ende rechnen, damit jeder Computer den Platz bekommt,
+      // den er auch so bekommen hätte (höchstens 30 ms pro Bild, damit nichts ruckelt)
+      if (this.phase === 'play' && this.onlyBots()) {
+        const t0 = performance.now();
+        this.ff = true;
+        try { while (this.phase === 'play' && this.onlyBots() && performance.now() - t0 < 30) this.step(HR.STEP); } finally { this.ff = false; }
+        this.ffT = 0.4; this.acc = 0;
+      }
+      if (this.ffT > 0) this.ffT -= dt;
       let n = 0;
       while (this.acc >= HR.STEP && n++ < 4) { this.step(HR.STEP); this.acc -= HR.STEP; }
       if (n >= 4) this.acc = 0;
@@ -264,6 +287,7 @@ HR.ArenaGame = class {
       T(g, this.def.short || '', W / 2, H * 0.42 + 85 * sc, 24 * sc, '#fff');
     } else if (this.goT > 0) T(g, 'LOS!', W / 2, H * 0.42, 110 * sc, 'rgb(90,235,110)');
     if (this.phase === 'end') T(g, 'ENDE!', W / 2, H * 0.42, 90 * sc, Y);
+    if (this.ffT > 0 && this.phase === 'play') T(g, 'Nur noch Computer im Spiel – Runde wird ausgewertet …', W / 2, H * 0.5, 22 * sc, '#fff');
     else if (this.phase === 'play' && this.def.isOut && this.def.isOut(S, S.p.find(p => p.id === this.me) || {})) {
       T(g, 'AUSGESCHIEDEN', W / 2, H * 0.12 + 20 * sc, 30 * sc, 'rgb(255,110,100)');
       const w = this.watching();
