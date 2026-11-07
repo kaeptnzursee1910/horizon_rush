@@ -27,6 +27,11 @@ HR.PartyRace = class {
     if (this.rules.init) this.rules.init(this.race, rnd);
   }
 
+  onlyBots() {
+    const race = this.race;
+    return race.humans.every(c => c.out || c.gone) && race.cars.some(c => !c.out && !c.gone && !c.human);
+  }
+
   carOf(id) { return this.race && this.race.cars.find(c => c.id === 'h' + id); }
   meCar() { return this.race && this.race.players[0]; }
 
@@ -51,6 +56,11 @@ HR.PartyRace = class {
         c.finished ? +c.finishTime.toFixed(3) : null, c.bestLap != null ? +c.bestLap.toFixed(3) : null];
       if (this.host) HR.Net.broadcast({ t: 'snap', c: race.cars.filter(c => !c.out).map(pack), pr: this.rules.pack(race), st: race.state });
       else { const me = this.meCar(); if (me && !me.out) HR.Net.send({ t: 'st', c: pack(me) }); }
+    }
+    // nur noch Computerautos im Rennen (bei Spielen mit Ausscheiden): Rest im Zeitraffer zu Ende fahren
+    if (this.host && race.state === 'racing' && this.rules.outs && this.onlyBots()) {
+      const t0 = performance.now(), idle = [{}, {}];
+      while (race.state === 'racing' && performance.now() - t0 < 30) race.update(HR.STEP, idle);
     }
     if (this.host && race.state === 'done') {
       this.endT += dt;

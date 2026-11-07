@@ -40,6 +40,7 @@ HR.AR.define({
     }
   },
 
+  done: (S, p) => !!p.ft,
   over(S) { return S.p.filter(p => !p.gone).every(p => p.ft) || S.fin >= Math.max(1, S.p.filter(p => !p.gone).length - 1); },
   rank(S) { return S.p.filter(p => !p.gone).map(p => p.ft ? { id: p.id, s: 100000 - p.fo, txt: 'Ziel nach ' + U.fmtTime(p.ft) } : { id: p.id, s: Math.round(p.x - this.X0), txt: Math.round((p.x - this.X0) / (this.X1 - this.X0) * 100) + ' % der Strecke' }).sort((a, b) => b.s - a.s); },
   status: (S, p) => p.ft ? p.fo + '.' : Math.round((p.x - 170) / 12.6) + ' %',

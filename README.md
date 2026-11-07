@@ -41,6 +41,9 @@ Autoscooter-Sumo geht über 5 Runden, es gewinnt, wer die meisten Runden für si
 Der Hüpf-Parcours ist ein Jump and Run: Jedes Mal wird ein neues Level gebaut (Lücken, Stacheln,
 schwebende Plattformen, Sprungfedern, Kreissägen) und vorher geprüft, ob es bis zur Zielflagge lösbar ist.
 
+Sind alle Menschen ausgeschieden oder im Ziel, wird der Rest der Runde im Zeitraffer zu Ende gerechnet: Die Runde endet
+sofort, und die Computergegner bekommen genau die Plätze, die sie auch so bekommen hätten.
+
 Die Computergegner spielen wie Menschen: Sie reagieren mit kurzer Verzögerung, drücken Tasten nicht
 beliebig kurz, machen ab und zu Fehler und haben jeweils ihren eigenen Stil (vorsichtig oder mutig).
 
