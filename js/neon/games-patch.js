@@ -270,6 +270,7 @@ Object.assign(HR.GAMES["C4"], {
       ST.oct(g, x, y, 29); ST.thin(g, ST.VIOLET, 2, 0.6);
       ST.oct(g, x, y, 13); ST.thin(g, ST.VIOLET, 2, 0.6);
     }
+    for (const e of S.gm || []) ST.gem(g, e.x, e.y - 4 + Math.sin(S.time * 4 + e.i) * 4, 15, [ST.MAGENTA, ST.CYAN, ST.GREEN][e.i % 3]);
     if (S.cr < 0) {
       const b = Math.sin(S.time * 4) * 6;
       ST.pool(g, S.cx, S.cy, 90, ST.YELLOW, 0.3);
@@ -281,7 +282,7 @@ Object.assign(HR.GAMES["C4"], {
       if (p.ds) { ST.line(g, p.x - p.lx * 70, p.y - p.ly * 70, p.x, p.y); ST.glow(g, c, 6, 0.45); }
       const hold = p.id === S.cr;
       if (hold) { ST.pool(g, p.x, p.y, 80, ST.YELLOW, 0.3); g.beginPath(); g.arc(p.x, p.y - 12, 46, 0, 7); ST.glow(g, ST.YELLOW, 3, 0.6 + 0.3 * Math.sin(S.time * 8)); }
-      G.fig(g, p, p.x, p.y - 12, this.PR, { look: [p.lx, p.ly], hat: hold ? 'crown' : null, stun: p.st, alpha: hold && S.imm > 0 && Math.floor(S.time * 12) % 2 ? 0.6 : 1 });
+      G.fig(g, p, p.x, p.y - 12, this.PR, { look: [p.lx, p.ly], hat: hold ? 'crown' : null, stun: p.st > 0, alpha: hold && S.imm > 0 && Math.floor(S.time * 12) % 2 ? 0.6 : 1 });
     }
   }
 });
