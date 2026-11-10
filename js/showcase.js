@@ -329,15 +329,37 @@ HR.Showcase = {
       const [tx, ty] = def.cellXY(best);
       return HR.Showcase.toward(p.x, p.y, tx, ty, 6);
     },
+    // Kronenjagd: Nur die zwei Nächsten jagen den Träger, die anderen sammeln Edelsteine oder lauern
+    // mit Abstand auf einem eigenen Platz rund um den Träger. So wird der Träger nicht dauernd umzingelt.
     C4(S, p, def) {
-      if (S.cr < 0) return HR.Showcase.toward(p.x, p.y, S.cx, S.cy, 4);
+      const SC = HR.Showcase, M = SC.mind || { err: 0, bold: 0.5 };
+      if (S.cr < 0) return SC.toward(p.x, p.y, S.cx, S.cy, 4);
       if (S.cr === p.id) {
         let fx = 800 - p.x, fy = 510 - p.y; fx *= 0.004; fy *= 0.004;
         for (const q of S.p) if (q !== p && !q.gone) { const dx = p.x - q.x, dy = p.y - q.y, d = Math.hypot(dx, dy) || 1; fx += dx / d * 300 / d; fy += dy / d * 300 / d; }
-        return HR.Showcase.toward(p.x, p.y, p.x + fx * 100, p.y + fy * 100, 2);
+        return SC.toward(p.x, p.y, p.x + fx * 100, p.y + fy * 100, 2);
       }
       const h = S.p.find(q => q.id === S.cr), d = Math.hypot(h.x - p.x, h.y - p.y);
-      return Object.assign(HR.Showcase.toward(p.x, p.y, h.x, h.y, 4), d < 170 && S.imm <= 0 && Math.random() < 0.3 ? { a: 1 } : {});
+      // Rolle: Wer zu den nächsten Jägern gehört (mit etwas Vorsprung für den, der schon jagt), jagt
+      const live = S.p.filter(q => !q.gone && q !== h), nCh = live.length >= 6 ? 2 : 1;
+      const key = q => Math.hypot(h.x - q.x, h.y - q.y) - (q._ch ? 90 : 0);
+      const rank = live.filter(q => key(q) < key(p)).length;
+      p._ch = rank < nCh && S.imm <= 0.2;
+      if (p._ch) {
+        const lead = 0.25 + 0.25 * M.bold, tx = h.x + (h.vx || 0) * lead * Math.min(1, d / 300), ty = h.y + (h.vy || 0) * lead * Math.min(1, d / 300);
+        return Object.assign(SC.toward(p.x, p.y, tx, ty, 4), d < 160 + 40 * M.bold && S.imm <= 0 && Math.random() < 0.3 ? { a: 1 } : {});
+      }
+      // Edelstein nur holen, wenn kein anderer (außer dem Träger) näher dran ist
+      let e = null, ed = 1e9;
+      for (const g of S.gm || []) {
+        const dg = Math.hypot(g.x - p.x, g.y - p.y);
+        if (dg < ed && !live.some(q => q !== p && Math.hypot(g.x - q.x, g.y - q.y) < dg - 10)) { ed = dg; e = g; }
+      }
+      if (e && ed < 800) return SC.toward(p.x, p.y, e.x, e.y, 4);
+      // lauern: eigener Winkel rund um den Träger, gut 300 Pixel entfernt
+      const ang = (p.id * 2.399 + S.time * 0.15) % 6.283, R = 300 + (p.id % 3) * 40;
+      const tx = U.clamp(h.x + Math.cos(ang) * R, 170, 1430), ty = U.clamp(h.y + Math.sin(ang) * R * 0.75, 180, 840);
+      return SC.toward(p.x, p.y, tx, ty, 30);
     },
     // Schneeball: weicht anfliegenden Bällen aus, dreht sich zum Gegner (8 Richtungen), wirft erst, wenn die Linie passt,
     // und formt neue Bälle, wenn keine mehr da sind
