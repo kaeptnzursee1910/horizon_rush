@@ -207,7 +207,7 @@ body.portrait #rotate { display: flex; }
 .chatlog p { margin: 0 0 4px; overflow-wrap: anywhere; }
 .chatlog p.sys { color: var(--dim); font-style: italic; }
 .chatform { display: flex; gap: 6px; margin-top: 6px; }
-.chatform input { flex: 1; min-width: 0; font: inherit; font-size: 16px; color: var(--text); background: rgba(0, 0, 0, .35); border: 2px solid var(--line); border-radius: 4px; padding: 7px 10px; -webkit-user-select: text; user-select: text; }
+.chatform input { flex: 1; min-width: 0; font: inherit; font-size: 16px; color: var(--text); background: rgba(0, 0, 0, .35); border: 2px solid var(--line); border-radius: 4px; padding: 7px 10px; -webkit-user-select: text; user-select: text; touch-action: pan-y; }
 .chatform input:focus { outline: none; border-color: var(--gold); }
 .chatform button { background: rgba(255, 43, 214, 0.19); border: 0; border-radius: 4px; padding: 0 12px; font-weight: bold; }
 .intro .preview { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 34vh; object-fit: cover; border-radius: 10px; border: 2px solid var(--line); background: #15112a; margin: 0 0 12px; }
@@ -389,3 +389,16 @@ small.via.relay { background: rgba(255, 226, 61, .14); color: #fff3a8; border-co
 .qr div { background: #fff; border-radius: 4px; padding: 4px; width: 150px; height: 150px; }
 .qr svg { width: 100%; height: 100%; display: block; }
 .qr figcaption { color: var(--dim); font-size: 13px; margin-top: 4px; font-family: var(--font); }
+
+/* Verbindungslog */
+.netlog .nlpre { max-height: 42vh; overflow: auto; margin: 8px 0 0; padding: 10px; border-radius: 4px; background: rgba(0, 0, 0, .5); border: 1px solid rgba(24, 231, 255, .3);
+  font: 11.5px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; text-align: left; -webkit-user-select: text; user-select: text; touch-action: pan-y; }
+.netlog .nl-w { color: #ffe23d; }
+.netlog .nl-e { color: #ff3355; font-weight: bold; }
+.netlog .nlsum { font-size: 14px; }
+.netlog .bad, small.via .bad { color: #ff3355; }
+small.via .meh { color: #ffe23d; }
+.netlog .nlfilter { display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 14px; margin-top: 10px; }
+.netlog .nlbtns { flex-wrap: wrap; }
+.nlbtns button.armed { background: #ff3355; color: #fff; }
+.netlink { margin: 6px 0 0; font-size: 13px; }

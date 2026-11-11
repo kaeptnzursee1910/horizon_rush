@@ -75,13 +75,23 @@ HR.Net = {
       const code = String(Math.floor(1000 + Math.random() * 9000));
       const p = this.makePeer(this.prefix + code);
       let opened = false;
-      p.on('open', () => { opened = true; this.peer = p; this.code = code; cb(null, code); });
+      // PeerJS meldet "open" nach jeder Neuanmeldung beim Vermittlungsserver erneut. Nur das erste Mal zählt,
+      // sonst würde der Gastgeber nach einem kurzen Netzaussetzer eine neue, leere Party/Lobby anlegen.
+      p.on('open', () => {
+        if (opened) { if (this.peer === p) HR.NetLog.info('', 'Wieder beim Vermittlungsserver angemeldet' + (this._dcAt ? ' nach ' + HR.NetLog.secs(Date.now() - this._dcAt) : '') + '. Neue Mitspieler können wieder beitreten.'); this._dcAt = 0; this._dcLogged = false; return; }
+        opened = true; this.peer = p; this.code = code;
+        HR.NetLog.start((this.prefix === this.PREFIX ? 'Online-Rennen' : 'Party') + ' ' + code + ' eröffnet (dieses Gerät ist Gastgeber)');
+        cb(null, code);
+      });
       p.on('error', e => {
         if (!opened && e.type === 'unavailable-id' && attempt < 5) { p.destroy(); tryCode(attempt + 1); return; }
-        if (!opened) cb(this.errText(e));
-        else if (e.type !== 'peer-unavailable') console.warn('Netz', e);
+        if (!opened) { HR.NetLog.error('', 'Eröffnen fehlgeschlagen: ' + ((e && e.type) || '') + ' ' + ((e && e.message) || '')); cb(this.errText(e)); }
+        else if (e.type !== 'peer-unavailable') { console.warn('Netz', e); if (this.peer === p && !(this._dcAt && e.type === 'network' && this._dcLogged)) { if (this._dcAt) this._dcLogged = true; HR.NetLog.warn('', 'Fehler beim Vermittlungsserver: ' + ((e && e.type) || '') + ' ' + ((e && e.message) || '')); } }
       });
-      p.on('disconnected', () => this.keepAlive(p));
+      p.on('disconnected', () => {
+        if (this.peer === p && !this._dcAt) { this._dcAt = Date.now(); HR.NetLog.warn('', 'Verbindung zum Vermittlungsserver verloren. Laufende Spiele gehen weiter, aber neue Mitspieler finden die Party gerade nicht. Melde neu an …'); }
+        this.keepAlive(p);
+      });
       p.on('connection', conn => this.acceptConn(conn));
     };
     tryCode(0);
@@ -98,20 +108,23 @@ HR.Net = {
 
   acceptConn(conn) {
     conn.on('open', () => {
-      if (this.conns.size >= this.limit - 1) { conn.send({ t: 'full', max: this.limit }); setTimeout(() => conn.close(), 300); return; }
+      if (this.conns.size >= this.limit - 1) { HR.NetLog.info('', 'Beitritt abgelehnt: schon voll (' + this.limit + ').'); conn.send({ t: 'full', max: this.limit }); setTimeout(() => conn.close(), 300); return; }
       const id = this.nextId++;
       conn.hrId = id;
       this.conns.set(id, conn);
-      conn.on('data', d => this.onMsg && this.onMsg(d, id));
-      conn.on('close', () => this.drop(id));
-      conn.on('error', () => this.drop(id));
-      this.watchIce(conn, () => this.drop(id));
+      HR.NetLog.attach(conn, id);
+      HR.NetLog.info('Gerät (#' + id + ')', 'Neues Gerät verbunden.');
+      conn.on('data', d => { if (HR.NetLog.onData(d, id)) return; if (this.onMsg) this.onMsg(d, id); });
+      conn.on('close', () => this.drop(id, 'Verbindung wurde geschlossen'));
+      conn.on('error', e => this.drop(id, 'Fehler ' + ((e && (e.type || e.message)) || '')));
+      this.watchIce(conn, s => this.drop(id, 'Netzwerkstatus ' + s));
       conn.send({ t: 'welcome', id });
     });
   },
 
-  drop(id) {
+  drop(id, why) {
     if (!this.conns.has(id)) return;
+    HR.NetLog.detach(id, why || 'unbekannt');
     this.conns.delete(id);
     if (this.onDrop) this.onDrop(id);
   },
@@ -123,26 +136,37 @@ HR.Net = {
     this.isHost = false;
     const p = this.makePeer();
     let done = false;
-    const fail = msg => { if (done) return; done = true; cb(msg); this.close(); };
+    const fail = msg => { if (done) return; done = true; HR.NetLog.error('', 'Beitreten fehlgeschlagen: ' + msg); cb(msg); this.close(); };
+    HR.NetLog.start((this.prefix === this.PREFIX ? 'Online-Rennen ' : 'Party ') + code + ' beitreten (dieses Gerät ist Gast)' + (attempt ? ', 2. Versuch' : ''));
     const timer = setTimeout(() => fail('Keine Verbindung zum Gastgeber. Bitte den Code prüfen und es erneut versuchen.'), 20000);
     p.on('open', () => {
       this.peer = p;
+      HR.NetLog.info('', 'Beim Vermittlungsserver angemeldet, verbinde mit dem Gastgeber …');
       const conn = p.connect(this.prefix + code, { reliable: true, serialization: 'json' });
+      const t0 = Date.now();
+      HR.NetLog.attach(conn, 0, why => lost(why));
       conn.on('data', d => {
-        if (d.t === 'welcome' && !done) { done = true; clearTimeout(timer); this.myId = d.id; this.hostConn = conn; this.code = code; cb(null, d.id); return; }
+        if (HR.NetLog.onData(d, 0)) return;
+        if (d.t === 'welcome' && !done) { done = true; clearTimeout(timer); this.myId = d.id; this.hostConn = conn; this.code = code; HR.NetLog.info('', 'Verbunden als Gerät #' + d.id + ' (Aufbau ' + HR.NetLog.secs(Date.now() - t0) + ').'); cb(null, d.id); return; }
         if (d.t === 'full') { clearTimeout(timer); fail('Hier ist schon alles voll (maximal ' + (d.max || HR.MAX_ONLINE) + ' Spieler).'); return; }
         if (this.onMsg) this.onMsg(d, 0);
       });
-      const lost = () => { if (done && this.hostConn === conn) { this.hostConn = null; if (this.onDrop) this.onDrop(0); } };
-      conn.on('close', lost);
-      conn.on('error', lost);
-      this.watchIce(conn, lost);
+      const lost = why => { if (done && this.hostConn === conn) { HR.NetLog.detach(0, why); this.hostConn = null; if (this.onDrop) this.onDrop(0); } };
+      conn.on('close', () => lost('Verbindung wurde geschlossen'));
+      conn.on('error', e => lost('Fehler ' + ((e && (e.type || e.message)) || '')));
+      this.watchIce(conn, s => lost('Netzwerkstatus ' + s));
     });
     p.on('error', e => {
       clearTimeout(timer);
       // Code noch nicht gefunden: kurz warten und es noch einmal versuchen (der Gastgeber meldet sich evtl. gerade neu an)
       if (!done && e.type === 'peer-unavailable' && attempt < 1) { done = true; this.close(); setTimeout(() => this.join(code, cb, prefix, attempt + 1), 2000); return; }
-      if (!done) fail(this.errText(e)); else if (e.type === 'peer-unavailable' || e.type === 'network') { if (this.onDrop) this.onDrop(0); } });
+      if (!done) { HR.NetLog.warn('', 'Fehler: ' + ((e && e.type) || '?') + ' ' + ((e && e.message) || '')); fail(this.errText(e)); }
+      // Nach dem Beitritt läuft das Spiel direkt zwischen den Geräten. Ein Abbruch zum Vermittlungsserver
+      // (Fehler "network") ist dann kein Grund, die Party zu verlassen: früher flogen dadurch alle Gäste raus,
+      // obwohl ihre Verbindung zum Gastgeber noch stand. Echte Abbrüche melden "close" oder der Netzwerkstatus.
+      else if (this.peer === p) HR.NetLog.info('', 'Meldung vom Vermittlungsserver: ' + ((e && e.type) || '') + ' ' + ((e && e.message) || '') + ' (Spielverbindung bleibt bestehen).');
+    });
+    p.on('disconnected', () => { if (this.peer === p) HR.NetLog.info('', 'Verbindung zum Vermittlungsserver getrennt (für Gäste unkritisch, das Spiel läuft direkt weiter).'); });
   },
 
   // tatsächlich genutzter Weg einer Verbindung: 'direct' oder 'relay' (null = noch unbekannt)
@@ -167,6 +191,8 @@ HR.Net = {
       const t = await this.connType(conn);
       const p = players && players.find(x => x.id === id);
       if (p && t && p.via !== t) { p.via = t; changed = true; }
+      const ms = HR.NetLog.pingOf(id);
+      if (p && ms != null && (p.ping == null || Math.abs(p.ping - ms) >= Math.max(15, p.ping * 0.25))) { p.ping = ms; changed = true; }
     }
     return changed;
   },
@@ -175,7 +201,7 @@ HR.Net = {
     const pc = conn.peerConnection;
     if (!pc) return;
     pc.addEventListener('iceconnectionstatechange', () => {
-      if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') onDead();
+      if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') onDead(pc.iceConnectionState);
     });
   },
 
@@ -190,16 +216,17 @@ HR.Net = {
   },
 
   send(msg) { // Gast -> Gastgeber
-    if (this.hostConn && this.hostConn.open) try { this.hostConn.send(msg); } catch (_) { }
+    if (this.hostConn && this.hostConn.open) try { this.hostConn.send(msg); HR.NetLog.out(0); } catch (e) { HR.NetLog.sendFail(0, e); }
   },
   broadcast(msg, except) { // Gastgeber -> alle
-    for (const [id, c] of this.conns) if (id !== except && c.open) try { c.send(msg); } catch (_) { }
+    for (const [id, c] of this.conns) if (id !== except && c.open) try { c.send(msg); HR.NetLog.out(id); } catch (e) { HR.NetLog.sendFail(id, e); }
   },
-  sendTo(id, msg) { const c = this.conns.get(id); if (c && c.open) try { c.send(msg); } catch (_) { } },
+  sendTo(id, msg) { const c = this.conns.get(id); if (c && c.open) try { c.send(msg); HR.NetLog.out(id); } catch (e) { HR.NetLog.sendFail(id, e); } },
 
   active() { return !!this.peer && (this.isHost || !!this.hostConn); },
 
   close() {
+    if (this.peer) HR.NetLog.stop('Sitzung beendet (Verbindung geschlossen).');
     for (const c of this.conns.values()) try { c.close(); } catch (_) { }
     this.conns.clear();
     if (this.hostConn) try { this.hostConn.close(); } catch (_) { }
