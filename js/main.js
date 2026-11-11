@@ -415,7 +415,7 @@ const Game = HR.Game = {
     } else {
       HR.Net.close(); this.online = null;
       this.startDemo();
-      UI.error('Die Verbindung zum Gastgeber ist abgebrochen.', () => UI.main());
+      UI.error('Die Verbindung zum Gastgeber ist abgebrochen.', () => UI.main(), true);
     }
   },
 
@@ -684,6 +684,7 @@ const UI = HR.UI = {
         ${HR.THEME === 'neon'
           ? `<button data-act="keyform"><span>Verbindung:</span><b>${HR.Net.MODES[HR.Net.getMode()]} · Server ${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>`
           : `<button data-act="keyform">Verbindung: <b>${HR.Net.MODES[HR.Net.getMode()]}</b> · Server <b>${key ? 'eingerichtet' : 'nicht eingerichtet'}</b></button>`}
+        <button data-act="netlog" data-arg="settings">Verbindungslog</button>
         <button data-act="fullscreen">Vollbild</button>
       </nav></div>`, () => this.main());
   },
@@ -760,15 +761,17 @@ const UI = HR.UI = {
   // Anzeige des tatsächlich genutzten Verbindungswegs eines Mitspielers
   viaTag(p) {
     if (!p || !p.via) return '';
-    return p.via === 'relay' ? '<small class="via relay" title="Verbindung über den Verbindungsserver">☁ Server</small>'
-      : '<small class="via" title="Direkte Verbindung (P2P)">⇄ Direkt</small>';
+    const ms = p.ping != null ? ` · <span class="${p.ping > 300 ? 'bad' : p.ping > 120 ? 'meh' : ''}">${p.ping} ms</span>` : '';
+    return p.via === 'relay' ? `<small class="via relay" title="Verbindung über den Verbindungsserver, Ping = Antwortzeit">☁ Server${ms}</small>`
+      : `<small class="via" title="Direkte Verbindung (P2P), Ping = Antwortzeit">⇄ Direkt${ms}</small>`;
   },
 
   busy(msg) { this.show(`<div class="panel narrow"><h2>${msg}</h2><div class="spinner"></div><nav class="list"><button data-act="quit">Abbrechen</button></nav></div>`, () => this.acts.quit()); },
 
-  error(msg, then) {
+  error(msg, then, log) {
     this._errThen = then;
-    this.show(`<div class="panel narrow"><h2>Hoppla</h2><p class="error">${this.esc(msg)}</p><nav class="list"><button data-act="errok" autofocus>OK</button></nav></div>`, () => this.acts.errok());
+    this.show(`<div class="panel narrow"><h2>Hoppla</h2><p class="error">${this.esc(msg)}</p><nav class="list"><button data-act="errok" autofocus>OK</button></nav>
+      ${log ? '<p class="note">Was genau passiert ist, steht im <button class="link" data-act="netlog" data-arg="error">Verbindungslog</button>. Lade es herunter und schick es weiter, damit sich das Problem finden lässt.</p>' : ''}</div>`, () => this.acts.errok());
   },
 
   // ---------- Aktionen ----------
@@ -850,4 +853,4 @@ const UI = HR.UI = {
   },
 };
 
-window.addEventListener('DOMContentLoaded', () => { UI.init(); Game.init(); });
+window.addEventListener('DOMContentLoaded', () => { HR.NetLog.init(); UI.init(); Game.init(); });

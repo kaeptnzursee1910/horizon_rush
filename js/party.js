@@ -37,7 +37,7 @@ const Party = HR.Party = {
     HR.Net.onMsg = (m, from) => this.msg(m, from);
     HR.Net.onDrop = id => this.drop(id);
     HR.Net.host((err, code) => {
-      if (err) { this.reset(); UI.error(err, () => UI.party()); return; }
+      if (err) { this.reset(); UI.error(err, () => UI.party(), true); return; }
       HR.Audio.init();
       this.P = {
         host: true, myId: 0, code, phase: 'lobby', max: 8, rounds: 5, pick: 'random', picks: HR.GAME_ORDER.slice(),
@@ -103,7 +103,7 @@ const Party = HR.Party = {
     HR.Net.onMsg = (m, from) => this.msg(m, from);
     HR.Net.onDrop = id => this.drop(id);
     HR.Net.join(code, (err, id) => {
-      if (err) { this.reset(); UI.error(err, () => UI.party()); return; }
+      if (err) { this.reset(); UI.error(err, () => UI.party(), true); return; }
       HR.Audio.init();
       this.P = { host: false, myId: id, code, phase: 'lobby', players: [], max: 8, rounds: 5, pick: 'random', picks: [], scores: {}, round: 0, ready: [] };
       this.chat = [];
@@ -199,7 +199,7 @@ const Party = HR.Party = {
     } else {
       this.reset();
       Game.startDemo();
-      UI.error('Die Verbindung zur Party ist abgebrochen.', () => UI.main());
+      UI.error('Die Verbindung zur Party ist abgebrochen.', () => UI.main(), true);
     }
   },
 
@@ -228,6 +228,7 @@ const Party = HR.Party = {
   },
 
   addChat(e) {
+    if (e.sys && this.P && !this.P.solo) HR.NetLog.info('', 'Party: ' + e.text);
     this.chat.push(e);
     if (this.chat.length > 80) this.chat.shift();
     if (!e.sys && e.id !== this.me()) HR.Audio.play('blip');
@@ -339,8 +340,18 @@ const Party = HR.Party = {
     this.startGame(m);
   },
 
+  // Wechsel des Spielabschnitts ins Verbindungslog schreiben (Zusammenhang für spätere Probleme)
+  logPhase() {
+    const P = this.P; if (!P || P.solo) return;
+    const k = P.phase + ':' + P.round + ':' + P.current;
+    if (k === this._logKey) return;
+    this._logKey = k;
+    HR.NetLog.info('', 'Abschnitt: ' + HR.NetLog.ctx() + ' · ' + P.players.length + ' Spieler (' + P.players.filter(p => p.ai).length + ' Computer).');
+  },
+
   startGame(m) {
     this.stopGame();
+    this.logPhase();
     const def = HR.GAMES[m.code];
     UI.hide();
     this.screen = 'play';
@@ -398,6 +409,7 @@ const Party = HR.Party = {
   // ---------- Bildschirme ----------
   show() {
     const P = this.P; if (!P) return;
+    this.logPhase();
     if (P.phase === 'play') { if (!this.ctl) this.screen = null; return; }
     if (!Game.race || !Game.race.demo) Game.startDemo();
     // Vorschau: in der Spielerklärung läuft im Hintergrund nur das kommende Spiel
@@ -445,7 +457,7 @@ const PUI = HR.PUI = {
     UI.show(`<div class="panel wide party">
       <header><button class="backbtn" data-act="pleave">‹ ${P.solo ? 'Beenden' : 'Verlassen'}</button><div class="ptitle"><h2>${title}</h2>${sub ? `<span>${sub}</span>` : ''}</div>
         ${P.solo ? '' : `<span class="codepill">Code <b>${P.code}</b></span>`}</header>
-      <div class="pgrid"><div class="pmain">${body}</div><div class="pside"><section><h3>Spieler <span id="pcount"></span></h3><ul class="players" id="pplayers"></ul></section>${P.solo ? '' : this.chatBox()}</div></div>
+      <div class="pgrid"><div class="pmain">${body}</div><div class="pside"><section><h3>Spieler <span id="pcount"></span></h3><ul class="players" id="pplayers"></ul>${P.solo ? '' : '<p class="note netlink"><button class="link" data-act="netlog" data-arg="party">Verbindungslog</button></p>'}</section>${P.solo ? '' : this.chatBox()}</div></div>
     </div>`, null);
     this.bindChat();
     this.players();
@@ -701,6 +713,81 @@ UI.partyPause = function () {
       <button data-act="presume" autofocus>Weiter</button>
       <button data-act="sound">${Game.settings.sound ? 'Ton aus' : 'Ton an'}</button>
       ${host ? `<button data-act="pabort">Runde abbrechen (zur ${solo ? 'Auswahl' : 'Lobby'})</button>` : ''}
+      ${solo ? '' : '<button data-act="netlog" data-arg="pause">Verbindungslog</button>'}
       <button data-act="pleave">${solo ? 'Beenden' : 'Party verlassen'}</button>
     </nav></div>`, () => UI.acts.presume());
 };
+
+// ---------- Verbindungslog ansehen, herunterladen, teilen, von allen Geräten einsammeln ----------
+UI.netlog = function (back) {
+  const L = HR.NetLog;
+  UI._nlBack = back;
+  const host = HR.Net.isHost && HR.Net.conns.size > 0;
+  this.show(`<div class="panel wide netlog"><header><button class="backbtn" data-act="back">‹ Zurück</button><h2>Verbindungslog</h2></header>
+    <p class="note">Jedes Gerät schreibt hier mit, wie gut die Verbindungen bei Partys und Online-Rennen laufen: Ping (Antwortzeit), Funkstille, Abbrüche und Hänger des Geräts. Das Log bleibt auch nach einem Absturz gespeichert.
+      ${host ? 'Als Gastgeber kannst du die Logs <b>aller verbundenen Geräte</b> einsammeln und als eine Datei speichern.' : 'Nach einem Problem: herunterladen oder teilen und weiterschicken.'}</p>
+    <div id="nlsum"></div>
+    <nav class="list row nlbtns">
+      ${host ? '<button class="hot" data-act="nlall">Logs aller Geräte einsammeln</button>' : ''}
+      <button data-act="nldl" ${host ? '' : 'autofocus'}>Herunterladen</button>
+      ${navigator.share ? '<button data-act="nlshare">Teilen</button>' : ''}
+      <button data-act="nlcopy">Kopieren</button>
+      <button data-act="nlclear">Leeren</button>
+    </nav>
+    <p class="note" id="nlstat"></p>
+    <label class="nlfilter"><input type="checkbox" id="nlonly"> nur Warnungen und Fehler</label>
+    <pre class="nlpre" id="nllog"></pre></div>`, () => { clearInterval(UI._nlT); const b = UI._nlBack; UI._nlBack = null; b ? b() : UI.main(); });
+  let shown = -1, only = false;
+  const box = this.el.querySelector('#nllog');
+  this.el.querySelector('#nlonly').addEventListener('change', e => { only = e.target.checked; shown = -1; draw(); });
+  const draw = () => {
+    if (!document.body.contains(box)) { clearInterval(UI._nlT); return; }
+    // Übersicht der aktuellen Verbindungen
+    const ov = L.overview(), sum = document.getElementById('nlsum');
+    sum.innerHTML = !L.active ? `<p class="note">Gerade keine Mehrspieler-Verbindung. Unten stehen die gespeicherten Einträge (${L.list.length}).</p>`
+      : !ov.length ? '<p class="note">Verbindung aktiv, aber noch kein Mitspieler verbunden.</p>'
+      : `<div class="tablewrap"><table class="res nlsum"><thead><tr><th>Gerät</th><th>Weg</th><th class="num">Ping</th><th class="num">Ø</th><th class="num">max</th><th class="num">Funkstille</th><th class="num">Daten vor</th></tr></thead><tbody>${ov.map(o =>
+        `<tr><td>${UI.esc(o.who)}</td><td>${o.relay == null ? '…' : o.relay ? '☁ Server' : '⇄ Direkt'}</td><td class="num ${o.ping > 300 ? 'bad' : ''}">${o.ping != null ? o.ping + ' ms' : '–'}</td><td class="num">${o.avg != null ? o.avg + ' ms' : '–'}</td><td class="num">${o.max != null ? o.max + ' ms' : '–'}</td><td class="num ${o.gaps ? 'bad' : ''}">${o.gaps}×</td><td class="num ${o.quiet > 3000 ? 'bad' : ''}">${L.secs(o.quiet)}</td></tr>`).join('')}</tbody></table></div>`;
+    // Einträge
+    if (L.list.length === shown) return;
+    shown = L.list.length;
+    const atEnd = box.scrollTop + box.clientHeight >= box.scrollHeight - 30;
+    const rows = (only ? L.list.filter(e => e[1] !== 'i') : L.list).slice(-400);
+    box.innerHTML = rows.length ? rows.map(e => `<span class="nl-${e[1]}">${UI.esc(L.line(e))}</span>`).join('\n') : 'Noch keine Einträge.';
+    if (atEnd || shown === rows.length) box.scrollTop = box.scrollHeight;
+  };
+  draw(); box.scrollTop = box.scrollHeight;
+  clearInterval(UI._nlT); UI._nlT = setInterval(draw, 1000);
+};
+
+Object.assign(UI.acts, {
+  netlog(from) {
+    const back = { settings: () => UI.settings(), pause: () => UI.partyPause(), party: () => { Party.screen = null; Party.show(); }, error: () => UI.acts.errok() }[from];
+    UI.netlog(back || (() => UI.main()));
+  },
+  nldl() { const L = HR.NetLog; L.download(L.text(), L.fileName()); UI.toast('Log wird gespeichert'); },
+  async nlshare() { const L = HR.NetLog; if (!await L.share(L.text(), L.fileName())) UI.acts.nldl(); },
+  nlcopy() {
+    const t = HR.NetLog.text();
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => UI.toast('Log kopiert'), () => UI.toast('Kopieren nicht möglich, bitte herunterladen'));
+    else UI.toast('Kopieren nicht möglich, bitte herunterladen');
+  },
+  nlclear(_, b) {
+    if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Wirklich leeren?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('armed'); b.textContent = 'Leeren'; } }, 3000); return; }
+    HR.NetLog.clear(); b.classList.remove('armed'); b.textContent = 'Leeren'; UI.toast('Log geleert');
+  },
+  nlall(_, b) {
+    const st = document.getElementById('nlstat'), L = HR.NetLog;
+    if (b) b.disabled = true;
+    if (st) st.textContent = 'Sammle Logs ein …';
+    L.collect((text, n, missing) => {
+      if (b && b.isConnected) b.disabled = false;
+      const name = L.fileName(true);
+      if (st && st.isConnected) st.textContent = 'Logs von ' + n + ' Geräten zusammengefasst' + (missing.length ? ' (ohne Antwort: ' + missing.join(', ') + ')' : '') + '.';
+      UI._nlAll = { text, name };
+      if (navigator.share && st && st.isConnected) st.innerHTML += ' <button class="link" data-act="nlallshare">Datei teilen</button>', UI.bind(st);
+      L.download(text, name);
+    }, (got, total) => { if (st && st.isConnected) st.textContent = 'Sammle Logs ein … ' + got + ' von ' + total + ' Geräten fertig'; });
+  },
+  async nlallshare() { const a = UI._nlAll; if (a && !await HR.NetLog.share(a.text, a.name)) HR.NetLog.download(a.text, a.name); },
+});
